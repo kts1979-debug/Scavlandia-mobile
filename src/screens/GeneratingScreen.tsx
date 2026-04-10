@@ -41,10 +41,27 @@ export default function GeneratingScreen() {
           params: { hunt: JSON.stringify(result.hunt) },
         });
       } catch (error: any) {
+        console.log("=== FULL ERROR DETAILS ===");
+        console.log("error.message:", error.message);
+        console.log("error.code:", error.code);
+        console.log("error.response:", JSON.stringify(error.response?.data));
+        console.log("error.response.status:", error.response?.status);
+        console.log(
+          "error.request:",
+          error.request ? "Request was made" : "No request made",
+        );
+        console.log("error.config url:", error.config?.url);
+        console.log(
+          "error.config headers:",
+          JSON.stringify(error.config?.headers),
+        );
+        console.log("=========================");
+
         Alert.alert(
           "Hunt Generation Failed",
           error.response?.data?.error ||
-            "Something went wrong. Please try again.",
+            error.message ||
+            "Something went wrong.",
           [{ text: "OK", onPress: () => router.back() }],
         );
       }

@@ -1,18 +1,18 @@
-import React, { useState, useCallback } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
-  View,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Alert,
-  ScrollView,
-} from "react-native, as ImagePicker from "expo-image-picker";
-import { router, useLocalSearchParams } from "expo-router";
+  View,
+} from "react-native";
 import HuntMap from "../components/HuntMap";
 import { useLocation } from "../hooks/useLocation";
-import { submitStop } from "../services/apiService";
-import { Hunt, HuntStop } from "../services/apiService";
+import { Hunt, HuntStop, submitStop } from "../services/apiService";
 
 export default function ActiveHuntScreen() {
   const params = useLocalSearchParams();
