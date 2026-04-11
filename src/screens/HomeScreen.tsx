@@ -1,4 +1,3 @@
-import { useAuth } from '../context/AuthContext';
 import { router } from "expo-router";
 import React from "react";
 import {
@@ -9,20 +8,24 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAuth } from "../context/AuthContext";
 
 export default function HomeScreen() {
+  const { user } = useAuth();
+
   return (
-    const { user } = useAuth();
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-  <Text style={styles.appName}>Daytripper</Text>
-  {user
-    ? <Text style={styles.greeting}>Welcome back, {user.displayName || 'Explorer'}! 👋</Text>
-    : <Text style={styles.tagline}>AI-powered city adventures</Text>
-  }
-</View>
-
+          <Text style={styles.appName}>Daytripper</Text>
+          {user ? (
+            <Text style={styles.greeting}>
+              Welcome back, {user.displayName || "Explorer"}! 👋
+            </Text>
+          ) : (
+            <Text style={styles.tagline}>AI-powered city adventures</Text>
+          )}
+        </View>
 
         <View style={styles.heroCard}>
           <Text style={styles.heroEmoji}>🗺️</Text>
@@ -72,7 +75,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     alignItems: "center",
   },
-  greeting: { fontSize: 15, color: '#2E86C1', marginTop: 4, fontWeight: '500' },
+  greeting: { fontSize: 15, color: "#2E86C1", marginTop: 4, fontWeight: "500" },
   heroEmoji: { fontSize: 48, marginBottom: 12 },
   heroTitle: {
     fontSize: 22,
