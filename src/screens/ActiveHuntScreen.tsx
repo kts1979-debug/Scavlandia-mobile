@@ -1,6 +1,8 @@
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
+import { uploadHuntPhoto } from "../services/storageService";
+
 import {
   Alert,
   ScrollView,
@@ -63,15 +65,29 @@ export default function ActiveHuntScreen() {
   const handleSubmitStop = async (photoUri: string) => {
     setSubmitting(true);
     try {
+      // Step 1: Upload the photo to Firebase Storage
+      // This replaces the local file path with a real URL
+      console.log("Uploading photo...");
+      const photoUrl = await uploadHuntPhoto(
+        photoUri,
+        hunt.huntId,
+        activeStop.order,
+      );
+      console.log("Photo uploaded, submitting stop...");
+
+      // Step 2: Submit the stop to your backend with the real photo URL
       await submitStop(
         hunt.huntId,
         activeStop.order,
-        photoUri,
+        photoUrl,
         activeStop.pointValue,
       );
+
+      // Step 3: Update local state
       setCompletedIndices((prev) => [...prev, activeStopIndex]);
       setTotalPoints((prev) => prev + activeStop.pointValue);
 
+      // Step 4: Check if the hunt is complete
       if (activeStopIndex >= hunt.stops.length - 1) {
         router.replace({
           pathname: "/hunt-complete",
@@ -83,10 +99,16 @@ export default function ActiveHuntScreen() {
         });
         return;
       }
+
+      // Step 5: Move to the next stop
       setActiveStopIndex((i) => i + 1);
       setAtLocation(false);
-    } catch (error) {
-      Alert.alert("Error", "Could not save your progress. Please try again.");
+    } catch (error: any) {
+      console.error("Submit stop error:", error.message);
+      Alert.alert(
+        "Upload Failed",
+        "Could not upload your photo. Please check your internet connection and try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -179,7 +201,9 @@ export default function ActiveHuntScreen() {
                 disabled={submitting}
               >
                 <Text style={styles.photoButtonText}>
-                  {submitting ? "Saving..." : "📸  Take Photo to Complete"}
+                  {submitting
+                    ? "⬆️  Uploading photo..."
+                    : "📸  Take Photo to Complete"}
                 </Text>
               </TouchableOpacity>
             </View>

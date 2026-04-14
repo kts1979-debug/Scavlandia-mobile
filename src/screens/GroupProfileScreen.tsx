@@ -54,8 +54,29 @@ export default function GroupProfileScreen() {
   };
 
   const handleGenerate = () => {
+    // Validate city
     if (!city.trim())
       return Alert.alert("Missing info", "Please enter a city name");
+    if (city.trim().length < 2)
+      return Alert.alert("Invalid city", "Please enter a valid city name");
+
+    // Validate ages
+    const parsedAge = parseInt(ages);
+    if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 100)
+      return Alert.alert(
+        "Invalid age",
+        "Please enter an age between 1 and 100",
+      );
+
+    // Validate group size
+    const parsedSize = parseInt(groupSize);
+    if (isNaN(parsedSize) || parsedSize < 1 || parsedSize > 100)
+      return Alert.alert(
+        "Invalid group size",
+        "Please enter a group size between 1 and 100",
+      );
+
+    // Validate interests, tone, mobility
     if (interests.length === 0)
       return Alert.alert("Missing info", "Please select at least one interest");
     if (!tone) return Alert.alert("Missing info", "Please select a vibe");
@@ -67,8 +88,8 @@ export default function GroupProfileScreen() {
       params: {
         city: city.trim(),
         groupProfile: JSON.stringify({
-          ages: parseInt(ages) || 30,
-          groupSize: parseInt(groupSize) || 4,
+          ages: parsedAge,
+          groupSize: parsedSize,
           interests,
           tone,
           mobility,

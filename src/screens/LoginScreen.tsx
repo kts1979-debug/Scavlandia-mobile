@@ -116,14 +116,6 @@ export default function LoginScreen() {
               <Text style={styles.footerLink}>Create one</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Skip for now — temporary, remove before launch */}
-          <TouchableOpacity
-            style={styles.skipButton}
-            onPress={() => router.replace("/(tabs)")}
-          >
-            <Text style={styles.skipText}>Skip for now (testing only)</Text>
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -182,6 +174,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textDecorationLine: "underline",
   },
-  skipButton: { alignItems: "center", padding: 12 },
-  skipText: { color: "#7FB3D3", fontSize: 13 },
 });
