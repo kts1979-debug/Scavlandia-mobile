@@ -1,6 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
+import ProgressBar from "../components/ui/ProgressBar";
 import { uploadHuntPhoto } from "../services/storageService";
 
 import {
@@ -130,19 +131,19 @@ export default function ActiveHuntScreen() {
         <Text style={styles.points}>⭐ {totalPoints} pts</Text>
       </View>
 
-      <View style={styles.progressBar}>
-        <View
-          style={[
-            styles.progressFill,
-            {
-              width: `${(completedIndices.length / hunt.stops.length) * 100}%`,
-            },
-          ]}
+      <View
+        style={{
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          backgroundColor: COLORS.white,
+        }}
+      >
+        <ProgressBar
+          current={completedIndices.length}
+          total={hunt.stops.length}
+          showLabel={true}
         />
       </View>
-      <Text style={styles.progressText}>
-        Stop {activeStopIndex + 1} of {hunt.stops.length}
-      </Text>
 
       <View style={styles.toggleRow}>
         <TouchableOpacity
@@ -242,14 +243,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   points: { fontSize: 16, color: "#F39C12", fontWeight: "bold" },
-  progressBar: { height: 4, backgroundColor: "#D5D8DC", width: "100%" },
-  progressFill: { height: 4, backgroundColor: "#27AE60" },
-  progressText: {
-    textAlign: "center",
-    fontSize: 13,
-    color: "#5D6D7E",
-    paddingVertical: 6,
-  },
   toggleRow: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",

@@ -1,116 +1,228 @@
+// src/screens/HomeScreen.tsx — Playful redesign
 import { router } from "expo-router";
 import React from "react";
 import {
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
+import { COLORS, FONTS, SPACING } from "../theme";
 
 export default function HomeScreen() {
   const { user } = useAuth();
 
+  const stats = [
+    { emoji: "🗺️", label: "Cities", value: "500+" },
+    { emoji: "🎯", label: "Stops", value: "9–12" },
+    { emoji: "⚡", label: "Ready in", value: "30s" },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.appName}>Daytripper</Text>
-          {user ? (
-            <Text style={styles.greeting}>
-              Welcome back, {user.displayName || "Explorer"}! 👋
+          <View>
+            <Text style={styles.appName}>Daytripper</Text>
+            {user ? (
+              <Text style={styles.greeting}>
+                Hey {user.displayName?.split(" ")[0] || "Explorer"} 👋
+              </Text>
+            ) : (
+              <Text style={styles.tagline}>AI-powered city adventures</Text>
+            )}
+          </View>
+          <TouchableOpacity
+            onPress={() => router.push("/login")}
+            style={styles.avatarBtn}
+          >
+            <Text style={styles.avatarText}>
+              {user?.displayName?.charAt(0).toUpperCase() || "👤"}
             </Text>
-          ) : (
-            <Text style={styles.tagline}>AI-powered city adventures</Text>
-          )}
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.heroCard}>
+        {/* Hero Banner */}
+        <Card variant="primary" style={styles.heroBanner}>
           <Text style={styles.heroEmoji}>🗺️</Text>
-          <Text style={styles.heroTitle}>Ready for an adventure?</Text>
-          <Text style={styles.heroText}>
-            Tell us about your group and we'll build a personalized scavenger
-            hunt in any city — powered by AI.
+          <Text style={styles.heroTitle}>
+            Your next adventure{`\n`}starts here
           </Text>
-        </View>
+          <Text style={styles.heroSub}>
+            Tell us about your group and we build{`\n`}a personalized hunt in
+            any city
+          </Text>
+          <Button
+            label="Start a Hunt"
+            onPress={() => router.push("/group-profile")}
+            variant="accent"
+            size="lg"
+            emoji="🚀"
+            style={styles.heroBtn}
+          />
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>How it works</Text>
-          {[
-            { icon: "👥", text: "Tell us about your group" },
-            { icon: "📍", text: "Pick your city" },
-            { icon: "🤖", text: "AI builds your custom hunt" },
-            { icon: "🏆", text: "Explore, complete stops, earn points" },
-          ].map((step, i) => (
-            <View key={i} style={styles.stepRow}>
-              <Text style={styles.stepIcon}>{step.icon}</Text>
-              <Text style={styles.stepText}>{step.text}</Text>
-            </View>
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          {stats.map((s, i) => (
+            <Card key={i} style={styles.statCard}>
+              <Text style={styles.statEmoji}>{s.emoji}</Text>
+              <Text style={styles.statValue}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
+            </Card>
           ))}
         </View>
 
-        <TouchableOpacity
-          style={styles.startButton}
-          onPress={() => router.push("/group-profile")}
-        >
-          <Text style={styles.startButtonText}>🚀 Start a Hunt</Text>
-        </TouchableOpacity>
+        {/* How it works */}
+        <Text style={styles.sectionTitle}>How it works</Text>
+        {[
+          {
+            step: "1",
+            emoji: "👥",
+            title: "Tell us about your group",
+            desc: "Age, size, interests and vibe",
+          },
+          {
+            step: "2",
+            emoji: "📍",
+            title: "Pick your city",
+            desc: "Works in 500+ cities worldwide",
+          },
+          {
+            step: "3",
+            emoji: "🤖",
+            title: "AI builds your hunt",
+            desc: "Real locations, custom clues",
+          },
+          {
+            step: "4",
+            emoji: "🏆",
+            title: "Play and earn points",
+            desc: "Complete stops, take photos, win",
+          },
+        ].map((item) => (
+          <Card key={item.step} style={styles.stepCard}>
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepNum}>{item.step}</Text>
+            </View>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>
+                {item.emoji} {item.title}
+              </Text>
+              <Text style={styles.stepDesc}>{item.desc}</Text>
+            </View>
+          </Card>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FA" },
-  scroll: { padding: 20 },
-  header: { alignItems: "center", paddingVertical: 30 },
-  appName: { fontSize: 36, fontWeight: "bold", color: "#1A5276" },
-  tagline: { fontSize: 16, color: "#5D6D7E", marginTop: 4 },
-  heroCard: {
-    backgroundColor: "#1A5276",
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 24,
+  container: { flex: 1, backgroundColor: COLORS.offWhite },
+  scroll: { padding: SPACING.md, paddingBottom: 40 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SPACING.lg,
+  },
+  appName: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+  },
+  greeting: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.accent,
+    fontWeight: FONTS.weights.medium,
+    marginTop: 2,
+  },
+  tagline: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, marginTop: 2 },
+  avatarBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.primary,
+    justifyContent: "center",
     alignItems: "center",
   },
-  greeting: { fontSize: 15, color: "#2E86C1", marginTop: 4, fontWeight: "500" },
-  heroEmoji: { fontSize: 48, marginBottom: 12 },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 8,
-    textAlign: "center",
+  avatarText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.bold,
   },
-  heroText: {
-    fontSize: 15,
+  heroBanner: {
+    marginBottom: SPACING.lg,
+    alignItems: "center",
+    paddingVertical: SPACING.xl,
+  },
+  heroEmoji: { fontSize: 56, marginBottom: SPACING.sm },
+  heroTitle: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+    textAlign: "center",
+    marginBottom: SPACING.sm,
+  },
+  heroSub: {
+    fontSize: FONTS.sizes.md,
     color: "#AED6F1",
     textAlign: "center",
     lineHeight: 22,
+    marginBottom: SPACING.lg,
   },
-  section: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
+  heroBtn: { width: "100%" },
+  statsRow: { flexDirection: "row", gap: SPACING.sm, marginBottom: SPACING.lg },
+  statCard: { flex: 1, alignItems: "center", paddingVertical: SPACING.md },
+  statEmoji: { fontSize: 24, marginBottom: 4 },
+  statValue: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
   },
+  statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1A5276",
-    marginBottom: 16,
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+    marginBottom: SPACING.sm,
   },
-  stepRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
-  stepIcon: { fontSize: 24, marginRight: 12 },
-  stepText: { fontSize: 15, color: "#5D6D7E", flex: 1 },
-  startButton: {
-    backgroundColor: "#2E86C1",
-    borderRadius: 14,
-    padding: 18,
+  stepCard: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: SPACING.sm,
+    gap: SPACING.md,
   },
-  startButtonText: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" },
+  stepBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.accent,
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  stepNum: {
+    color: COLORS.white,
+    fontWeight: FONTS.weights.heavy,
+    fontSize: FONTS.sizes.md,
+  },
+  stepContent: { flex: 1 },
+  stepTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
+    marginBottom: 2,
+  },
+  stepDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
 });

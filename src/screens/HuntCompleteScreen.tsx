@@ -1,13 +1,18 @@
+// src/screens/HuntCompleteScreen.tsx — Celebration screen with sharing
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import {
+  SafeAreaView,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Badge from "../components/ui/Badge";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import { COLORS, FONTS, SPACING } from "../theme";
 
 export default function HuntCompleteScreen() {
   const params = useLocalSearchParams();
@@ -15,82 +20,116 @@ export default function HuntCompleteScreen() {
   const totalPoints = parseInt(params.totalPoints as string);
   const completedStops = parseInt(params.completedStops as string);
 
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        message:
+          `🗺️ Just completed a Daytripper hunt in ${hunt.city?.split(",")[0]}! ` +
+          `Finished ${completedStops} stops and earned ${totalPoints} points. ` +
+          `Try Daytripper for your next adventure!`,
+        title: "Daytripper Hunt Complete!",
+      });
+    } catch (error) {
+      console.log("Share error:", error);
+    }
+  };
+
+  const percentage = Math.round(
+    (totalPoints / (hunt.totalPossiblePoints || 1)) * 100,
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.emoji}>🏆</Text>
+        <Text style={styles.trophy}>🏆</Text>
         <Text style={styles.title}>Hunt Complete!</Text>
         <Text style={styles.huntName}>{hunt.huntTitle}</Text>
+        <Badge
+          label={hunt.city?.split(",")[0]}
+          emoji="📍"
+          color={COLORS.primaryLight}
+          style={styles.cityBadge}
+        />
 
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{totalPoints}</Text>
-            <Text style={styles.statLabel}>Points</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{completedStops}</Text>
-            <Text style={styles.statLabel}>Stops</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{hunt.city?.split(",")[0]}</Text>
-            <Text style={styles.statLabel}>City</Text>
-          </View>
+        {/* Stats */}
+        <View style={styles.statsGrid}>
+          {[
+            { emoji: "⭐", value: totalPoints, label: "Points" },
+            { emoji: "🚩", value: completedStops, label: "Stops" },
+            { emoji: "💯", value: `${percentage}%`, label: "Score" },
+          ].map((s, i) => (
+            <Card key={i} variant="dark" style={styles.statCard}>
+              <Text style={styles.statEmoji}>{s.emoji}</Text>
+              <Text style={styles.statValue}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
+            </Card>
+          ))}
         </View>
 
         <Text style={styles.message}>
-          Amazing job! You explored the city and completed all your stops.
+          Amazing work! You explored the city, solved every clue, and crushed
+          it. 🎉
         </Text>
 
-        <TouchableOpacity
-          style={styles.newHuntButton}
+        <Button
+          label="Share Your Results"
+          onPress={handleShare}
+          variant="accent"
+          size="lg"
+          emoji="📤"
+          style={styles.btn}
+        />
+        <Button
+          label="Start Another Hunt"
           onPress={() => router.replace("/(tabs)")}
-        >
-          <Text style={styles.newHuntText}>🗺️ Start Another Hunt</Text>
-        </TouchableOpacity>
+          variant="secondary"
+          size="lg"
+          emoji="🗺️"
+          style={styles.btn}
+        />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1A5276" },
-  scroll: { padding: 30, alignItems: "center" },
-  emoji: { fontSize: 72, marginTop: 40, marginBottom: 16 },
+  container: { flex: 1, backgroundColor: COLORS.primary },
+  scroll: { padding: SPACING.lg, alignItems: "center", paddingBottom: 40 },
+  trophy: { fontSize: 80, marginTop: SPACING.xl, marginBottom: SPACING.md },
   title: {
-    fontSize: 34,
-    fontWeight: "bold",
-    color: "#FFFFFF",
+    fontSize: FONTS.sizes.hero,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
     marginBottom: 8,
   },
   huntName: {
-    fontSize: 16,
+    fontSize: FONTS.sizes.lg,
     color: "#AED6F1",
     textAlign: "center",
-    marginBottom: 32,
+    marginBottom: SPACING.sm,
   },
-  statsRow: { flexDirection: "row", gap: 24, marginBottom: 32 },
-  stat: {
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 12,
-    padding: 20,
-    minWidth: 80,
+  cityBadge: { marginBottom: SPACING.lg },
+  statsGrid: {
+    flexDirection: "row",
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
+    width: "100%",
   },
-  statValue: { fontSize: 26, fontWeight: "bold", color: "#F39C12" },
-  statLabel: { fontSize: 13, color: "#AED6F1", marginTop: 4 },
+  statCard: { flex: 1, alignItems: "center", paddingVertical: SPACING.md },
+  statEmoji: { fontSize: 28, marginBottom: 4 },
+  statValue: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.gold,
+  },
+  statLabel: { fontSize: FONTS.sizes.xs, color: "#AED6F1", marginTop: 2 },
   message: {
-    fontSize: 16,
+    fontSize: FONTS.sizes.md,
     color: "#AED6F1",
     textAlign: "center",
     lineHeight: 24,
-    marginBottom: 40,
+    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.md,
   },
-  newHuntButton: {
-    backgroundColor: "#F39C12",
-    borderRadius: 14,
-    padding: 18,
-    alignItems: "center",
-    width: "100%",
-  },
-  newHuntText: { color: "#FFFFFF", fontSize: 17, fontWeight: "bold" },
+  btn: { width: "100%", marginBottom: SPACING.sm },
 });

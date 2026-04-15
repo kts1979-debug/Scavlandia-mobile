@@ -1,7 +1,9 @@
+// src/screens/GroupProfileScreen.tsx — Playful redesign
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,32 +11,34 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 const INTERESTS = [
-  "Food & Drink",
-  "History",
-  "Art",
-  "Sports",
-  "Nature",
-  "Music",
-  "Architecture",
-  "Games",
-  "Shopping",
-  "Birds",
+  { label: "Food & Drink", emoji: "🍕" },
+  { label: "History", emoji: "🏛️" },
+  { label: "Art", emoji: "🎨" },
+  { label: "Sports", emoji: "⚽" },
+  { label: "Nature", emoji: "🌿" },
+  { label: "Music", emoji: "🎵" },
+  { label: "Architecture", emoji: "🏗️" },
+  { label: "Games", emoji: "🎮" },
+  { label: "Shopping", emoji: "🛍️" },
+  { label: "Birds", emoji: "🦅" },
 ];
 const TONES = [
-  "Educational",
-  "Silly & Fun",
-  "Competitive",
-  "Relaxed",
-  "Exercise-Focused",
+  { label: "Educational", emoji: "📚" },
+  { label: "Silly & Fun", emoji: "😂" },
+  { label: "Competitive", emoji: "🏆" },
+  { label: "Relaxed", emoji: "😌" },
+  { label: "Exercise-Focused", emoji: "🏃" },
 ];
 const MOBILITY = [
-  "Walking only",
-  "Can take transit",
-  "Wheelchair accessible needed",
-  "Mix of walking & driving",
+  { label: "Walking only", emoji: "🚶" },
+  { label: "Can take transit", emoji: "🚌" },
+  { label: "Wheelchair accessible", emoji: "♿" },
+  { label: "Mix of walking & driving", emoji: "🚗" },
 ];
 
 export default function GroupProfileScreen() {
@@ -45,51 +49,27 @@ export default function GroupProfileScreen() {
   const [tone, setTone] = useState("");
   const [mobility, setMobility] = useState("");
 
-  const toggleInterest = (interest: string) => {
+  const toggleInterest = (label: string) => {
     setInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest],
+      prev.includes(label) ? prev.filter((i) => i !== label) : [...prev, label],
     );
   };
 
   const handleGenerate = () => {
-    // Validate city
     if (!city.trim())
       return Alert.alert("Missing info", "Please enter a city name");
-    if (city.trim().length < 2)
-      return Alert.alert("Invalid city", "Please enter a valid city name");
-
-    // Validate ages
-    const parsedAge = parseInt(ages);
-    if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 100)
-      return Alert.alert(
-        "Invalid age",
-        "Please enter an age between 1 and 100",
-      );
-
-    // Validate group size
-    const parsedSize = parseInt(groupSize);
-    if (isNaN(parsedSize) || parsedSize < 1 || parsedSize > 100)
-      return Alert.alert(
-        "Invalid group size",
-        "Please enter a group size between 1 and 100",
-      );
-
-    // Validate interests, tone, mobility
     if (interests.length === 0)
       return Alert.alert("Missing info", "Please select at least one interest");
     if (!tone) return Alert.alert("Missing info", "Please select a vibe");
     if (!mobility)
       return Alert.alert("Missing info", "Please select a mobility option");
-
     router.push({
       pathname: "/generating",
       params: {
         city: city.trim(),
         groupProfile: JSON.stringify({
-          ages: parsedAge,
-          groupSize: parsedSize,
+          ages: parseInt(ages) || 30,
+          groupSize: parseInt(groupSize) || 4,
           interests,
           tone,
           mobility,
@@ -98,191 +78,246 @@ export default function GroupProfileScreen() {
     });
   };
 
+  const SectionHeader = ({
+    emoji,
+    title,
+  }: {
+    emoji: string;
+    title: string;
+  }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionEmoji}>{emoji}</Text>
+      <Text style={styles.sectionTitle}>{title}</Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Tell us about your group</Text>
-        <Text style={styles.subtitle}>
-          The more you share, the better your hunt
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.pageTitle}>Build Your Hunt</Text>
+        <Text style={styles.pageSubtitle}>
+          Tell us about your group and we'll do the rest
         </Text>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>📍 What city are you in?</Text>
+        <Card style={styles.section}>
+          <SectionHeader emoji="📍" title="Where are you?" />
           <TextInput
             style={styles.input}
             value={city}
             onChangeText={setCity}
             placeholder="e.g. Seattle, WA"
-            placeholderTextColor="#BDC3C7"
+            placeholderTextColor={COLORS.midGray}
           />
-        </View>
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>🎂 Average age of your group</Text>
-          <TextInput
-            style={[styles.input, styles.smallInput]}
-            value={ages}
-            onChangeText={setAges}
-            keyboardType="numeric"
-            maxLength={2}
-            placeholder="30"
-            placeholderTextColor="#BDC3C7"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>👥 How many people?</Text>
-          <TextInput
-            style={[styles.input, styles.smallInput]}
-            value={groupSize}
-            onChangeText={setGroupSize}
-            keyboardType="numeric"
-            maxLength={2}
-            placeholder="4"
-            placeholderTextColor="#BDC3C7"
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.label}>
-            ❤️ What does your group love? (pick all that apply)
-          </Text>
-          <View style={styles.chipContainer}>
-            {INTERESTS.map((interest) => (
-              <TouchableOpacity
-                key={interest}
-                style={[
-                  styles.chip,
-                  interests.includes(interest) && styles.chipSelected,
-                ]}
-                onPress={() => toggleInterest(interest)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    interests.includes(interest) && styles.chipTextSelected,
-                  ]}
-                >
-                  {interest}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        <Card style={styles.section}>
+          <SectionHeader emoji="👥" title="About your group" />
+          <View style={styles.row}>
+            <View style={styles.halfField}>
+              <Text style={styles.fieldLabel}>Average age</Text>
+              <TextInput
+                style={[styles.input, styles.smallInput]}
+                value={ages}
+                onChangeText={setAges}
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="30"
+                placeholderTextColor={COLORS.midGray}
+              />
+            </View>
+            <View style={styles.halfField}>
+              <Text style={styles.fieldLabel}>Group size</Text>
+              <TextInput
+                style={[styles.input, styles.smallInput]}
+                value={groupSize}
+                onChangeText={setGroupSize}
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="4"
+                placeholderTextColor={COLORS.midGray}
+              />
+            </View>
           </View>
-        </View>
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>🎭 What vibe are you going for?</Text>
-          {TONES.map((t) => (
-            <TouchableOpacity
-              key={t}
-              style={[styles.optionRow, tone === t && styles.optionSelected]}
-              onPress={() => setTone(t)}
-            >
-              <Text
-                style={[
-                  styles.optionText,
-                  tone === t && styles.optionTextSelected,
-                ]}
-              >
-                {t}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Card style={styles.section}>
+          <SectionHeader emoji="❤️" title="What do you love?" />
+          <Text style={styles.hint}>Pick everything that fits</Text>
+          <View style={styles.chipGrid}>
+            {INTERESTS.map(({ label, emoji }) => {
+              const selected = interests.includes(label);
+              return (
+                <TouchableOpacity
+                  key={label}
+                  style={[styles.chip, selected && styles.chipSelected]}
+                  onPress={() => toggleInterest(label)}
+                >
+                  <Text style={styles.chipEmoji}>{emoji}</Text>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selected && styles.chipTextSelected,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Card>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>♿ Any mobility considerations?</Text>
-          {MOBILITY.map((m) => (
+        <Card style={styles.section}>
+          <SectionHeader emoji="🎭" title="What vibe?" />
+          {TONES.map(({ label, emoji }) => (
             <TouchableOpacity
-              key={m}
+              key={label}
               style={[
                 styles.optionRow,
-                mobility === m && styles.optionSelected,
+                tone === label && styles.optionSelected,
               ]}
-              onPress={() => setMobility(m)}
+              onPress={() => setTone(label)}
             >
+              <Text style={styles.optionEmoji}>{emoji}</Text>
               <Text
                 style={[
                   styles.optionText,
-                  mobility === m && styles.optionTextSelected,
+                  tone === label && styles.optionTextSelected,
                 ]}
               >
-                {m}
+                {label}
               </Text>
+              {tone === label && <Text style={styles.checkmark}>✓</Text>}
             </TouchableOpacity>
           ))}
-        </View>
+        </Card>
 
-        <TouchableOpacity
-          style={styles.generateButton}
+        <Card style={styles.section}>
+          <SectionHeader emoji="♿" title="Mobility?" />
+          {MOBILITY.map(({ label, emoji }) => (
+            <TouchableOpacity
+              key={label}
+              style={[
+                styles.optionRow,
+                mobility === label && styles.optionSelected,
+              ]}
+              onPress={() => setMobility(label)}
+            >
+              <Text style={styles.optionEmoji}>{emoji}</Text>
+              <Text
+                style={[
+                  styles.optionText,
+                  mobility === label && styles.optionTextSelected,
+                ]}
+              >
+                {label}
+              </Text>
+              {mobility === label && <Text style={styles.checkmark}>✓</Text>}
+            </TouchableOpacity>
+          ))}
+        </Card>
+
+        <Button
+          label="Generate My Hunt"
           onPress={handleGenerate}
-        >
-          <Text style={styles.generateButtonText}>🤖 Generate My Hunt</Text>
-        </TouchableOpacity>
+          variant="accent"
+          size="lg"
+          emoji="🤖"
+          style={styles.generateBtn}
+        />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FA" },
-  scroll: { padding: 20 },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#1A5276",
+  container: { flex: 1, backgroundColor: COLORS.offWhite },
+  scroll: { padding: SPACING.md, paddingBottom: 40 },
+  pageTitle: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  pageSubtitle: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.darkGray,
+    marginBottom: SPACING.lg,
+  },
+  section: { marginBottom: SPACING.md },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: SPACING.sm,
+  },
+  sectionEmoji: { fontSize: 22, marginRight: 8 },
+  sectionTitle: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+  },
+  hint: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    marginBottom: SPACING.sm,
+  },
+  row: { flexDirection: "row", gap: SPACING.md },
+  halfField: { flex: 1 },
+  fieldLabel: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
     marginBottom: 6,
-  },
-  subtitle: { fontSize: 15, color: "#5D6D7E", marginBottom: 24 },
-  section: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1A5276",
-    marginBottom: 12,
+    fontWeight: FONTS.weights.medium,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#D5D8DC",
-    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    borderRadius: RADIUS.md,
     padding: 12,
-    fontSize: 16,
-    color: "#2C3E50",
+    fontSize: FONTS.sizes.md,
+    color: COLORS.black,
+    backgroundColor: COLORS.offWhite,
   },
-  smallInput: { width: 100 },
-  chipContainer: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  smallInput: {},
+  chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: "#D5D8DC",
-    backgroundColor: "#F8F9FA",
-  },
-  chipSelected: { backgroundColor: "#1A5276", borderColor: "#1A5276" },
-  chipText: { fontSize: 14, color: "#5D6D7E" },
-  chipTextSelected: { color: "#FFFFFF", fontWeight: "600" },
-  optionRow: {
-    padding: 14,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: "#D5D8DC",
-    marginBottom: 8,
-  },
-  optionSelected: { backgroundColor: "#1A5276", borderColor: "#1A5276" },
-  optionText: { fontSize: 15, color: "#2C3E50" },
-  optionTextSelected: { color: "#FFFFFF", fontWeight: "600" },
-  generateButton: {
-    backgroundColor: "#2E86C1",
-    borderRadius: 14,
-    padding: 18,
+    flexDirection: "row",
     alignItems: "center",
-    marginVertical: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADIUS.round,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.offWhite,
+    gap: 4,
   },
-  generateButtonText: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" },
+  chipSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  chipEmoji: { fontSize: 14 },
+  chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
+  chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    marginBottom: 8,
+    gap: 10,
+  },
+  optionSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  optionEmoji: { fontSize: 18 },
+  optionText: { flex: 1, fontSize: FONTS.sizes.md, color: COLORS.black },
+  optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
+  checkmark: { fontSize: 18, color: COLORS.accent },
+  generateBtn: { marginTop: SPACING.md, marginBottom: 40 },
 });

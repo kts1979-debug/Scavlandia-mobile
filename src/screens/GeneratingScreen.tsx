@@ -1,29 +1,46 @@
+// src/screens/GeneratingScreen.tsx — Animated game-like loading screen
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { generateHunt } from "../services/apiService";
+import { COLORS, FONTS, SPACING } from "../theme";
 
-const LOADING_MESSAGES = [
-  "🗺️  Mapping your city...",
-  "📍  Finding the best locations...",
-  "🤖  AI is designing your hunt...",
-  "✍️   Writing personalized clues...",
-  "🎯  Ordering stops for the best route...",
-  "✨  Almost ready...",
+const STEPS = [
+  { emoji: "🗺️", text: "Mapping your city..." },
+  { emoji: "📍", text: "Finding real locations..." },
+  { emoji: "🤖", text: "AI is designing your hunt..." },
+  { emoji: "✍️", text: "Writing custom clues..." },
+  { emoji: "🎯", text: "Ordering stops perfectly..." },
+  { emoji: "✨", text: "Almost ready..." },
 ];
 
 export default function GeneratingScreen() {
   const params = useLocalSearchParams();
   const city = params.city as string;
   const groupProfile = JSON.parse(params.groupProfile as string);
-  const [messageIndex, setMessageIndex] = useState(0);
+  const [step, setStep] = useState(0);
+  const [dots, setDots] = useState("");
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMessageIndex((i) => (i + 1) % LOADING_MESSAGES.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    const stepInterval = setInterval(
+      () => setStep((i) => (i + 1) % STEPS.length),
+      4000,
+    );
+    const dotInterval = setInterval(
+      () => setDots((d) => (d.length >= 3 ? "" : d + ".")),
+      500,
+    );
+    return () => {
+      clearInterval(stepInterval);
+      clearInterval(dotInterval);
+    };
   }, []);
 
   useEffect(() => {
@@ -35,27 +52,10 @@ export default function GeneratingScreen() {
           params: { hunt: JSON.stringify(result.hunt) },
         });
       } catch (error: any) {
-        console.log("=== FULL ERROR DETAILS ===");
-        console.log("error.message:", error.message);
-        console.log("error.code:", error.code);
-        console.log("error.response:", JSON.stringify(error.response?.data));
-        console.log("error.response.status:", error.response?.status);
-        console.log(
-          "error.request:",
-          error.request ? "Request was made" : "No request made",
-        );
-        console.log("error.config url:", error.config?.url);
-        console.log(
-          "error.config headers:",
-          JSON.stringify(error.config?.headers),
-        );
-        console.log("=========================");
-
         Alert.alert(
           "Hunt Generation Failed",
           error.response?.data?.error ||
-            error.message ||
-            "Something went wrong.",
+            "Something went wrong. Please try again.",
           [{ text: "OK", onPress: () => router.back() }],
         );
       }
@@ -65,14 +65,23 @@ export default function GeneratingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Building your hunt</Text>
-        <Text style={styles.city}>{city}</Text>
+        <Text style={styles.bigEmoji}>{STEPS[step].emoji}</Text>
+        <Text style={styles.city}>📍 {city}</Text>
+        <Text style={styles.title}>Building your hunt{dots}</Text>
         <ActivityIndicator
           size="large"
-          color="#AED6F1"
+          color={COLORS.accent}
           style={styles.spinner}
         />
-        <Text style={styles.message}>{LOADING_MESSAGES[messageIndex]}</Text>
+        <Text style={styles.stepText}>{STEPS[step].text}</Text>
+        <View style={styles.stepsRow}>
+          {STEPS.map((_, i) => (
+            <View
+              key={i}
+              style={[styles.dot, i === step && styles.dotActive]}
+            />
+          ))}
+        </View>
         <Text style={styles.note}>This takes about 20–30 seconds</Text>
       </View>
     </SafeAreaView>
@@ -80,27 +89,42 @@ export default function GeneratingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1A5276" },
+  container: { flex: 1, backgroundColor: COLORS.primary },
   content: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 40,
+    padding: SPACING.xl,
+  },
+  bigEmoji: { fontSize: 80, marginBottom: SPACING.md },
+  city: {
+    fontSize: FONTS.sizes.lg,
+    color: "#AED6F1",
+    marginBottom: SPACING.xl,
+    fontWeight: FONTS.weights.medium,
   },
   title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 8,
-  },
-  city: { fontSize: 18, color: "#AED6F1", marginBottom: 48 },
-  spinner: { marginBottom: 32 },
-  message: {
-    fontSize: 18,
-    color: "#FFFFFF",
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+    marginBottom: SPACING.xl,
     textAlign: "center",
-    marginBottom: 16,
+  },
+  spinner: { marginBottom: SPACING.lg },
+  stepText: {
+    fontSize: FONTS.sizes.lg,
+    color: COLORS.white,
+    textAlign: "center",
+    marginBottom: SPACING.xl,
     minHeight: 28,
   },
-  note: { fontSize: 14, color: "#7FB3D3", textAlign: "center" },
+  stepsRow: { flexDirection: "row", gap: 8, marginBottom: SPACING.xl },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.3)",
+  },
+  dotActive: { backgroundColor: COLORS.accent, width: 24 },
+  note: { fontSize: FONTS.sizes.sm, color: "#7FB3D3" },
 });
