@@ -1,20 +1,23 @@
-// src/screens/HistoryScreen.tsx
+// src/screens/HistoryScreen.tsx — Playful redesign
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
+  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Badge from "../components/ui/Badge";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
 import { getUserHunts } from "../services/apiService";
+import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
 
-// ── Type for a hunt summary (less data than a full hunt) ──────────
 interface HuntSummary {
   huntId: string;
   huntTitle: string;
@@ -31,7 +34,6 @@ export default function HistoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load hunts when user is confirmed logged in
   const loadHunts = useCallback(async () => {
     if (!user) return;
     try {
@@ -40,7 +42,6 @@ export default function HistoryScreen() {
       setHunts(data.hunts || []);
     } catch (err: any) {
       setError("Could not load your hunts. Pull down to try again.");
-      console.error("Error loading hunts:", err.message);
     }
   }, [user]);
 
@@ -51,16 +52,14 @@ export default function HistoryScreen() {
     }
   }, [user, authLoading]);
 
-  // Pull-to-refresh handler
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadHunts();
     setRefreshing(false);
   };
 
-  // Format date from Firestore timestamp
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return "Unknown date";
+    if (!timestamp) return "";
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     return date.toLocaleDateString("en-US", {
       month: "short",
@@ -69,111 +68,154 @@ export default function HistoryScreen() {
     });
   };
 
-  // ── Not logged in ────────────────────────────────────────────
+  // Not logged in
   if (!authLoading && !user) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
-          <Text style={styles.emoji}>📋</Text>
-          <Text style={styles.title}>Your Hunt History</Text>
-          <Text style={styles.subtitle}>Sign in to see your past hunts.</Text>
-          <TouchableOpacity
-            style={styles.signInButton}
+          <Text style={styles.stateEmoji}>🔐</Text>
+          <Text style={styles.stateTitle}>Sign In to See Your Hunts</Text>
+          <Text style={styles.stateSubtitle}>
+            Your completed adventures will appear here.
+          </Text>
+          <Button
+            label="Sign In"
             onPress={() => router.push("/login")}
-          >
-            <Text style={styles.signInButtonText}>Sign In</Text>
-          </TouchableOpacity>
+            variant="accent"
+            size="lg"
+            emoji="🚀"
+            style={styles.stateBtn}
+          />
         </View>
       </SafeAreaView>
     );
   }
 
-  // ── Loading ──────────────────────────────────────────────────
+  // Loading
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#1A5276" />
-          <Text style={styles.loadingText}>Loading your hunts...</Text>
+          <ActivityIndicator size="large" color={COLORS.accent} />
+          <Text style={styles.loadingText}>Loading your adventures...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // ── Error state ──────────────────────────────────────────────
+  // Error
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
-          <Text style={styles.emoji}>⚠️</Text>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadHunts}>
-            <Text style={styles.retryText}>Try Again</Text>
-          </TouchableOpacity>
+          <Text style={styles.stateEmoji}>⚠️</Text>
+          <Text style={styles.stateTitle}>Something went wrong</Text>
+          <Text style={styles.stateSubtitle}>{error}</Text>
+          <Button
+            label="Try Again"
+            onPress={loadHunts}
+            variant="accent"
+            size="md"
+            style={styles.stateBtn}
+          />
         </View>
       </SafeAreaView>
     );
   }
 
-  // ── Empty state ──────────────────────────────────────────────
+  // Empty
   if (hunts.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
-          <Text style={styles.emoji}>🗺️</Text>
-          <Text style={styles.title}>No hunts yet!</Text>
-          <Text style={styles.subtitle}>
-            Generate your first hunt from the Home tab.
+          <Text style={styles.stateEmoji}>🗺️</Text>
+          <Text style={styles.stateTitle}>No adventures yet!</Text>
+          <Text style={styles.stateSubtitle}>
+            Generate your first hunt and it will show up here.
           </Text>
-          <TouchableOpacity
-            style={styles.startButton}
+          <Button
+            label="Start a Hunt"
             onPress={() => router.push("/(tabs)")}
-          >
-            <Text style={styles.startButtonText}>Start a Hunt</Text>
-          </TouchableOpacity>
+            variant="accent"
+            size="lg"
+            emoji="🚀"
+            style={styles.stateBtn}
+          />
         </View>
       </SafeAreaView>
     );
   }
 
-  // ── Hunt list ────────────────────────────────────────────────
+  // Hunt list
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>Your Hunts</Text>
-        <Text style={styles.listCount}>{hunts.length} total</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Your Adventures</Text>
+          <Text style={styles.headerSub}>
+            {hunts.length} hunt{hunts.length !== 1 ? "s" : ""} completed
+          </Text>
+        </View>
+        <Badge label="History" emoji="📋" color={COLORS.accent} />
       </View>
+
       <FlatList
         data={hunts}
         keyExtractor={(item) => item.huntId}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.accent}
+          />
         }
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <TouchableOpacity
-            style={styles.huntCard}
-            onPress={() => {
-              // Navigate to a hunt detail view (you can expand this later)
+            activeOpacity={0.85}
+            onPress={() =>
               router.push({
                 pathname: "/hunt-detail",
                 params: { huntId: item.huntId },
-              });
-            }}
+              })
+            }
           >
-            <View style={styles.huntCardTop}>
-              <Text style={styles.huntCity}>📍 {item.city}</Text>
-              <Text style={styles.huntDate}>{formatDate(item.createdAt)}</Text>
-            </View>
-            <Text style={styles.huntTitle} numberOfLines={2}>
-              {item.huntTitle}
-            </Text>
-            <View style={styles.huntCardBottom}>
-              <Text style={styles.huntMeta}>🚩 {item.stopCount} stops</Text>
-              <Text style={styles.huntMeta}>
-                ⭐ {item.totalPoints} pts possible
+            <Card style={styles.huntCard}>
+              {/* Top row */}
+              <View style={styles.cardTop}>
+                <Badge
+                  label={item.city?.split(",")[0] || item.city}
+                  emoji="📍"
+                  color={COLORS.accentPale}
+                  textColor={COLORS.accent}
+                />
+                <Text style={styles.cardDate}>
+                  {formatDate(item.createdAt)}
+                </Text>
+              </View>
+
+              {/* Hunt title */}
+              <Text style={styles.cardTitle} numberOfLines={2}>
+                {item.huntTitle}
               </Text>
-            </View>
+
+              {/* Bottom stats */}
+              <View style={styles.cardBottom}>
+                <View style={styles.statPill}>
+                  <Text style={styles.statPillText}>
+                    🚩 {item.stopCount} stops
+                  </Text>
+                </View>
+                <View style={styles.statPill}>
+                  <Text style={styles.statPillText}>
+                    ⭐ {item.totalPoints} pts
+                  </Text>
+                </View>
+                <Text style={styles.cardArrow}>›</Text>
+              </View>
+            </Card>
           </TouchableOpacity>
         )}
       />
@@ -182,93 +224,80 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  container: { flex: 1, backgroundColor: COLORS.offWhite },
   centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 40,
+    padding: SPACING.xl,
   },
-  emoji: { fontSize: 60, marginBottom: 16 },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1A5276",
-    marginBottom: 8,
+  stateEmoji: { fontSize: 64, marginBottom: SPACING.md },
+  stateTitle: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
     textAlign: "center",
+    marginBottom: SPACING.sm,
   },
-  subtitle: {
-    fontSize: 15,
-    color: "#5D6D7E",
+  stateSubtitle: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.darkGray,
     textAlign: "center",
-    marginBottom: 24,
     lineHeight: 22,
+    marginBottom: SPACING.xl,
   },
-  loadingText: { fontSize: 15, color: "#5D6D7E", marginTop: 12 },
-  errorText: {
-    fontSize: 15,
-    color: "#E74C3C",
-    textAlign: "center",
-    marginBottom: 16,
+  stateBtn: { width: "100%" },
+  loadingText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.darkGray,
+    marginTop: SPACING.md,
   },
-  signInButton: {
-    backgroundColor: "#1A5276",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    width: "100%",
-  },
-  signInButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
-  startButton: {
-    backgroundColor: "#2E86C1",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    width: "100%",
-  },
-  startButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
-  retryButton: {
-    backgroundColor: "#2E86C1",
-    borderRadius: 10,
-    padding: 14,
-    alignItems: "center",
-  },
-  retryText: { color: "#FFFFFF", fontSize: 15, fontWeight: "bold" },
-  listHeader: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    padding: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: "#E5E8E8",
+    borderBottomColor: COLORS.lightGray,
+    backgroundColor: COLORS.white,
   },
-  listTitle: { fontSize: 20, fontWeight: "bold", color: "#1A5276" },
-  listCount: { fontSize: 14, color: "#5D6D7E" },
-  list: { padding: 16, gap: 12 },
-  huntCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+  headerTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
   },
-  huntCardTop: {
+  headerSub: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, marginTop: 2 },
+  list: { padding: SPACING.md, gap: SPACING.sm, paddingBottom: 40 },
+  huntCard: { ...SHADOW.sm },
+  cardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
+    alignItems: "center",
+    marginBottom: SPACING.sm,
   },
-  huntCity: { fontSize: 13, color: "#2E86C1", fontWeight: "600" },
-  huntDate: { fontSize: 13, color: "#95A5A6" },
-  huntTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#2C3E50",
-    marginBottom: 12,
-    lineHeight: 22,
+  cardDate: { fontSize: FONTS.sizes.xs, color: COLORS.midGray },
+  cardTitle: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
+    marginBottom: SPACING.sm,
+    lineHeight: 24,
   },
-  huntCardBottom: { flexDirection: "row", gap: 16 },
-  huntMeta: { fontSize: 13, color: "#5D6D7E" },
+  cardBottom: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+  statPill: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  statPillText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    fontWeight: FONTS.weights.medium,
+  },
+  cardArrow: {
+    marginLeft: "auto",
+    fontSize: FONTS.sizes.xxl,
+    color: COLORS.midGray,
+  },
 });

@@ -1,8 +1,7 @@
-// src/screens/LoginScreen.tsx
+// src/screens/LoginScreen.tsx — Playful redesign
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -14,17 +13,18 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
+import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPass, setShowPass] = useState(false);
 
   const handleSignIn = async () => {
-    // Basic validation before calling Firebase
     if (!email.trim())
       return Alert.alert("Missing info", "Please enter your email address");
     if (!password.trim())
@@ -33,19 +33,17 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
-      // On success, navigate to home and remove login from back stack
       router.replace("/(tabs)");
     } catch (error: any) {
-      // Firebase returns specific error codes — show helpful messages
       let message = "Sign in failed. Please try again.";
       if (error.code === "auth/user-not-found")
-        message = "No account found with this email address.";
+        message = "No account found with this email.";
       if (error.code === "auth/wrong-password")
         message = "Incorrect password. Please try again.";
       if (error.code === "auth/invalid-email")
         message = "Please enter a valid email address.";
       if (error.code === "auth/too-many-requests")
-        message = "Too many failed attempts. Please try again later.";
+        message = "Too many attempts. Please try again later.";
       if (error.code === "auth/invalid-credential")
         message = "Email or password is incorrect.";
       Alert.alert("Sign In Failed", message);
@@ -63,57 +61,71 @@ export default function LoginScreen() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {/* Logo and title */}
-          <View style={styles.header}>
-            <Text style={styles.logo}>🗺️</Text>
+          {/* Logo */}
+          <View style={styles.logoSection}>
+            <Text style={styles.logoEmoji}>🗺️</Text>
             <Text style={styles.appName}>Daytripper</Text>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
+            <Text style={styles.tagline}>Your next adventure awaits</Text>
           </View>
 
-          {/* Form */}
-          <View style={styles.form}>
+          {/* Form Card */}
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Welcome back!</Text>
+            <Text style={styles.formSubtitle}>
+              Sign in to continue your adventures
+            </Text>
+
             <Text style={styles.label}>Email Address</Text>
             <TextInput
               style={styles.input}
               value={email}
               onChangeText={setEmail}
               placeholder="you@example.com"
-              placeholderTextColor="#BDC3C7"
+              placeholderTextColor={COLORS.midGray}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
 
             <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Your password"
-              placeholderTextColor="#BDC3C7"
-              secureTextEntry={true}
-              autoCapitalize="none"
-            />
+            <View style={styles.passwordRow}>
+              <TextInput
+                style={[styles.input, styles.passwordInput]}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Your password"
+                placeholderTextColor={COLORS.midGray}
+                secureTextEntry={!showPass}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                style={styles.showPassBtn}
+                onPress={() => setShowPass(!showPass)}
+              >
+                <Text style={styles.showPassText}>
+                  {showPass ? "🙈" : "👁️"}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              style={[styles.signInButton, loading && styles.buttonDisabled]}
+            <Button
+              label="Sign In"
               onPress={handleSignIn}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.signInButtonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
+              variant="accent"
+              size="lg"
+              loading={loading}
+              emoji="🚀"
+              style={styles.signInBtn}
+            />
           </View>
 
-          {/* Link to sign up */}
+          {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.push("/signup")}>
-              <Text style={styles.footerLink}>Create one</Text>
+              <Text style={styles.footerLink}>Create one free</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -123,55 +135,66 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#1A5276" },
+  container: { flex: 1, backgroundColor: COLORS.primary },
   keyboardView: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: "center", padding: 30 },
-  header: { alignItems: "center", marginBottom: 40 },
-  logo: { fontSize: 64, marginBottom: 12 },
+  scroll: { flexGrow: 1, justifyContent: "center", padding: SPACING.lg },
+  logoSection: { alignItems: "center", marginBottom: SPACING.xl },
+  logoEmoji: { fontSize: 72, marginBottom: SPACING.sm },
   appName: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 8,
+    fontSize: FONTS.sizes.hero,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+    marginBottom: 4,
   },
-  subtitle: { fontSize: 16, color: "#AED6F1" },
-  form: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 24,
-    marginBottom: 20,
+  tagline: { fontSize: FONTS.sizes.md, color: "#AED6F1" },
+  formCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    ...SHADOW.lg,
+  },
+  formTitle: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  formSubtitle: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    marginBottom: SPACING.lg,
   },
   label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1A5276",
-    marginBottom: 8,
-    marginTop: 12,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+    marginBottom: 6,
+    marginTop: SPACING.sm,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: "#D5D8DC",
-    borderRadius: 8,
+    borderColor: COLORS.midGray,
+    borderRadius: RADIUS.md,
     padding: 14,
-    fontSize: 16,
-    color: "#2C3E50",
-    backgroundColor: "#F8F9FA",
+    fontSize: FONTS.sizes.md,
+    color: COLORS.black,
+    backgroundColor: COLORS.offWhite,
   },
-  signInButton: {
-    backgroundColor: "#1A5276",
-    borderRadius: 10,
-    padding: 16,
+  passwordRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+  passwordInput: { flex: 1 },
+  showPassBtn: { padding: 8 },
+  showPassText: { fontSize: 20 },
+  signInBtn: { marginTop: SPACING.lg },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 24,
   },
-  buttonDisabled: { opacity: 0.6 },
-  signInButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "bold" },
-  footer: { flexDirection: "row", justifyContent: "center", marginBottom: 20 },
-  footerText: { color: "#AED6F1", fontSize: 15 },
+  footerText: { color: "#AED6F1", fontSize: FONTS.sizes.md },
   footerLink: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "bold",
-    textDecorationLine: "underline",
+    color: COLORS.accent,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
   },
 });

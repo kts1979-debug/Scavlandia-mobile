@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
 import ProgressBar from "../components/ui/ProgressBar";
 import { uploadHuntPhoto } from "../services/storageService";
+import { COLORS } from "../theme";
 
 import {
   Alert,

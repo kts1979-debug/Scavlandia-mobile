@@ -1,21 +1,25 @@
-// src/screens/ProfileScreen.tsx
+// src/screens/ProfileScreen.tsx — Playful redesign
 import { router } from "expo-router";
 import React from "react";
 import {
   Alert,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Badge from "../components/ui/Badge";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
+import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 export default function ProfileScreen() {
   const { user, signOut, loading } = useAuth();
 
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       {
@@ -29,192 +33,271 @@ export default function ProfileScreen() {
     ]);
   };
 
-  // Show loading spinner while checking auth state
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
-          <Text style={styles.loadingText}>Loading...</Text>
+          <Text style={styles.loadingEmoji}>⏳</Text>
+          <Text style={styles.loadingText}>Loading your profile...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Not logged in — show sign in prompt
+  // Not logged in
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.centered}>
-            <Text style={styles.emoji}>👤</Text>
-            <Text style={styles.title}>Your Profile</Text>
-            <Text style={styles.subtitle}>
-              Sign in to save your hunts and track your progress.
-            </Text>
-            <TouchableOpacity
-              style={styles.signInButton}
-              onPress={() => router.push("/login")}
-            >
-              <Text style={styles.signInButtonText}>Sign In</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.signUpButton}
-              onPress={() => router.push("/signup")}
-            >
-              <Text style={styles.signUpButtonText}>Create an Account</Text>
-            </TouchableOpacity>
-          </View>
+        <ScrollView contentContainerStyle={styles.centeredScroll}>
+          <Text style={styles.guestEmoji}>🗺️</Text>
+          <Text style={styles.guestTitle}>Join the Adventure</Text>
+          <Text style={styles.guestSubtitle}>
+            Sign in to save your hunts, track your points, and see your history.
+          </Text>
+          <Button
+            label="Sign In"
+            onPress={() => router.push("/login")}
+            variant="accent"
+            size="lg"
+            emoji="🚀"
+            style={styles.authBtn}
+          />
+          <Button
+            label="Create Free Account"
+            onPress={() => router.push("/signup")}
+            variant="secondary"
+            size="lg"
+            emoji="✨"
+            style={styles.authBtn}
+          />
         </ScrollView>
       </SafeAreaView>
     );
   }
 
-  // Logged in — show profile
+  // Logged in
+  const initial = user.displayName?.charAt(0).toUpperCase() || "?";
+  const memberSince = user.metadata.creationTime
+    ? new Date(user.metadata.creationTime).toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric",
+      })
+    : "Unknown";
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Avatar and name */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {user.displayName?.charAt(0).toUpperCase() || "?"}
-            </Text>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Header */}
+        <Card variant="primary" style={styles.profileHeader}>
+          <View style={styles.avatarRing}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{initial}</Text>
+            </View>
           </View>
           <Text style={styles.displayName}>
             {user.displayName || "Explorer"}
           </Text>
           <Text style={styles.email}>{user.email}</Text>
+          <Badge
+            label={`Member since ${memberSince}`}
+            emoji="📅"
+            color="rgba(255,255,255,0.2)"
+            style={styles.memberBadge}
+          />
+        </Card>
+
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          {[
+            { emoji: "🗺️", label: "Hunts", value: "—" },
+            { emoji: "⭐", label: "Points", value: "—" },
+            { emoji: "🏆", label: "Best", value: "—" },
+          ].map((s, i) => (
+            <Card key={i} style={styles.statCard}>
+              <Text style={styles.statEmoji}>{s.emoji}</Text>
+              <Text style={styles.statValue}>{s.value}</Text>
+              <Text style={styles.statLabel}>{s.label}</Text>
+            </Card>
+          ))}
         </View>
 
-        {/* Account details */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Email</Text>
-            <Text style={styles.rowValue}>{user.email}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Member since</Text>
-            <Text style={styles.rowValue}>
-              {user.metadata.creationTime
-                ? new Date(user.metadata.creationTime).toLocaleDateString()
-                : "Unknown"}
+        {/* Account Details */}
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>⚙️ Account Details</Text>
+          {[
+            { label: "Name", value: user.displayName || "—" },
+            { label: "Email", value: user.email || "—" },
+            { label: "Member since", value: memberSince },
+            { label: "Plan", value: "Free tier" },
+          ].map((row, i) => (
+            <View key={i} style={[styles.row, i > 0 && styles.rowBorder]}>
+              <Text style={styles.rowLabel}>{row.label}</Text>
+              <Text style={styles.rowValue} numberOfLines={1}>
+                {row.value}
+              </Text>
+            </View>
+          ))}
+        </Card>
+
+        {/* Upgrade Banner */}
+        <Card variant="accent" style={styles.upgradeBanner}>
+          <Text style={styles.upgradeEmoji}>♾️</Text>
+          <View style={styles.upgradeText}>
+            <Text style={styles.upgradeTitle}>Go Unlimited</Text>
+            <Text style={styles.upgradeSub}>
+              Unlimited hunts for $9.99/month
             </Text>
           </View>
-        </View>
+          <TouchableOpacity style={styles.upgradeBtn}>
+            <Text style={styles.upgradeBtnText}>Upgrade</Text>
+          </TouchableOpacity>
+        </Card>
 
-        {/* Sign out */}
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutButtonText}>Sign Out</Text>
-        </TouchableOpacity>
+        {/* Sign Out */}
+        <Button
+          label="Sign Out"
+          onPress={handleSignOut}
+          variant="ghost"
+          size="md"
+          emoji="👋"
+          style={styles.signOutBtn}
+        />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FA" },
-  scroll: { padding: 20 },
+  container: { flex: 1, backgroundColor: COLORS.offWhite },
   centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: 40,
-    paddingTop: 80,
+    padding: SPACING.xl,
   },
-  loadingText: { fontSize: 16, color: "#5D6D7E" },
-  emoji: { fontSize: 60, marginBottom: 16 },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#1A5276",
-    marginBottom: 8,
+  centeredScroll: {
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: SPACING.xl,
   },
-  subtitle: {
-    fontSize: 15,
-    color: "#5D6D7E",
+  loadingEmoji: { fontSize: 48, marginBottom: SPACING.md },
+  loadingText: { fontSize: FONTS.sizes.md, color: COLORS.darkGray },
+  guestEmoji: { fontSize: 72, marginBottom: SPACING.md },
+  guestTitle: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: SPACING.sm,
     textAlign: "center",
-    marginBottom: 32,
+  },
+  guestSubtitle: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.darkGray,
+    textAlign: "center",
     lineHeight: 22,
+    marginBottom: SPACING.xl,
   },
-  signInButton: {
-    backgroundColor: "#1A5276",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    width: "100%",
-    marginBottom: 12,
-  },
-  signInButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
-  signUpButton: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#1A5276",
-    padding: 16,
-    alignItems: "center",
-    width: "100%",
-  },
-  signUpButtonText: { color: "#1A5276", fontSize: 16, fontWeight: "bold" },
+  authBtn: { width: "100%", marginBottom: SPACING.sm },
+  scroll: { padding: SPACING.md, paddingBottom: 40 },
   profileHeader: {
     alignItems: "center",
-    paddingVertical: 30,
-    backgroundColor: "#1A5276",
-    borderRadius: 16,
-    marginBottom: 20,
+    paddingVertical: SPACING.xl,
+    marginBottom: SPACING.md,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#2E86C1",
+  avatarRing: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    borderColor: COLORS.accent,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: SPACING.md,
   },
-  avatarText: { fontSize: 36, fontWeight: "bold", color: "#FFFFFF" },
+  avatar: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: COLORS.accent,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  avatarText: {
+    fontSize: 36,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+  },
   displayName: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#FFFFFF",
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
     marginBottom: 4,
   },
-  email: { fontSize: 14, color: "#AED6F1" },
-  section: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+  email: {
+    fontSize: FONTS.sizes.sm,
+    color: "#AED6F1",
+    marginBottom: SPACING.md,
   },
+  memberBadge: {},
+  statsRow: { flexDirection: "row", gap: SPACING.sm, marginBottom: SPACING.md },
+  statCard: { flex: 1, alignItems: "center", paddingVertical: SPACING.md },
+  statEmoji: { fontSize: 24, marginBottom: 4 },
+  statValue: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+  },
+  statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
+  section: { marginBottom: SPACING.md },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#1A5276",
-    marginBottom: 12,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+    marginBottom: SPACING.md,
   },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F2F3F4",
+    alignItems: "center",
+    paddingVertical: SPACING.sm,
   },
-  rowLabel: { fontSize: 15, color: "#5D6D7E" },
+  rowBorder: { borderTopWidth: 1, borderTopColor: COLORS.lightGray },
+  rowLabel: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, flex: 1 },
   rowValue: {
-    fontSize: 15,
-    color: "#2C3E50",
-    fontWeight: "500",
-    maxWidth: "60%",
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.medium,
+    color: COLORS.black,
+    flex: 1,
     textAlign: "right",
   },
-  signOutButton: {
-    backgroundColor: "#FADBD8",
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: "#E74C3C",
-    padding: 16,
+  upgradeBanner: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
   },
-  signOutButtonText: { color: "#C0392B", fontSize: 16, fontWeight: "bold" },
+  upgradeEmoji: { fontSize: 32 },
+  upgradeText: { flex: 1 },
+  upgradeTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+  },
+  upgradeSub: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
+  upgradeBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  upgradeBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+  },
+  signOutBtn: { marginTop: SPACING.sm },
 });
