@@ -16,15 +16,28 @@ export default function HuntCompleteScreen() {
 
   const handleShare = async () => {
     try {
+      const cityName = hunt.city?.split(",")[0] || hunt.city;
+      const percentage = Math.round(
+        (totalPoints / (hunt.totalPossiblePoints || 1)) * 100,
+      );
+      const scoreEmoji =
+        percentage >= 80 ? "🏆" : percentage >= 60 ? "⭐" : "🎯";
+      const diffEmoji = { easy: "🟢", medium: "🟡", hard: "🔴" }[
+        hunt.groupProfile?.difficulty || "medium"
+      ];
+
       await Share.share({
         message:
-          `🗺️ Just completed a Daytripper hunt in ${hunt.city?.split(",")[0]}! ` +
-          `Finished ${completedStops} stops and earned ${totalPoints} points. ` +
-          `Try Daytripper for your next adventure!`,
-        title: "Daytripper Hunt Complete!",
+          `${scoreEmoji} Just crushed a Daytripper scavenger hunt in ${cityName}!\n\n` +
+          `🚩 ${completedStops} stops completed\n` +
+          `⭐ ${totalPoints} points earned\n` +
+          `💯 ${percentage}% score\n` +
+          `${diffEmoji} ${hunt.groupProfile?.difficulty || "Medium"} difficulty\n\n` +
+          `Think you can beat my score? Try Daytripper for your next city adventure! 🗺️`,
+        title: `Daytripper Hunt — ${cityName}`,
       });
     } catch (error) {
-      console.log("Share error:", error);
+      console.log("Share cancelled or failed:", error);
     }
   };
 

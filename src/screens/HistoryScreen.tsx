@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -33,6 +34,22 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleShareHunt = async (hunt: HuntSummary) => {
+    try {
+      const cityName = hunt.city?.split(",")[0] || hunt.city;
+      await Share.share({
+        message:
+          `🗺️ I explored ${cityName} with Daytripper!\n\n` +
+          `🚩 ${hunt.stopCount} stops\n` +
+          `⭐ ${hunt.totalPoints} points possible\n\n` +
+          `Plan your own city adventure at Daytripper! 🚀`,
+        title: `Daytripper — ${cityName}`,
+      });
+    } catch (error) {
+      console.log("Share cancelled:", error);
+    }
+  };
 
   const loadHunts = useCallback(async () => {
     if (!user) return;
@@ -213,6 +230,12 @@ export default function HistoryScreen() {
                     ⭐ {item.totalPoints} pts
                   </Text>
                 </View>
+                <TouchableOpacity
+                  style={styles.shareHuntBtn}
+                  onPress={() => handleShareHunt(item)}
+                >
+                  <Text style={styles.shareHuntBtnText}>📤</Text>
+                </TouchableOpacity>
                 <Text style={styles.cardArrow}>›</Text>
               </View>
             </Card>
@@ -300,4 +323,14 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.xxl,
     color: COLORS.midGray,
   },
+  shareHuntBtn: {
+    backgroundColor: COLORS.accentPale,
+    borderRadius: RADIUS.round,
+    width: 28,
+    height: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: "auto",
+  },
+  shareHuntBtnText: { fontSize: 13 },
 });

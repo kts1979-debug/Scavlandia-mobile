@@ -6,11 +6,12 @@ import HuntTimer from "../components/HuntTimer";
 import ProgressBar from "../components/ui/ProgressBar";
 import { useHuntTimer } from "../hooks/useHuntTimer";
 import { uploadHuntPhoto } from "../services/storageService";
-import { COLORS, SPACING } from "../theme";
+import { COLORS, RADIUS, SPACING } from "../theme";
 
 import {
   Alert,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -91,11 +92,12 @@ export default function ActiveHuntScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaType.Images,
+      mediaTypes: ["images"],
       quality: 0.7,
       allowsEditing: true,
       aspect: [4, 3],
     });
+
     if (!result.canceled && result.assets[0]) {
       await handleSubmitStop(result.assets[0].uri);
     }
@@ -163,6 +165,22 @@ export default function ActiveHuntScreen() {
     ]);
   };
 
+  const handleShare = async () => {
+    try {
+      const cityName = hunt.city?.split(",")[0] || hunt.city;
+      await Share.share({
+        message:
+          `🗺️ I'm on a Daytripper scavenger hunt in ${cityName}!\n\n` +
+          `✅ Completed ${completedIndices.length} of ${hunt.stops.length} stops\n` +
+          `⭐ Earned ${totalPoints} points so far\n\n` +
+          `Join me on my next adventure — try Daytripper! 🚀`,
+        title: `Daytripper Hunt in ${cityName}`,
+      });
+    } catch (error) {
+      console.log("Share cancelled:", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -171,9 +189,14 @@ export default function ActiveHuntScreen() {
           <Text style={styles.huntTitle} numberOfLines={1}>
             {hunt.huntTitle}
           </Text>
-          <Text style={styles.points}>
-            ⭐ {totalPoints - hintDeductions} pts
-          </Text>
+          <View style={styles.headerRight}>
+            <Text style={styles.points}>
+              ⭐ {totalPoints - hintDeductions} pts
+            </Text>
+            <TouchableOpacity onPress={handleShare} style={styles.shareBtn}>
+              <Text style={styles.shareBtnText}>📤</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Timer section */}
@@ -399,4 +422,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   arrivalButtonText: { color: "#2E86C1", fontSize: 15, fontWeight: "600" },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.sm,
+  },
+  shareBtn: {
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: RADIUS.round,
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shareBtnText: { fontSize: 16 },
 });
