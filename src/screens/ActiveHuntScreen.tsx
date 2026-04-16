@@ -31,7 +31,13 @@ export default function ActiveHuntScreen() {
   const [showMap, setShowMap] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const timerMinutes = hunt.estimatedDurationMinutes || 120;
+  // Use difficulty-based timer if available, otherwise fall back to Claude's estimate
+  const difficulty = hunt.groupProfile?.difficulty || "medium";
+  const diffSettings = { easy: 180, medium: 120, hard: 90 };
+  const timerMinutes =
+    diffSettings[difficulty as keyof typeof diffSettings] ||
+    hunt.estimatedDurationMinutes ||
+    120;
 
   const timer = useHuntTimer(timerMinutes, () => {
     Alert.alert(

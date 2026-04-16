@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, THEMES } from "../theme";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍕" },
@@ -48,6 +48,10 @@ export default function GroupProfileScreen() {
   const [interests, setInterests] = useState<string[]>([]);
   const [tone, setTone] = useState("");
   const [mobility, setMobility] = useState("");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
+    "medium",
+  );
+  const [theme, setTheme] = useState("adventure");
 
   const toggleInterest = (label: string) => {
     setInterests((prev) =>
@@ -63,6 +67,7 @@ export default function GroupProfileScreen() {
     if (!tone) return Alert.alert("Missing info", "Please select a vibe");
     if (!mobility)
       return Alert.alert("Missing info", "Please select a mobility option");
+
     router.push({
       pathname: "/generating",
       params: {
@@ -73,6 +78,8 @@ export default function GroupProfileScreen() {
           interests,
           tone,
           mobility,
+          difficulty,
+          theme,
         }),
       },
     });
@@ -102,6 +109,7 @@ export default function GroupProfileScreen() {
           Tell us about your group and we'll do the rest
         </Text>
 
+        {/* City */}
         <Card style={styles.section}>
           <SectionHeader emoji="📍" title="Where are you?" />
           <TextInput
@@ -113,6 +121,7 @@ export default function GroupProfileScreen() {
           />
         </Card>
 
+        {/* Group details */}
         <Card style={styles.section}>
           <SectionHeader emoji="👥" title="About your group" />
           <View style={styles.row}>
@@ -143,6 +152,7 @@ export default function GroupProfileScreen() {
           </View>
         </Card>
 
+        {/* Interests */}
         <Card style={styles.section}>
           <SectionHeader emoji="❤️" title="What do you love?" />
           <Text style={styles.hint}>Pick everything that fits</Text>
@@ -170,6 +180,7 @@ export default function GroupProfileScreen() {
           </View>
         </Card>
 
+        {/* Tone */}
         <Card style={styles.section}>
           <SectionHeader emoji="🎭" title="What vibe?" />
           {TONES.map(({ label, emoji }) => (
@@ -195,6 +206,7 @@ export default function GroupProfileScreen() {
           ))}
         </Card>
 
+        {/* Mobility */}
         <Card style={styles.section}>
           <SectionHeader emoji="♿" title="Mobility?" />
           {MOBILITY.map(({ label, emoji }) => (
@@ -220,6 +232,86 @@ export default function GroupProfileScreen() {
           ))}
         </Card>
 
+        {/* Difficulty — NOW INSIDE THE RETURN STATEMENT */}
+        <Card style={styles.section}>
+          <SectionHeader emoji="🎯" title="Difficulty" />
+          <Text style={styles.hint}>
+            Affects clue complexity and timer length
+          </Text>
+          <View style={styles.difficultyRow}>
+            {(["easy", "medium", "hard"] as const).map((level) => {
+              const d = DIFFICULTY[level];
+              const selected = difficulty === level;
+              return (
+                <TouchableOpacity
+                  key={level}
+                  style={[
+                    styles.diffBtn,
+                    selected && {
+                      backgroundColor: d.color,
+                      borderColor: d.color,
+                    },
+                  ]}
+                  onPress={() => setDifficulty(level)}
+                >
+                  <Text style={styles.diffEmoji}>{d.emoji}</Text>
+                  <Text
+                    style={[
+                      styles.diffLabel,
+                      selected && styles.diffLabelSelected,
+                    ]}
+                  >
+                    {d.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.diffSub,
+                      selected && styles.diffLabelSelected,
+                    ]}
+                  >
+                    {d.timerMinutes}m
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Card>
+
+        {/* Theme — NOW INSIDE THE RETURN STATEMENT */}
+        <Card style={styles.section}>
+          <SectionHeader emoji="🎨" title="Hunt Theme" />
+          <Text style={styles.hint}>Sets the personality of your clues</Text>
+          <View style={styles.chipGrid}>
+            {Object.entries(THEMES).map(([key, t]) => {
+              const selected = theme === key;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  style={[
+                    styles.chip,
+                    selected && {
+                      backgroundColor: t.color,
+                      borderColor: t.color,
+                    },
+                  ]}
+                  onPress={() => setTheme(key)}
+                >
+                  <Text style={styles.chipEmoji}>{t.emoji}</Text>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selected && styles.chipTextSelected,
+                    ]}
+                  >
+                    {t.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Card>
+
+        {/* Generate button */}
         <Button
           label="Generate My Hunt"
           onPress={handleGenerate}
@@ -320,4 +412,23 @@ const styles = StyleSheet.create({
   optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
   checkmark: { fontSize: 18, color: COLORS.accent },
   generateBtn: { marginTop: SPACING.md, marginBottom: 40 },
+  difficultyRow: { flexDirection: "row", gap: 8 },
+  diffBtn: {
+    flex: 1,
+    alignItems: "center",
+    padding: 12,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.offWhite,
+  },
+  diffEmoji: { fontSize: 22, marginBottom: 4 },
+  diffLabel: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
+    marginBottom: 2,
+  },
+  diffLabelSelected: { color: COLORS.white },
+  diffSub: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
 });
