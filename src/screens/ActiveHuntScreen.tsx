@@ -306,7 +306,7 @@ export default function ActiveHuntScreen() {
               onPress={handleManualArrival}
             >
               <Text style={styles.arrivalButtonText}>
-                📍 I'm at this location
+                📍 <Text>{"I'm at this location!"}</Text>
               </Text>
             </TouchableOpacity>
           )}

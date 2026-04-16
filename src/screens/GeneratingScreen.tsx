@@ -54,7 +54,7 @@ export default function GeneratingScreen() {
         );
       }
     })();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <SafeAreaView style={styles.container}>

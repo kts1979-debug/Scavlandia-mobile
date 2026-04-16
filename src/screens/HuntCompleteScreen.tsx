@@ -22,9 +22,12 @@ export default function HuntCompleteScreen() {
       );
       const scoreEmoji =
         percentage >= 80 ? "🏆" : percentage >= 60 ? "⭐" : "🎯";
-      const diffEmoji = { easy: "🟢", medium: "🟡", hard: "🔴" }[
-        hunt.groupProfile?.difficulty || "medium"
-      ];
+      const diffMap = { easy: "🟢", medium: "🟡", hard: "🔴" } as Record<
+        string,
+        string
+      >;
+      const diffEmoji =
+        diffMap[hunt.groupProfile?.difficulty || "medium"] || "🟡";
 
       await Share.share({
         message:

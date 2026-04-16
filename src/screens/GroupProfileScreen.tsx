@@ -106,7 +106,7 @@ export default function GroupProfileScreen() {
       >
         <Text style={styles.pageTitle}>Build Your Hunt</Text>
         <Text style={styles.pageSubtitle}>
-          Tell us about your group and we'll do the rest
+          <Text>{"Tell us about your group and we'll do the rest"}</Text>
         </Text>
 
         {/* City */}

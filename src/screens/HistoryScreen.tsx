@@ -57,7 +57,7 @@ export default function HistoryScreen() {
       setError(null);
       const data = await getUserHunts();
       setHunts(data.hunts || []);
-    } catch (err: any) {
+    } catch {
       setError("Could not load your hunts. Pull down to try again.");
     }
   }, [user]);
@@ -67,7 +67,7 @@ export default function HistoryScreen() {
       setLoading(true);
       loadHunts().finally(() => setLoading(false));
     }
-  }, [user, authLoading]);
+  }, [user, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefresh = async () => {
     setRefreshing(true);

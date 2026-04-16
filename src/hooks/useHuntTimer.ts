@@ -25,7 +25,7 @@ export function useHuntTimer(initialMinutes: number, onExpire: () => void) {
       });
     }, 1000);
     return () => clearInterval(intervalRef.current!);
-  }, [isRunning]);
+  }, [isRunning, onExpire]);
 
   const pause = useCallback(() => setIsRunning(false), []);
   const resume = useCallback(() => setIsRunning(true), []);

@@ -93,6 +93,7 @@ export interface HuntStop {
   task: string;
   funFact: string;
   pointValue: number;
+  hints?: string[];
 }
 
 export interface Hunt {
@@ -103,4 +104,14 @@ export interface Hunt {
   totalPossiblePoints: number;
   city: string;
   stops: HuntStop[];
+  groupProfile?: {
+    // ← add this entire block
+    ages: number;
+    groupSize: number;
+    interests: string[];
+    tone: string;
+    mobility: string;
+    difficulty?: string;
+    theme?: string;
+  };
 }

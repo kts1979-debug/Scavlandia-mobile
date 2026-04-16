@@ -3,7 +3,7 @@
 // Usage: <Badge label='20 pts' color={COLORS.gold} />
 
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, ViewStyle } from "react-native";
 import { COLORS, FONTS, RADIUS } from "../../theme";
 
 interface BadgeProps {
@@ -11,6 +11,7 @@ interface BadgeProps {
   color?: string;
   textColor?: string;
   emoji?: string;
+  style?: ViewStyle;
 }
 
 export default function Badge({
@@ -18,9 +19,10 @@ export default function Badge({
   color = COLORS.accent,
   textColor = COLORS.white,
   emoji,
+  style,
 }: BadgeProps) {
   return (
-    <View style={[styles.badge, { backgroundColor: color }]}>
+    <View style={[styles.badge, { backgroundColor: color }, style]}>
       <Text style={[styles.text, { color: textColor }]}>
         {emoji ? `${emoji} ${label}` : label}
       </Text>
