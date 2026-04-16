@@ -1,15 +1,13 @@
-// app/_layout.tsx — add loading state
 import { Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
+import { COLORS } from "../src/theme";
 import "../src/utils/firebaseConfig";
 
-// Inner component that can access auth context
 function RootStack() {
   const { loading } = useAuth();
 
-  // Show spinner while Firebase checks login status
   if (loading) {
     return (
       <View
@@ -17,10 +15,10 @@ function RootStack() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#1A5276",
+          backgroundColor: COLORS.primary,
         }}
       >
-        <ActivityIndicator size="large" color="#AED6F1" />
+        <ActivityIndicator size="large" color={COLORS.accent} />
       </View>
     );
   }
@@ -37,6 +35,7 @@ function RootStack() {
       <Stack.Screen name="hunt-complete" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
+      <Stack.Screen name="paywall" options={{ headerShown: false }} />
     </Stack>
   );
 }

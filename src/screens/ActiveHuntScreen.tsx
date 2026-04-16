@@ -1,9 +1,11 @@
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
+import HuntTimer from "../components/HuntTimer";
 import ProgressBar from "../components/ui/ProgressBar";
+import { useHuntTimer } from "../hooks/useHuntTimer";
 import { uploadHuntPhoto } from "../services/storageService";
-import { COLORS } from "../theme";
+import { COLORS, SPACING } from "../theme";
 
 import {
   Alert,
@@ -28,6 +30,29 @@ export default function ActiveHuntScreen() {
   const [atLocation, setAtLocation] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const timerMinutes = hunt.estimatedDurationMinutes || 120;
+
+  const timer = useHuntTimer(timerMinutes, () => {
+    Alert.alert(
+      "⏱ Time's Up!",
+      `Your hunt has ended. You completed ${completedIndices.length} of ${hunt.stops.length} stops and earned ${totalPoints} points.`,
+      [
+        {
+          text: "See Results",
+          onPress: () =>
+            router.replace({
+              pathname: "/hunt-complete",
+              params: {
+                hunt: JSON.stringify(hunt),
+                totalPoints: String(totalPoints),
+                completedStops: String(completedIndices.length),
+              },
+            }),
+        },
+      ],
+    );
+  });
 
   const activeStop: HuntStop = hunt.stops[activeStopIndex];
 
@@ -54,7 +79,7 @@ export default function ActiveHuntScreen() {
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaType.Images,
       quality: 0.7,
       allowsEditing: true,
       aspect: [4, 3],
@@ -91,6 +116,7 @@ export default function ActiveHuntScreen() {
 
       // Step 4: Check if the hunt is complete
       if (activeStopIndex >= hunt.stops.length - 1) {
+        timer.stop();
         router.replace({
           pathname: "/hunt-complete",
           params: {
@@ -125,11 +151,26 @@ export default function ActiveHuntScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.huntTitle} numberOfLines={1}>
-          {hunt.huntTitle}
-        </Text>
-        <Text style={styles.points}>⭐ {totalPoints} pts</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.huntTitle} numberOfLines={1}>
+            {hunt.huntTitle}
+          </Text>
+          <Text style={styles.points}>⭐ {totalPoints} pts</Text>
+        </View>
+
+        {/* Timer section */}
+        <View style={styles.timerSection}>
+          <HuntTimer
+            display={timer.display}
+            isWarning={timer.isWarning}
+            isCritical={timer.isCritical}
+            estimatedMinutes={timerMinutes}
+            stopsCompleted={completedIndices.length}
+            totalStops={hunt.stops.length}
+          />
+        </View>
       </View>
 
       <View
@@ -230,11 +271,7 @@ export default function ActiveHuntScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F9FA" },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: "#1A5276",
+    backgroundColor: COLORS.primary,
   },
   huntTitle: {
     fontSize: 16,
@@ -312,6 +349,19 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 16,
     alignItems: "center",
+  },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.sm,
+  },
+  timerSection: {
+    alignItems: "center",
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
   },
   photoButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
   arrivalButton: {

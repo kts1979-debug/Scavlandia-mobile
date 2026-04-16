@@ -1,14 +1,8 @@
 // src/screens/HuntCompleteScreen.tsx — Celebration screen with sharing
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
-import {
-  SafeAreaView,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
