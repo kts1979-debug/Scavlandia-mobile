@@ -1,6 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
+import HintsPanel from "../components/HintsPanel";
 import HuntTimer from "../components/HuntTimer";
 import ProgressBar from "../components/ui/ProgressBar";
 import { useHuntTimer } from "../hooks/useHuntTimer";
@@ -30,14 +31,19 @@ export default function ActiveHuntScreen() {
   const [atLocation, setAtLocation] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [hintDeductions, setHintDeductions] = useState(0);
 
   // Use difficulty-based timer if available, otherwise fall back to Claude's estimate
+  // Difficulty settings — used for both timer and hints
   const difficulty = hunt.groupProfile?.difficulty || "medium";
   const diffSettings = { easy: 180, medium: 120, hard: 90 };
   const timerMinutes =
     diffSettings[difficulty as keyof typeof diffSettings] ||
     hunt.estimatedDurationMinutes ||
     120;
+  const maxHints =
+    { easy: 3, medium: 2, hard: 1 }[difficulty as keyof typeof diffSettings] ??
+    2;
 
   const timer = useHuntTimer(timerMinutes, () => {
     Alert.alert(
@@ -137,6 +143,8 @@ export default function ActiveHuntScreen() {
       // Step 5: Move to the next stop
       setActiveStopIndex((i) => i + 1);
       setAtLocation(false);
+      // Reset hints for next stop — hints are per stop not per hunt
+      setHintDeductions(0);
     } catch (error: any) {
       console.error("Submit stop error:", error.message);
       Alert.alert(
@@ -163,7 +171,9 @@ export default function ActiveHuntScreen() {
           <Text style={styles.huntTitle} numberOfLines={1}>
             {hunt.huntTitle}
           </Text>
-          <Text style={styles.points}>⭐ {totalPoints} pts</Text>
+          <Text style={styles.points}>
+            ⭐ {totalPoints - hintDeductions} pts
+          </Text>
         </View>
 
         {/* Timer section */}
@@ -231,6 +241,15 @@ export default function ActiveHuntScreen() {
             <Text style={styles.clueLabel}>🔍 Your Clue</Text>
             <Text style={styles.clueText}>{activeStop.clue}</Text>
           </View>
+
+          {/* Hints panel — shown below the clue */}
+          {activeStop.hints && activeStop.hints.length > 0 && (
+            <HintsPanel
+              hints={activeStop.hints}
+              maxHints={maxHints}
+              onHintUsed={(cost) => setHintDeductions((prev) => prev + cost)}
+            />
+          )}
 
           {distanceToStop !== null && !atLocation && (
             <View style={styles.distanceCard}>

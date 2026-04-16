@@ -9,7 +9,7 @@ import { auth } from "../utils/firebaseConfig";
 
 const api = axios.create({
   baseURL: config.API_URL,
-  timeout: 60000,
+  timeout: 90000,
 });
 
 // ── Auth interceptor ─────────────────────────────────────────────
