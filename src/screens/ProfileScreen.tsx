@@ -142,6 +142,25 @@ export default function ProfileScreen() {
           ))}
         </Card>
 
+        {/* Community leaderboard link */}
+        <Card style={styles.section}>
+          <TouchableOpacity
+            style={styles.leaderboardLink}
+            onPress={() => router.push("/community-leaderboard")}
+          >
+            <Text style={styles.leaderboardLinkEmoji}>🌍</Text>
+            <View style={styles.leaderboardLinkText}>
+              <Text style={styles.leaderboardLinkTitle}>
+                Community Leaderboard
+              </Text>
+              <Text style={styles.leaderboardLinkSub}>
+                See how you rank globally
+              </Text>
+            </View>
+            <Text style={styles.leaderboardLinkArrow}>›</Text>
+          </TouchableOpacity>
+        </Card>
+
         {/* Upgrade Banner */}
         <Card variant="accent" style={styles.upgradeBanner}>
           <Text style={styles.upgradeEmoji}>♾️</Text>
@@ -300,4 +319,22 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
   },
   signOutBtn: { marginTop: SPACING.sm },
+  leaderboardLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.md,
+  },
+  leaderboardLinkEmoji: { fontSize: 32 },
+  leaderboardLinkText: { flex: 1 },
+  leaderboardLinkTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+  },
+  leaderboardLinkSub: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    marginTop: 2,
+  },
+  leaderboardLinkArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
 });

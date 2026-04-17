@@ -42,7 +42,7 @@ export default function GeneratingScreen() {
       try {
         const result = await generateHunt(city, groupProfile);
         router.replace({
-          pathname: "/active-hunt",
+          pathname: "/hunt-setup",
           params: { hunt: JSON.stringify(result.hunt) },
         });
       } catch (error: any) {

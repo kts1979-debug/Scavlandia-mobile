@@ -3,8 +3,14 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
 import HintsPanel from "../components/HintsPanel";
 import HuntTimer from "../components/HuntTimer";
+import LiveLeaderboard from "../components/LiveLeaderboard";
 import ProgressBar from "../components/ui/ProgressBar";
 import { useHuntTimer } from "../hooks/useHuntTimer";
+import { Hunt, HuntStop, submitStop } from "../services/apiService";
+import {
+  updateAllTimeStats,
+  updateSessionScore,
+} from "../services/leaderboardService";
 import { uploadHuntPhoto } from "../services/storageService";
 import { COLORS, RADIUS, SPACING } from "../theme";
 
@@ -20,12 +26,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import HuntMap from "../components/HuntMap";
 import { useLocation } from "../hooks/useLocation";
-import { Hunt, HuntStop, submitStop } from "../services/apiService";
 
 export default function ActiveHuntScreen() {
+  // ── Params ─────────────────────────────────────────────────────────
   const params = useLocalSearchParams();
   const hunt: Hunt = JSON.parse(params.hunt as string);
+  const sessionCode = (params.sessionCode as string) || "";
 
+  // ── State ──────────────────────────────────────────────────────────
   const [activeStopIndex, setActiveStopIndex] = useState(0);
   const [completedIndices, setCompletedIndices] = useState<number[]>([]);
   const [totalPoints, setTotalPoints] = useState(0);
@@ -33,9 +41,9 @@ export default function ActiveHuntScreen() {
   const [showMap, setShowMap] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [hintDeductions, setHintDeductions] = useState(0);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
-  // Use difficulty-based timer if available, otherwise fall back to Claude's estimate
-  // Difficulty settings — used for both timer and hints
+  // ── Difficulty & timer ─────────────────────────────────────────────
   const difficulty = hunt.groupProfile?.difficulty || "medium";
   const diffSettings = { easy: 180, medium: 120, hard: 90 };
   const timerMinutes =
@@ -60,6 +68,7 @@ export default function ActiveHuntScreen() {
                 hunt: JSON.stringify(hunt),
                 totalPoints: String(totalPoints),
                 completedStops: String(completedIndices.length),
+                sessionCode,
               },
             }),
         },
@@ -69,6 +78,7 @@ export default function ActiveHuntScreen() {
 
   const activeStop: HuntStop = hunt.stops[activeStopIndex];
 
+  // ── Location ───────────────────────────────────────────────────────
   const handleArrival = useCallback(() => {
     setAtLocation(true);
     Alert.alert(
@@ -82,6 +92,7 @@ export default function ActiveHuntScreen() {
     handleArrival,
   );
 
+  // ── Photo ──────────────────────────────────────────────────────────
   const handleTakePhoto = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
@@ -97,17 +108,16 @@ export default function ActiveHuntScreen() {
       allowsEditing: true,
       aspect: [4, 3],
     });
-
     if (!result.canceled && result.assets[0]) {
       await handleSubmitStop(result.assets[0].uri);
     }
   };
 
+  // ── Submit stop ────────────────────────────────────────────────────
   const handleSubmitStop = async (photoUri: string) => {
     setSubmitting(true);
     try {
-      // Step 1: Upload the photo to Firebase Storage
-      // This replaces the local file path with a real URL
+      // Upload photo
       console.log("Uploading photo...");
       const photoUrl = await uploadHuntPhoto(
         photoUri,
@@ -116,7 +126,7 @@ export default function ActiveHuntScreen() {
       );
       console.log("Photo uploaded, submitting stop...");
 
-      // Step 2: Submit the stop to your backend with the real photo URL
+      // Save to backend
       await submitStop(
         hunt.huntId,
         activeStop.order,
@@ -124,28 +134,50 @@ export default function ActiveHuntScreen() {
         activeStop.pointValue,
       );
 
-      // Step 3: Update local state
-      setCompletedIndices((prev) => [...prev, activeStopIndex]);
-      setTotalPoints((prev) => prev + activeStop.pointValue);
+      // Calculate new totals
+      const newTotalPoints = totalPoints + activeStop.pointValue;
+      const newCompletedList = [...completedIndices, activeStopIndex];
 
-      // Step 4: Check if the hunt is complete
+      // Update state
+      setCompletedIndices(newCompletedList);
+      setTotalPoints(newTotalPoints);
+
+      // Update session leaderboard if in a session
+      if (sessionCode) {
+        updateSessionScore(
+          sessionCode,
+          activeStop.pointValue,
+          newCompletedList.length,
+          hunt.city,
+        ).catch((err) =>
+          console.warn("Session score update failed:", err.message),
+        );
+      }
+
+      // Check if hunt is complete
       if (activeStopIndex >= hunt.stops.length - 1) {
         timer.stop();
+
+        // Update all-time stats
+        updateAllTimeStats(newTotalPoints, hunt.city, hunt.huntTitle).catch(
+          (err) => console.warn("All-time stats update failed:", err.message),
+        );
+
         router.replace({
           pathname: "/hunt-complete",
           params: {
             hunt: JSON.stringify(hunt),
-            totalPoints: String(totalPoints + activeStop.pointValue),
-            completedStops: String(completedIndices.length + 1),
+            totalPoints: String(newTotalPoints),
+            completedStops: String(newCompletedList.length),
+            sessionCode,
           },
         });
         return;
       }
 
-      // Step 5: Move to the next stop
+      // Move to next stop
       setActiveStopIndex((i) => i + 1);
       setAtLocation(false);
-      // Reset hints for next stop — hints are per stop not per hunt
       setHintDeductions(0);
     } catch (error: any) {
       console.error("Submit stop error:", error.message);
@@ -158,6 +190,7 @@ export default function ActiveHuntScreen() {
     }
   };
 
+  // ── Manual arrival ─────────────────────────────────────────────────
   const handleManualArrival = () => {
     Alert.alert("Confirm arrival", `Are you at ${activeStop.locationName}?`, [
       { text: "Not yet", style: "cancel" },
@@ -165,6 +198,7 @@ export default function ActiveHuntScreen() {
     ]);
   };
 
+  // ── Share ──────────────────────────────────────────────────────────
   const handleShare = async () => {
     try {
       const cityName = hunt.city?.split(",")[0] || hunt.city;
@@ -181,6 +215,7 @@ export default function ActiveHuntScreen() {
     }
   };
 
+  // ── Render ─────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -193,13 +228,22 @@ export default function ActiveHuntScreen() {
             <Text style={styles.points}>
               ⭐ {totalPoints - hintDeductions} pts
             </Text>
+            {/* Leaderboard toggle — only shown in a session */}
+            {sessionCode ? (
+              <TouchableOpacity
+                style={styles.shareBtn}
+                onPress={() => setShowLeaderboard(!showLeaderboard)}
+              >
+                <Text style={styles.shareBtnText}>🏆</Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity onPress={handleShare} style={styles.shareBtn}>
               <Text style={styles.shareBtnText}>📤</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Timer section */}
+        {/* Timer */}
         <View style={styles.timerSection}>
           <HuntTimer
             display={timer.display}
@@ -212,13 +256,8 @@ export default function ActiveHuntScreen() {
         </View>
       </View>
 
-      <View
-        style={{
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          backgroundColor: COLORS.white,
-        }}
-      >
+      {/* Progress bar */}
+      <View style={styles.progressContainer}>
         <ProgressBar
           current={completedIndices.length}
           total={hunt.stops.length}
@@ -226,6 +265,14 @@ export default function ActiveHuntScreen() {
         />
       </View>
 
+      {/* Live leaderboard panel */}
+      {sessionCode && showLeaderboard && (
+        <View style={styles.leaderboardPanel}>
+          <LiveLeaderboard sessionCode={sessionCode} />
+        </View>
+      )}
+
+      {/* Clue / Map toggle */}
       <View style={styles.toggleRow}>
         <TouchableOpacity
           style={[styles.toggle, !showMap && styles.toggleActive]}
@@ -247,6 +294,7 @@ export default function ActiveHuntScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Map view */}
       {showMap && (
         <View style={styles.mapContainer}>
           <HuntMap
@@ -258,14 +306,16 @@ export default function ActiveHuntScreen() {
         </View>
       )}
 
+      {/* Clue view */}
       {!showMap && (
         <ScrollView style={styles.clueContainer}>
+          {/* Clue card */}
           <View style={styles.clueCard}>
             <Text style={styles.clueLabel}>🔍 Your Clue</Text>
             <Text style={styles.clueText}>{activeStop.clue}</Text>
           </View>
 
-          {/* Hints panel — shown below the clue */}
+          {/* Hints */}
           {activeStop.hints && activeStop.hints.length > 0 && (
             <HintsPanel
               hints={activeStop.hints}
@@ -274,12 +324,14 @@ export default function ActiveHuntScreen() {
             />
           )}
 
+          {/* Distance */}
           {distanceToStop !== null && !atLocation && (
             <View style={styles.distanceCard}>
               <Text style={styles.distanceText}>📡 {distanceToStop}m away</Text>
             </View>
           )}
 
+          {/* Task card — shown after arrival */}
           {atLocation && (
             <View style={styles.taskCard}>
               <Text style={styles.taskLabel}>🎯 Your Task</Text>
@@ -300,13 +352,14 @@ export default function ActiveHuntScreen() {
             </View>
           )}
 
+          {/* Manual arrival button */}
           {!atLocation && (
             <TouchableOpacity
               style={styles.arrivalButton}
               onPress={handleManualArrival}
             >
               <Text style={styles.arrivalButtonText}>
-                📍 <Text>{"I'm at this location!"}</Text>
+                {"📍  I'm at this location!"}
               </Text>
             </TouchableOpacity>
           )}
@@ -318,8 +371,14 @@ export default function ActiveHuntScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8F9FA" },
-  header: {
-    backgroundColor: COLORS.primary,
+  header: { backgroundColor: COLORS.primary },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.sm,
   },
   huntTitle: {
     fontSize: 16,
@@ -328,7 +387,28 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
   points: { fontSize: 16, color: "#F39C12", fontWeight: "bold" },
+  shareBtn: {
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: RADIUS.round,
+    width: 34,
+    height: 34,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shareBtnText: { fontSize: 16 },
+  timerSection: {
+    alignItems: "center",
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+  },
+  progressContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: COLORS.white,
+  },
+  leaderboardPanel: { margin: SPACING.sm },
   toggleRow: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
@@ -398,19 +478,6 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
   },
-  headerTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.sm,
-  },
-  timerSection: {
-    alignItems: "center",
-    paddingBottom: SPACING.md,
-    paddingHorizontal: SPACING.md,
-  },
   photoButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
   arrivalButton: {
     backgroundColor: "#FFFFFF",
@@ -422,18 +489,4 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   arrivalButtonText: { color: "#2E86C1", fontSize: 15, fontWeight: "600" },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-  },
-  shareBtn: {
-    backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: RADIUS.round,
-    width: 34,
-    height: 34,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  shareBtnText: { fontSize: 16 },
 });

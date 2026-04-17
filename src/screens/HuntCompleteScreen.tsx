@@ -13,6 +13,7 @@ export default function HuntCompleteScreen() {
   const hunt = JSON.parse(params.hunt as string);
   const totalPoints = parseInt(params.totalPoints as string);
   const completedStops = parseInt(params.completedStops as string);
+  const sessionCode = (params.sessionCode as string) || "";
 
   const handleShare = async () => {
     try {
@@ -43,6 +44,24 @@ export default function HuntCompleteScreen() {
       console.log("Share cancelled or failed:", error);
     }
   };
+
+  {
+    sessionCode ? (
+      <Button
+        label="View Final Leaderboard"
+        onPress={() =>
+          router.push({
+            pathname: "/final-leaderboard",
+            params: { sessionCode, myPoints: String(totalPoints) },
+          })
+        }
+        variant="primary"
+        size="lg"
+        emoji="🏆"
+        style={styles.btn}
+      />
+    ) : null;
+  }
 
   const percentage = Math.round(
     (totalPoints / (hunt.totalPossiblePoints || 1)) * 100,

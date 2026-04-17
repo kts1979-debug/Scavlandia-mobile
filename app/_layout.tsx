@@ -36,6 +36,12 @@ function RootStack() {
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
       <Stack.Screen name="paywall" options={{ headerShown: false }} />
+      <Stack.Screen name="hunt-setup" options={{ headerShown: false }} />
+      <Stack.Screen name="final-leaderboard" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="community-leaderboard"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }
