@@ -1,2 +1,2 @@
-import CommunityLeaderboardScreen from "./screens/CommunityLeaderboardScreen";
+import CommunityLeaderboardScreen from "../src/screens/CommunityLeaderboardScreen";
 export default CommunityLeaderboardScreen;

@@ -18,14 +18,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import { useAuth } from "../context/AuthContext";
 import { createSession, joinSession } from "../services/leaderboardService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 export default function HuntSetupScreen() {
   const params = useLocalSearchParams();
   const hunt = JSON.parse(params.hunt as string);
-  const { user } = useAuth();
 
   const [mode, setMode] = useState<"solo" | "session">("solo");
   const [sessionAction, setAction] = useState<"create" | "join">("create");

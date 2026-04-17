@@ -8,12 +8,12 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Badge from "../components/ui/Badge";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
@@ -51,7 +51,7 @@ export default function CommunityLeaderboardScreen() {
   useEffect(() => {
     setLoading(true);
     loadData().finally(() => setLoading(false));
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRefresh = async () => {
     setRefreshing(true);

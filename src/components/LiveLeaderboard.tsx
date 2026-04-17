@@ -1,7 +1,13 @@
 // src/components/LiveLeaderboard.tsx
-// Shows real-time scores for all session participants.
-// Uses Firestore onSnapshot for live updates.
-
+import {
+  collection,
+  DocumentData,
+  getFirestore,
+  onSnapshot,
+  orderBy,
+  query,
+  QuerySnapshot,
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
@@ -22,16 +28,7 @@ export default function LiveLeaderboard({ sessionCode }: LiveLeaderboardProps) {
   useEffect(() => {
     if (!sessionCode) return;
 
-    // Import getFirestore correctly
-    const {
-      getFirestore,
-      collection,
-      onSnapshot,
-      orderBy,
-      query,
-    } = require("firebase/firestore");
     const db = getFirestore();
-
     const participantsRef = collection(
       db,
       "sessions",
@@ -40,17 +37,16 @@ export default function LiveLeaderboard({ sessionCode }: LiveLeaderboardProps) {
     );
     const q = query(participantsRef, orderBy("score", "desc"));
 
-    // Real-time listener — updates automatically as scores change
     const unsubscribe = onSnapshot(
       q,
-      (snapshot) => {
+      (snapshot: QuerySnapshot<DocumentData>) => {
         const data = snapshot.docs.map(
           (doc) => doc.data() as SessionParticipant,
         );
         setParticipants(data);
         setLoading(false);
       },
-      (error) => {
+      (error: Error) => {
         console.error("Leaderboard listener error:", error.message);
         setLoading(false);
       },
@@ -103,10 +99,7 @@ export default function LiveLeaderboard({ sessionCode }: LiveLeaderboardProps) {
               index === 0 && styles.rowFirst,
             ]}
           >
-            {/* Rank */}
             <Text style={styles.rank}>{medal || `${index + 1}`}</Text>
-
-            {/* Name and city */}
             <View style={styles.info}>
               <Text
                 style={[styles.name, isCurrentUser && styles.nameHighlighted]}
@@ -120,8 +113,6 @@ export default function LiveLeaderboard({ sessionCode }: LiveLeaderboardProps) {
                 {participant.stopsComplete} stops
               </Text>
             </View>
-
-            {/* Score */}
             <View style={styles.scoreContainer}>
               <Text style={[styles.score, index === 0 && styles.scoreFirst]}>
                 {participant.score}

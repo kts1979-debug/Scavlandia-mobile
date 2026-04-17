@@ -45,24 +45,6 @@ export default function HuntCompleteScreen() {
     }
   };
 
-  {
-    sessionCode ? (
-      <Button
-        label="View Final Leaderboard"
-        onPress={() =>
-          router.push({
-            pathname: "/final-leaderboard",
-            params: { sessionCode, myPoints: String(totalPoints) },
-          })
-        }
-        variant="primary"
-        size="lg"
-        emoji="🏆"
-        style={styles.btn}
-      />
-    ) : null;
-  }
-
   const percentage = Math.round(
     (totalPoints / (hunt.totalPossiblePoints || 1)) * 100,
   );
@@ -116,6 +98,21 @@ export default function HuntCompleteScreen() {
           emoji="🗺️"
           style={styles.btn}
         />
+        {sessionCode ? (
+          <Button
+            label="View Final Leaderboard"
+            onPress={() =>
+              router.push({
+                pathname: "/final-leaderboard",
+                params: { sessionCode, myPoints: String(totalPoints) },
+              })
+            }
+            variant="primary"
+            size="lg"
+            emoji="🏆"
+            style={styles.btn}
+          />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
