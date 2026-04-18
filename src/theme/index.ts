@@ -106,25 +106,28 @@ export const DIFFICULTY = {
     label: "Easy",
     emoji: "🟢",
     color: "#27AE60",
-    multiplier: 1.0, // Points multiplier
-    hintCount: 3, // Number of hints available
-    timerMinutes: 180, // 3 hours
+    multiplier: 1.0,
+    hintCount: 3,
+    timerMinutes: null, // No timer for Easy
+    description: "Simple clues, 3 hints",
   },
   medium: {
     label: "Medium",
     emoji: "🟡",
     color: "#F39C12",
     multiplier: 1.5,
-    hintCount: 2,
-    timerMinutes: 120, // 2 hours
+    hintCount: 3,
+    timerMinutes: null, // No timer for Medium
+    description: "Trickier clues, 3 hints",
   },
   hard: {
-    label: "Hard",
+    label: "Amazing Race",
     emoji: "🔴",
     color: "#E74C3C",
     multiplier: 2.0,
-    hintCount: 1,
-    timerMinutes: 90, // 90 minutes
+    hintCount: 2,
+    timerMinutes: 120, // 2 hour timer for Amazing Race only
+    description: "Cryptic clues, 2 hints, 2hr timer",
   },
 };
 

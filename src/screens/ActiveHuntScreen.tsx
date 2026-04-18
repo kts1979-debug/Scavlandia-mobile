@@ -45,36 +45,36 @@ export default function ActiveHuntScreen() {
 
   // ── Difficulty & timer ─────────────────────────────────────────────
   const difficulty = hunt.groupProfile?.difficulty || "medium";
-  const diffSettings = { easy: 180, medium: 120, hard: 90 };
-  const timerMinutes =
-    diffSettings[difficulty as keyof typeof diffSettings] ||
-    hunt.estimatedDurationMinutes ||
-    120;
-  const maxHints =
-    { easy: 3, medium: 2, hard: 1 }[difficulty as keyof typeof diffSettings] ??
-    2;
+  const timerMinutes = difficulty === "hard" ? 120 : null; // Only Amazing Race has a timer
+  const maxHints = difficulty === "hard" ? 2 : 3; // Amazing Race gets 2, others get 3
 
-  const timer = useHuntTimer(timerMinutes, () => {
-    Alert.alert(
-      "⏱ Time's Up!",
-      `Your hunt has ended. You completed ${completedIndices.length} of ${hunt.stops.length} stops and earned ${totalPoints} points.`,
-      [
-        {
-          text: "See Results",
-          onPress: () =>
-            router.replace({
-              pathname: "/hunt-complete",
-              params: {
-                hunt: JSON.stringify(hunt),
-                totalPoints: String(totalPoints),
-                completedStops: String(completedIndices.length),
-                sessionCode,
-              },
-            }),
-        },
-      ],
-    );
-  });
+  const timer = useHuntTimer(
+    timerMinutes ?? 999, // 999 minutes = effectively no timer
+    () => {
+      // Only show time's up alert for Amazing Race
+      if (difficulty === "hard") {
+        Alert.alert(
+          "⏱ Time's Up!",
+          `Your Amazing Race has ended! You completed ${completedIndices.length} of ${hunt.stops.length} stops and earned ${totalPoints} points.`,
+          [
+            {
+              text: "See Results",
+              onPress: () =>
+                router.replace({
+                  pathname: "/hunt-complete",
+                  params: {
+                    hunt: JSON.stringify(hunt),
+                    totalPoints: String(totalPoints),
+                    completedStops: String(completedIndices.length),
+                    sessionCode,
+                  },
+                }),
+            },
+          ],
+        );
+      }
+    },
+  );
 
   const activeStop: HuntStop = hunt.stops[activeStopIndex];
 
@@ -243,18 +243,19 @@ export default function ActiveHuntScreen() {
           </View>
         </View>
 
-        {/* Timer */}
-        <View style={styles.timerSection}>
-          <HuntTimer
-            display={timer.display}
-            isWarning={timer.isWarning}
-            isCritical={timer.isCritical}
-            estimatedMinutes={timerMinutes}
-            stopsCompleted={completedIndices.length}
-            totalStops={hunt.stops.length}
-          />
-        </View>
-      </View>
+        {/* Timer section — only shown for Amazing Race difficulty */}
+{difficulty === 'hard' && (
+  <View style={styles.timerSection}>
+    <HuntTimer
+      display={timer.display}
+      isWarning={timer.isWarning}
+      isCritical={timer.isCritical}
+      estimatedMinutes={120}
+      stopsCompleted={completedIndices.length}
+      totalStops={hunt.stops.length}
+    />
+  </View>
+)}
 
       {/* Progress bar */}
       <View style={styles.progressContainer}>

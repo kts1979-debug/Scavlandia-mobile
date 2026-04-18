@@ -394,7 +394,7 @@ export default function GroupProfileScreen() {
                       selected && styles.diffLabelSelected,
                     ]}
                   >
-                    {d.timerMinutes}m
+                    {d.description}
                   </Text>
                 </TouchableOpacity>
               );
