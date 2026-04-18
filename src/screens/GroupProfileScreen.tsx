@@ -52,6 +52,7 @@ export default function GroupProfileScreen() {
     "medium",
   );
   const [theme, setTheme] = useState("adventure");
+  const [stopCount, setStopCount] = useState(9);
 
   const toggleInterest = (label: string) => {
     setInterests((prev) =>
@@ -59,12 +60,51 @@ export default function GroupProfileScreen() {
     );
   };
 
+  const RANDOM_INTERESTS = [
+    "Food & Drink",
+    "History",
+    "Art",
+    "Nature",
+    "Music",
+    "Architecture",
+    "Games",
+    "Sports",
+    "Shopping",
+    "Birds",
+  ];
+  const RANDOM_TONES = [
+    "Educational",
+    "Silly & Fun",
+    "Competitive",
+    "Relaxed",
+    "Exercise-Focused",
+  ];
+
+  const handleRandomize = () => {
+    // Pick 3-5 random interests
+    const shuffled = [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5);
+    const count = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+    setInterests(shuffled.slice(0, count));
+
+    // Pick a random tone
+    const randomTone =
+      RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
+    setTone(randomTone);
+  };
+
   const handleGenerate = () => {
     if (!city.trim())
       return Alert.alert("Missing info", "Please enter a city name");
-    if (interests.length === 0)
-      return Alert.alert("Missing info", "Please select at least one interest");
-    if (!tone) return Alert.alert("Missing info", "Please select a vibe");
+
+    // Interests and tone are optional — use random if not selected
+    const finalInterests =
+      interests.length > 0
+        ? interests
+        : RANDOM_INTERESTS.sort(() => Math.random() - 0.5).slice(0, 4);
+
+    const finalTone =
+      tone || RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
+
     if (!mobility)
       return Alert.alert("Missing info", "Please select a mobility option");
 
@@ -75,11 +115,12 @@ export default function GroupProfileScreen() {
         groupProfile: JSON.stringify({
           ages: parseInt(ages) || 30,
           groupSize: parseInt(groupSize) || 4,
-          interests,
-          tone,
+          interests: finalInterests,
+          tone: finalTone,
           mobility,
           difficulty,
           theme,
+          stopCount,
         }),
       },
     });
@@ -152,10 +193,87 @@ export default function GroupProfileScreen() {
           </View>
         </Card>
 
+        {/* Stop Count */}
+        <Card style={styles.section}>
+          <SectionHeader emoji="🚩" title="How many stops?" />
+          <Text style={styles.hint}>More stops = longer adventure</Text>
+
+          {/* Current value display */}
+          <View style={styles.stopCountRow}>
+            <TouchableOpacity
+              style={styles.stopCountBtn}
+              onPress={() => setStopCount((prev) => Math.max(6, prev - 1))}
+            >
+              <Text style={styles.stopCountBtnText}>−</Text>
+            </TouchableOpacity>
+
+            <View style={styles.stopCountDisplay}>
+              <Text style={styles.stopCountValue}>{stopCount}</Text>
+              <Text style={styles.stopCountLabel}>stops</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.stopCountBtn}
+              onPress={() => setStopCount((prev) => Math.min(12, prev + 1))}
+            >
+              <Text style={styles.stopCountBtnText}>+</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Visual slider dots */}
+          <View style={styles.stopDots}>
+            {Array.from({ length: 12 - 6 + 1 }, (_, i) => i + 6).map((n) => (
+              <TouchableOpacity
+                key={n}
+                onPress={() => setStopCount(n)}
+                style={[
+                  styles.stopDot,
+                  n <= stopCount && styles.stopDotFilled,
+                  n === stopCount && styles.stopDotActive,
+                ]}
+              >
+                {n === stopCount && (
+                  <Text style={styles.stopDotNumber}>{n}</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Time estimate */}
+          <Text style={styles.stopCountEstimate}>
+            ⏱ Estimated time: {Math.round(stopCount * 12)}–
+            {Math.round(stopCount * 18)} minutes
+          </Text>
+        </Card>
+
         {/* Interests */}
         <Card style={styles.section}>
-          <SectionHeader emoji="❤️" title="What do you love?" />
-          <Text style={styles.hint}>Pick everything that fits</Text>
+          <View style={styles.sectionHeaderRow}>
+            <SectionHeader emoji="❤️" title="What do you love?" />
+            <View style={styles.optionalRow}>
+              <Text style={styles.optionalLabel}>Optional</Text>
+              <TouchableOpacity
+                style={styles.randomBtn}
+                onPress={handleRandomize}
+              >
+                <Text style={styles.randomBtnText}>🎲 Randomize</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <Text style={styles.hint}>
+            Pick what fits — or tap Randomize to let us choose
+          </Text>
+          {interests.length > 0 && (
+            <TouchableOpacity
+              style={styles.clearBtn}
+              onPress={() => {
+                setInterests([]);
+                setTone("");
+              }}
+            >
+              <Text style={styles.clearBtnText}>✕ Clear selections</Text>
+            </TouchableOpacity>
+          )}
           <View style={styles.chipGrid}>
             {INTERESTS.map(({ label, emoji }) => {
               const selected = interests.includes(label);
@@ -182,28 +300,35 @@ export default function GroupProfileScreen() {
 
         {/* Tone */}
         <Card style={styles.section}>
-          <SectionHeader emoji="🎭" title="What vibe?" />
-          {TONES.map(({ label, emoji }) => (
-            <TouchableOpacity
-              key={label}
-              style={[
-                styles.optionRow,
-                tone === label && styles.optionSelected,
-              ]}
-              onPress={() => setTone(label)}
-            >
-              <Text style={styles.optionEmoji}>{emoji}</Text>
-              <Text
-                style={[
-                  styles.optionText,
-                  tone === label && styles.optionTextSelected,
-                ]}
+          <View style={styles.sectionHeaderRow}>
+            <SectionHeader emoji="🎭" title="What vibe?" />
+            <Text style={styles.optionalLabel}>Optional</Text>
+          </View>
+          <Text style={styles.hint}>Leave blank for a surprise</Text>
+          {TONES.map(({ label, emoji }) => {
+            const isSelected = tone === label;
+            return (
+              <TouchableOpacity
+                key={label}
+                style={[styles.optionRow, isSelected && styles.optionSelected]}
+                onPress={() => {
+                  const newTone = isSelected ? "" : label;
+                  setTone(newTone);
+                }}
               >
-                {label}
-              </Text>
-              {tone === label && <Text style={styles.checkmark}>✓</Text>}
-            </TouchableOpacity>
-          ))}
+                <Text style={styles.optionEmoji}>{emoji}</Text>
+                <Text
+                  style={[
+                    styles.optionText,
+                    isSelected && styles.optionTextSelected,
+                  ]}
+                >
+                  {label}
+                </Text>
+                {isSelected && <Text style={styles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+            );
+          })}
         </Card>
 
         {/* Mobility */}
@@ -343,7 +468,6 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: SPACING.sm,
   },
   sectionEmoji: { fontSize: 22, marginRight: 8 },
   sectionTitle: {
@@ -431,4 +555,104 @@ const styles = StyleSheet.create({
   },
   diffLabelSelected: { color: COLORS.white },
   diffSub: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SPACING.sm,
+  },
+  optionalRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+  optionalLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.midGray,
+    fontStyle: "italic",
+  },
+  randomBtn: {
+    backgroundColor: COLORS.accentPale,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  randomBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.accent,
+    fontWeight: FONTS.weights.bold,
+  },
+  clearBtn: { alignSelf: "flex-start", marginBottom: SPACING.sm },
+  clearBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.danger,
+    fontWeight: FONTS.weights.medium,
+  },
+  stopCountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: SPACING.xl,
+    marginBottom: SPACING.md,
+  },
+  stopCountBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stopCountBtnText: {
+    color: COLORS.white,
+    fontSize: 28,
+    fontWeight: FONTS.weights.heavy,
+    lineHeight: 32,
+  },
+  stopCountDisplay: { alignItems: "center", minWidth: 80 },
+  stopCountValue: {
+    fontSize: 48,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    lineHeight: 52,
+  },
+  stopCountLabel: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    marginTop: 2,
+  },
+  stopDots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
+    marginBottom: SPACING.sm,
+  },
+  stopDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.offWhite,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stopDotFilled: {
+    backgroundColor: COLORS.accentPale,
+    borderColor: COLORS.accent,
+  },
+  stopDotActive: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  stopDotNumber: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.xs,
+    fontWeight: FONTS.weights.heavy,
+  },
+  stopCountEstimate: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    textAlign: "center",
+    fontStyle: "italic",
+  },
 });
