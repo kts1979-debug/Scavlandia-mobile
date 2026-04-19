@@ -44,6 +44,15 @@
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
-    "plugins": ["expo-location", "expo-camera"]
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Daytripper to use your location to detect your city for hunt generation.",
+          "locationWhenInUsePermission": "Allow Daytripper to use your location to detect your city for hunt generation."
+        }
+      ],
+      "expo-camera"
+    ]
   }
 }

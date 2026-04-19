@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import CityPicker from "../components/CityPicker";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, THEMES } from "../theme";
@@ -167,13 +168,7 @@ export default function GroupProfileScreen() {
         {/* City */}
         <Card style={styles.section}>
           <SectionHeader emoji="📍" title="Where are you?" />
-          <TextInput
-            style={styles.input}
-            value={city}
-            onChangeText={setCity}
-            placeholder="e.g. Seattle, WA"
-            placeholderTextColor={COLORS.midGray}
-          />
+          <CityPicker value={city} onChange={setCity} />
         </Card>
 
         {/* Group details */}
