@@ -12,7 +12,7 @@ import {
   updateSessionScore,
 } from "../services/leaderboardService";
 import { uploadHuntPhoto } from "../services/storageService";
-import { COLORS, RADIUS, SPACING } from "../theme";
+import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 import {
   Alert,
@@ -47,6 +47,9 @@ export default function ActiveHuntScreen() {
   const difficulty = hunt.groupProfile?.difficulty || "medium";
   const timerMinutes = difficulty === "hard" ? 120 : null; // Only Amazing Race has a timer
   const maxHints = difficulty === "hard" ? 2 : 3; // Amazing Race gets 2, others get 3
+
+  const [answerRevealed, setAnswerRevealed] = useState(false);
+  const [answerDeductions, setAnswerDeductions] = useState(0);
 
   const timer = useHuntTimer(
     timerMinutes ?? 999, // 999 minutes = effectively no timer
@@ -135,7 +138,8 @@ export default function ActiveHuntScreen() {
       );
 
       // Calculate new totals
-      const newTotalPoints = totalPoints + activeStop.pointValue;
+      const newTotalPoints =
+        totalPoints + activeStop.pointValue - answerDeductions;
       const newCompletedList = [...completedIndices, activeStopIndex];
 
       // Update state
@@ -167,7 +171,7 @@ export default function ActiveHuntScreen() {
           pathname: "/hunt-complete",
           params: {
             hunt: JSON.stringify(hunt),
-            totalPoints: String(newTotalPoints),
+            totalPoints: String(newTotalPoints - hintDeductions),
             completedStops: String(newCompletedList.length),
             sessionCode,
           },
@@ -179,6 +183,8 @@ export default function ActiveHuntScreen() {
       setActiveStopIndex((i) => i + 1);
       setAtLocation(false);
       setHintDeductions(0);
+      setAnswerRevealed(false);
+      setAnswerDeductions(0);
     } catch (error: any) {
       console.error("Submit stop error:", error.message);
       Alert.alert(
@@ -226,9 +232,8 @@ export default function ActiveHuntScreen() {
           </Text>
           <View style={styles.headerRight}>
             <Text style={styles.points}>
-              ⭐ {totalPoints - hintDeductions} pts
+              ⭐ {totalPoints - hintDeductions - answerDeductions} pts
             </Text>
-            {/* Leaderboard toggle — only shown in a session */}
             {sessionCode ? (
               <TouchableOpacity
                 style={styles.shareBtn}
@@ -243,19 +248,20 @@ export default function ActiveHuntScreen() {
           </View>
         </View>
 
-        {/* Timer section — only shown for Amazing Race difficulty */}
-{difficulty === 'hard' && (
-  <View style={styles.timerSection}>
-    <HuntTimer
-      display={timer.display}
-      isWarning={timer.isWarning}
-      isCritical={timer.isCritical}
-      estimatedMinutes={120}
-      stopsCompleted={completedIndices.length}
-      totalStops={hunt.stops.length}
-    />
-  </View>
-)}
+        {/* Timer — only shown for Amazing Race difficulty */}
+        {difficulty === "hard" && (
+          <View style={styles.timerSection}>
+            <HuntTimer
+              display={timer.display}
+              isWarning={timer.isWarning}
+              isCritical={timer.isCritical}
+              estimatedMinutes={120}
+              stopsCompleted={completedIndices.length}
+              totalStops={hunt.stops.length}
+            />
+          </View>
+        )}
+      </View>
 
       {/* Progress bar */}
       <View style={styles.progressContainer}>
@@ -316,7 +322,56 @@ export default function ActiveHuntScreen() {
             <Text style={styles.clueText}>{activeStop.clue}</Text>
           </View>
 
-          {/* Hints */}
+          {/* Answer reveal — shown before arrival */}
+          {!atLocation && (
+            <View style={styles.answerSection}>
+              {answerRevealed ? (
+                // Answer revealed — show location name
+                <View style={styles.answerRevealed}>
+                  <Text style={styles.answerRevealedLabel}>
+                    📍 Location Answer
+                  </Text>
+                  <Text style={styles.answerRevealedName}>
+                    {activeStop.locationName}
+                  </Text>
+                  <Text style={styles.answerRevealedAddress}>
+                    {activeStop.address}
+                  </Text>
+                  <Text style={styles.answerPenaltyNote}>
+                    -{answerDeductions} pts deducted
+                  </Text>
+                </View>
+              ) : (
+                // Show answer button
+                <TouchableOpacity
+                  style={styles.showAnswerBtn}
+                  onPress={() => {
+                    Alert.alert(
+                      "🔓 Reveal Answer?",
+                      `This will show you the location name and deduct 15 points.\n\nAre you sure?`,
+                      [
+                        { text: "Keep trying", style: "cancel" },
+                        {
+                          text: "Show me the answer",
+                          style: "destructive",
+                          onPress: () => {
+                            setAnswerRevealed(true);
+                            setAnswerDeductions((prev) => prev + 15);
+                          },
+                        },
+                      ],
+                    );
+                  }}
+                >
+                  <Text style={styles.showAnswerBtnText}>
+                    🔓 Show Answer (-15 pts)
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+
+          {/* Hints panel */}
           {activeStop.hints && activeStop.hints.length > 0 && (
             <HintsPanel
               hints={activeStop.hints}
@@ -490,4 +545,48 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   arrivalButtonText: { color: "#2E86C1", fontSize: 15, fontWeight: "600" },
+  answerSection: { marginBottom: SPACING.sm },
+  showAnswerBtn: {
+    borderWidth: 1.5,
+    borderColor: COLORS.danger,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    alignItems: "center",
+    backgroundColor: COLORS.lred,
+  },
+  showAnswerBtnText: {
+    color: COLORS.danger,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+  },
+  answerRevealed: {
+    backgroundColor: COLORS.lred,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.danger,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  answerRevealedLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.danger,
+    fontWeight: FONTS.weights.bold,
+    marginBottom: 4,
+  },
+  answerRevealedName: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.black,
+    marginBottom: 2,
+  },
+  answerRevealedAddress: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    marginBottom: SPACING.sm,
+  },
+  answerPenaltyNote: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.danger,
+    fontStyle: "italic",
+  },
 });

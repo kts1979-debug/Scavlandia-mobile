@@ -11,6 +11,8 @@ export const COLORS = {
   accent: "#E8622A", // Energetic orange — buttons and highlights
   accentLight: "#FF8C5A", // Lighter orange — hover states
   accentPale: "#FEF0E8", // Very pale orange — backgrounds
+  lred: "#FADBD8", // Pale red — answer reveal background
+  lgreen: "#D5F5E3", // Pale green — success backgrounds
 
   // Gameplay colors
   gold: "#F39C12", // Gold — points and achievements
