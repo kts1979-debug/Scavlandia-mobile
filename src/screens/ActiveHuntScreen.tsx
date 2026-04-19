@@ -97,6 +97,20 @@ export default function ActiveHuntScreen() {
 
   // ── Photo ──────────────────────────────────────────────────────────
   const handleTakePhoto = async () => {
+    Alert.alert("📸 Add Photo", "How would you like to add your photo?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "📷 Take Photo",
+        onPress: () => launchCamera(),
+      },
+      {
+        text: "🖼️ Choose from Library",
+        onPress: () => launchLibrary(),
+      },
+    ]);
+  };
+
+  const launchCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       Alert.alert(
@@ -108,8 +122,28 @@ export default function ActiveHuntScreen() {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ["images"],
       quality: 0.7,
-      allowsEditing: true,
-      aspect: [4, 3],
+      allowsEditing: false, // ← no forced crop on camera
+      exif: false,
+    });
+    if (!result.canceled && result.assets[0]) {
+      await handleSubmitStop(result.assets[0].uri);
+    }
+  };
+
+  const launchLibrary = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Photo library needed",
+        "Please allow photo library access in your phone settings.",
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.7,
+      allowsEditing: false, // ← no forced crop from library either
+      exif: false,
     });
     if (!result.canceled && result.assets[0]) {
       await handleSubmitStop(result.assets[0].uri);
@@ -402,7 +436,7 @@ export default function ActiveHuntScreen() {
                 <Text style={styles.photoButtonText}>
                   {submitting
                     ? "⬆️  Uploading photo..."
-                    : "📸  Take Photo to Complete"}
+                    : "📸  Add Photo to Complete"}
                 </Text>
               </TouchableOpacity>
             </View>

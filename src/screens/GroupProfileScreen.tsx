@@ -26,7 +26,18 @@ const INTERESTS = [
   { label: "Games", emoji: "🎮" },
   { label: "Shopping", emoji: "🛍️" },
   { label: "Birds", emoji: "🦅" },
+  { label: "True Crime", emoji: "🔪" },
+  { label: "Ghosts", emoji: "👻" },
+  { label: "Street Art", emoji: "🖌️" },
+  { label: "Coffee", emoji: "☕" },
+  { label: "Beer & Bars", emoji: "🍺" },
+  { label: "Hidden Gems", emoji: "💎" },
+  { label: "Street Food", emoji: "🌮" },
+  { label: "Parks", emoji: "🌳" },
+  { label: "Photography", emoji: "📷" },
+  { label: "Film & TV", emoji: "🎬" },
 ];
+
 const TONES = [
   { label: "Educational", emoji: "📚" },
   { label: "Silly & Fun", emoji: "😂" },
@@ -69,8 +80,11 @@ export default function GroupProfileScreen() {
     "Architecture",
     "Games",
     "Sports",
-    "Shopping",
-    "Birds",
+    "Hidden Gems",
+    "Street Art",
+    "Coffee",
+    "Parks",
+    "Photography",
   ];
   const RANDOM_TONES = [
     "Educational",
