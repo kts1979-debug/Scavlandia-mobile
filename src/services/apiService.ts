@@ -40,6 +40,17 @@ export const generateHunt = async (
   return response.data;
 };
 
+// Fetch nearby city suggestions when current city has too few locations
+export const getNearbyCities = async (
+  lat: number,
+  lng: number,
+  currentCity: string,
+): Promise<string[]> => {
+  const response = await api.get("/api/hunts/nearby-cities", {
+    params: { lat, lng, currentCity },
+  });
+  return response.data.nearbyCities || [];
+};
 // ── Fetch a saved hunt by ID ──────────────────────────────────────
 export const getHunt = async (huntId: string) => {
   const response = await api.get(`/api/hunts/${huntId}`);

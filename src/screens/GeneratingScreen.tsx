@@ -1,8 +1,9 @@
-// src/screens/GeneratingScreen.tsx — Animated game-like loading screen
+// src/screens/GeneratingScreen.tsx
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import NearbyCitySuggestion from "../components/NearbyCitySuggestion";
 import { generateHunt } from "../services/apiService";
 import { COLORS, FONTS, SPACING } from "../theme";
 
@@ -17,10 +18,14 @@ const STEPS = [
 
 export default function GeneratingScreen() {
   const params = useLocalSearchParams();
-  const city = params.city as string;
-  const groupProfile = JSON.parse(params.groupProfile as string);
+  const [city, setCity] = useState(params.city as string);
+  const [groupProfile, setGroupProfile] = useState(
+    JSON.parse(params.groupProfile as string),
+  );
   const [step, setStep] = useState(0);
   const [dots, setDots] = useState("");
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const [generating, setGenerating] = useState(true);
 
   useEffect(() => {
     const stepInterval = setInterval(
@@ -37,25 +42,60 @@ export default function GeneratingScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const result = await generateHunt(city, groupProfile);
-        router.replace({
-          pathname: "/hunt-setup",
-          params: { hunt: JSON.stringify(result.hunt) },
-        });
-      } catch (error: any) {
+  const runGeneration = async (huntCity: string, profile: any) => {
+    setGenerating(true);
+    setShowSuggestion(false);
+    try {
+      const result = await generateHunt(huntCity, profile);
+      router.replace({
+        pathname: "/hunt-setup",
+        params: { hunt: JSON.stringify(result.hunt) },
+      });
+    } catch (error: any) {
+      setGenerating(false);
+      const errorMsg = error.response?.data?.error || "";
+
+      // Check if it's a "too few locations" error
+      if (
+        errorMsg.includes("Only found") ||
+        errorMsg.includes("too few") ||
+        errorMsg.includes("not enough")
+      ) {
+        setShowSuggestion(true);
+      } else {
         Alert.alert(
           "Hunt Generation Failed",
-          error.response?.data?.error ||
-            "Something went wrong. Please try again.",
+          errorMsg || "Something went wrong. Please try again.",
           [{ text: "OK", onPress: () => router.back() }],
         );
       }
-    })();
+    }
+  };
+
+  useEffect(() => {
+    runGeneration(city, groupProfile);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Nearby city suggestion screen ──────────────────────────────
+  if (showSuggestion) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.suggestionContent}>
+          <NearbyCitySuggestion
+            currentCity={city}
+            onSelectCity={(newCity) => {
+              setCity(newCity);
+              setStep(0);
+              runGeneration(newCity, groupProfile);
+            }}
+            onDismiss={() => router.back()}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Generating screen ───────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -121,4 +161,5 @@ const styles = StyleSheet.create({
   },
   dotActive: { backgroundColor: COLORS.accent, width: 24 },
   note: { fontSize: FONTS.sizes.sm, color: "#7FB3D3" },
+  suggestionContent: { flex: 1, justifyContent: "center", padding: SPACING.lg },
 });
