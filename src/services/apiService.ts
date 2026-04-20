@@ -57,6 +57,34 @@ export const getHunt = async (huntId: string) => {
   return response.data;
 };
 
+// Fetch nearby museums
+export const getNearbyMuseums = async (
+  lat: number,
+  lng: number,
+): Promise<any[]> => {
+  const response = await api.get("/api/hunts/nearby-museums", {
+    params: { lat, lng },
+  });
+  return response.data.museums || [];
+};
+
+// Generate a museum hunt
+export const generateMuseumHunt = async (
+  museumName: string,
+  museumAddress: string,
+  museumLat: number,
+  museumLng: number,
+  groupProfile: GroupProfile,
+) => {
+  const response = await api.post("/api/hunts/generate-museum", {
+    museumName,
+    museumAddress,
+    museumLat,
+    museumLng,
+    groupProfile,
+  });
+  return response.data;
+};
 // ── Fetch all hunts for the current user ──────────────────────────
 export const getUserHunts = async () => {
   const response = await api.get("/api/hunts/user/my-hunts");

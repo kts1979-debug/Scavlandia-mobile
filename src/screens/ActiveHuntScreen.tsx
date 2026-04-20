@@ -33,6 +33,9 @@ export default function ActiveHuntScreen() {
   const hunt: Hunt = JSON.parse(params.hunt as string);
   const sessionCode = (params.sessionCode as string) || "";
 
+  // ── Museum mode ────────────────────────────────────────────────────
+  const isMuseumHunt = !!(hunt as any).isMuseumHunt;
+
   // ── State ──────────────────────────────────────────────────────────
   const [activeStopIndex, setActiveStopIndex] = useState(0);
   const [completedIndices, setCompletedIndices] = useState<number[]>([]);
@@ -148,8 +151,7 @@ export default function ActiveHuntScreen() {
     try {
       console.log("Uploading photo...");
 
-      // Save local URI immediately — used for album display
-      // Local URIs always load reliably on any device
+      // Save local URI immediately for album display
       const updatedLocalPhotos = {
         ...localPhotos,
         [String(activeStop.order)]: photoUri,
@@ -214,7 +216,7 @@ export default function ActiveHuntScreen() {
             totalPoints: String(newTotalPoints - hintDeductions),
             completedStops: String(newCompletedList.length),
             sessionCode,
-            stopPhotos: JSON.stringify(updatedLocalPhotos), // ← local URIs for display
+            stopPhotos: JSON.stringify(updatedLocalPhotos),
           },
         });
         return;
@@ -269,6 +271,7 @@ export default function ActiveHuntScreen() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.huntTitle} numberOfLines={1}>
+            {isMuseumHunt ? "🏛️ " : ""}
             {hunt.huntTitle}
           </Text>
           <View style={styles.headerRight}>
@@ -302,6 +305,15 @@ export default function ActiveHuntScreen() {
             />
           </View>
         )}
+
+        {/* Museum banner */}
+        {isMuseumHunt && (
+          <View style={styles.museumBanner}>
+            <Text style={styles.museumBannerText}>
+              🏛️ {(hunt as any).museumName || "Museum Hunt"} — Indoor Hunt
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Progress bar */}
@@ -320,7 +332,7 @@ export default function ActiveHuntScreen() {
         </View>
       )}
 
-      {/* Clue / Map toggle */}
+      {/* Clue / Map toggle — hide map tab for museum hunts */}
       <View style={styles.toggleRow}>
         <TouchableOpacity
           style={[styles.toggle, !showMap && styles.toggleActive]}
@@ -332,18 +344,22 @@ export default function ActiveHuntScreen() {
             📋 Clue
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggle, showMap && styles.toggleActive]}
-          onPress={() => setShowMap(true)}
-        >
-          <Text style={[styles.toggleText, showMap && styles.toggleTextActive]}>
-            🗺️ Map
-          </Text>
-        </TouchableOpacity>
+        {!isMuseumHunt && (
+          <TouchableOpacity
+            style={[styles.toggle, showMap && styles.toggleActive]}
+            onPress={() => setShowMap(true)}
+          >
+            <Text
+              style={[styles.toggleText, showMap && styles.toggleTextActive]}
+            >
+              🗺️ Map
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* Map view */}
-      {showMap && (
+      {/* Map view — not available for museum hunts */}
+      {showMap && !isMuseumHunt && (
         <View style={styles.mapContainer}>
           <HuntMap
             stops={hunt.stops}
@@ -363,13 +379,23 @@ export default function ActiveHuntScreen() {
             <Text style={styles.clueText}>{activeStop.clue}</Text>
           </View>
 
+          {/* Gallery location — museum hunts only */}
+          {isMuseumHunt && !atLocation && (activeStop as any).galleryOrRoom && (
+            <View style={styles.galleryCard}>
+              <Text style={styles.galleryLabel}>🗺️ Find it in</Text>
+              <Text style={styles.galleryText}>
+                {(activeStop as any).galleryOrRoom}
+              </Text>
+            </View>
+          )}
+
           {/* Answer reveal */}
           {!atLocation && (
             <View style={styles.answerSection}>
               {answerRevealed ? (
                 <View style={styles.answerRevealed}>
                   <Text style={styles.answerRevealedLabel}>
-                    📍 Location Answer
+                    {isMuseumHunt ? "🎨 Artwork Answer" : "📍 Location Answer"}
                   </Text>
                   <Text style={styles.answerRevealedName}>
                     {activeStop.locationName}
@@ -387,7 +413,7 @@ export default function ActiveHuntScreen() {
                   onPress={() => {
                     Alert.alert(
                       "🔓 Reveal Answer?",
-                      `This will show you the location name and deduct 15 points.\n\nAre you sure?`,
+                      `This will show you the ${isMuseumHunt ? "artwork name" : "location name"} and deduct 15 points.\n\nAre you sure?`,
                       [
                         { text: "Keep trying", style: "cancel" },
                         {
@@ -419,8 +445,8 @@ export default function ActiveHuntScreen() {
             />
           )}
 
-          {/* Distance */}
-          {distanceToStop !== null && !atLocation && (
+          {/* Distance — hidden for museum hunts (GPS unreliable indoors) */}
+          {distanceToStop !== null && !atLocation && !isMuseumHunt && (
             <View style={styles.distanceCard}>
               <Text style={styles.distanceText}>📡 {distanceToStop}m away</Text>
             </View>
@@ -429,7 +455,9 @@ export default function ActiveHuntScreen() {
           {/* Task card */}
           {atLocation && (
             <View style={styles.taskCard}>
-              <Text style={styles.taskLabel}>🎯 Your Task</Text>
+              <Text style={styles.taskLabel}>
+                {isMuseumHunt ? "🎨 Your Task" : "🎯 Your Task"}
+              </Text>
               <Text style={styles.taskText}>{activeStop.task}</Text>
               <Text style={styles.funFactLabel}>💡 Fun Fact</Text>
               <Text style={styles.funFactText}>{activeStop.funFact}</Text>
@@ -441,7 +469,9 @@ export default function ActiveHuntScreen() {
                 <Text style={styles.photoButtonText}>
                   {submitting
                     ? "⬆️  Uploading photo..."
-                    : "📸  Add Photo to Complete"}
+                    : isMuseumHunt
+                      ? "📸  Photograph the Artwork"
+                      : "📸  Add Photo to Complete"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -454,7 +484,9 @@ export default function ActiveHuntScreen() {
               onPress={handleManualArrival}
             >
               <Text style={styles.arrivalButtonText}>
-                {"📍  I'm at this location!"}
+                {isMuseumHunt
+                  ? "🎨  I found the artwork!"
+                  : "📍  I'm at this location!"}
               </Text>
             </TouchableOpacity>
           )}
@@ -498,6 +530,18 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.md,
     paddingHorizontal: SPACING.md,
   },
+  museumBanner: {
+    backgroundColor: "rgba(255,255,255,0.12)",
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  museumBannerText: {
+    color: "#AED6F1",
+    fontSize: FONTS.sizes.sm,
+    fontStyle: "italic",
+    textAlign: "center",
+  },
   progressContainer: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -529,6 +573,25 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   clueText: { fontSize: 17, color: "#FFFFFF", lineHeight: 26 },
+  galleryCard: {
+    backgroundColor: "#EBF5FB",
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+  },
+  galleryLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.primary,
+    fontWeight: FONTS.weights.bold,
+    marginBottom: 4,
+  },
+  galleryText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.black,
+    fontWeight: FONTS.weights.medium,
+  },
   distanceCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 8,

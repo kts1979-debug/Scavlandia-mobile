@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import NearbyCitySuggestion from "../components/NearbyCitySuggestion";
-import { generateHunt } from "../services/apiService";
+import { generateHunt, generateMuseumHunt } from "../services/apiService";
 import { COLORS, FONTS, SPACING } from "../theme";
 
 const STEPS = [
@@ -14,6 +14,15 @@ const STEPS = [
   { emoji: "✍️", text: "Writing custom clues..." },
   { emoji: "🎯", text: "Ordering stops perfectly..." },
   { emoji: "✨", text: "Almost ready..." },
+];
+
+const MUSEUM_STEPS = [
+  { emoji: "🏛️", text: "Exploring the museum..." },
+  { emoji: "🎨", text: "Finding iconic artworks..." },
+  { emoji: "🤖", text: "AI is crafting art clues..." },
+  { emoji: "🔍", text: "Writing mystery riddles..." },
+  { emoji: "🗺️", text: "Mapping gallery stops..." },
+  { emoji: "✨", text: "Your hunt is almost ready..." },
 ];
 
 export default function GeneratingScreen() {
@@ -27,9 +36,13 @@ export default function GeneratingScreen() {
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [generating, setGenerating] = useState(true);
 
+  // Determine which step messages to use
+  const isMuseumHunt = groupProfile.huntType === "museum";
+  const activeSteps = isMuseumHunt ? MUSEUM_STEPS : STEPS;
+
   useEffect(() => {
     const stepInterval = setInterval(
-      () => setStep((i) => (i + 1) % STEPS.length),
+      () => setStep((i) => (i + 1) % activeSteps.length),
       4000,
     );
     const dotInterval = setInterval(
@@ -40,13 +53,28 @@ export default function GeneratingScreen() {
       clearInterval(stepInterval);
       clearInterval(dotInterval);
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runGeneration = async (huntCity: string, profile: any) => {
     setGenerating(true);
     setShowSuggestion(false);
     try {
-      const result = await generateHunt(huntCity, profile);
+      let result;
+
+      if (profile.huntType === "museum" && profile.museum) {
+        // Museum hunt — use museum endpoint
+        result = await generateMuseumHunt(
+          profile.museum.name,
+          profile.museum.address,
+          profile.museum.lat,
+          profile.museum.lng,
+          profile,
+        );
+      } else {
+        // Regular city hunt
+        result = await generateHunt(huntCity, profile);
+      }
+
       router.replace({
         pathname: "/hunt-setup",
         params: { hunt: JSON.stringify(result.hunt) },
@@ -55,7 +83,6 @@ export default function GeneratingScreen() {
       setGenerating(false);
       const errorMsg = error.response?.data?.error || "";
 
-      // Check if it's a "too few locations" error
       if (
         errorMsg.includes("Only found") ||
         errorMsg.includes("too few") ||
@@ -99,24 +126,34 @@ export default function GeneratingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.bigEmoji}>{STEPS[step].emoji}</Text>
-        <Text style={styles.city}>📍 {city}</Text>
-        <Text style={styles.title}>Building your hunt{dots}</Text>
+        {/* Dynamic emoji and text based on hunt type */}
+        <Text style={styles.bigEmoji}>{activeSteps[step].emoji}</Text>
+        <Text style={styles.city}>
+          {isMuseumHunt ? "🏛️" : "📍"} {city}
+        </Text>
+        <Text style={styles.title}>
+          {isMuseumHunt ? "Building your museum hunt" : "Building your hunt"}
+          {dots}
+        </Text>
         <ActivityIndicator
           size="large"
           color={COLORS.accent}
           style={styles.spinner}
         />
-        <Text style={styles.stepText}>{STEPS[step].text}</Text>
+        <Text style={styles.stepText}>{activeSteps[step].text}</Text>
         <View style={styles.stepsRow}>
-          {STEPS.map((_, i) => (
+          {activeSteps.map((_, i) => (
             <View
               key={i}
               style={[styles.dot, i === step && styles.dotActive]}
             />
           ))}
         </View>
-        <Text style={styles.note}>This takes about 20–30 seconds</Text>
+        <Text style={styles.note}>
+          {isMuseumHunt
+            ? "Claude is crafting artwork clues..."
+            : "This takes about 20–30 seconds"}
+        </Text>
       </View>
     </SafeAreaView>
   );
