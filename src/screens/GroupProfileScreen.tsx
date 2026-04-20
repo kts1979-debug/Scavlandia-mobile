@@ -1,4 +1,4 @@
-// src/screens/GroupProfileScreen.tsx — Playful redesign
+// src/screens/GroupProfileScreen.tsx
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CityPicker from "../components/CityPicker";
-import MuseumPicker from "../components/MuseumPicker";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, THEMES } from "../theme";
@@ -47,11 +46,36 @@ const TONES = [
   { label: "Relaxed", emoji: "😌" },
   { label: "Exercise-Focused", emoji: "🏃" },
 ];
+
 const MOBILITY = [
   { label: "Walking only", emoji: "🚶" },
   { label: "Can take transit", emoji: "🚌" },
   { label: "Wheelchair accessible", emoji: "♿" },
   { label: "Mix of walking & driving", emoji: "🚗" },
+];
+
+const RANDOM_INTERESTS = [
+  "Food & Drink",
+  "History",
+  "Art",
+  "Nature",
+  "Music",
+  "Architecture",
+  "Games",
+  "Sports",
+  "Hidden Gems",
+  "Street Art",
+  "Coffee",
+  "Parks",
+  "Photography",
+];
+
+const RANDOM_TONES = [
+  "Educational",
+  "Silly & Fun",
+  "Competitive",
+  "Relaxed",
+  "Exercise-Focused",
 ];
 
 export default function GroupProfileScreen() {
@@ -64,8 +88,6 @@ export default function GroupProfileScreen() {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium",
   );
-  const [huntType, setHuntType] = useState<"regular" | "museum">("regular");
-  const [selectedMuseum, setSelectedMuseum] = useState<any>(null);
   const [theme, setTheme] = useState("adventure");
   const [stopCount, setStopCount] = useState(9);
 
@@ -75,101 +97,43 @@ export default function GroupProfileScreen() {
     );
   };
 
-  const RANDOM_INTERESTS = [
-    "Food & Drink",
-    "History",
-    "Art",
-    "Nature",
-    "Music",
-    "Architecture",
-    "Games",
-    "Sports",
-    "Hidden Gems",
-    "Street Art",
-    "Coffee",
-    "Parks",
-    "Photography",
-  ];
-  const RANDOM_TONES = [
-    "Educational",
-    "Silly & Fun",
-    "Competitive",
-    "Relaxed",
-    "Exercise-Focused",
-  ];
-
   const handleRandomize = () => {
-    // Pick 3-5 random interests
     const shuffled = [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5);
-    const count = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+    const count = Math.floor(Math.random() * 3) + 3;
     setInterests(shuffled.slice(0, count));
-
-    // Pick a random tone
-    const randomTone =
-      RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
-    setTone(randomTone);
+    setTone(RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)]);
   };
 
   const handleGenerate = () => {
-    if (!city.trim() && huntType === "regular")
+    if (!city.trim())
       return Alert.alert("Missing info", "Please enter a city name");
-
-    if (huntType === "museum" && !selectedMuseum)
-      return Alert.alert("Missing info", "Please select a museum first");
-
     if (!mobility)
       return Alert.alert("Missing info", "Please select a mobility option");
 
     const finalInterests =
       interests.length > 0
         ? interests
-        : RANDOM_INTERESTS.sort(() => Math.random() - 0.5).slice(0, 4);
+        : [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5).slice(0, 4);
 
     const finalTone =
       tone || RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
 
-    if (huntType === "museum") {
-      router.push({
-        pathname: "/generating",
-        params: {
-          city: selectedMuseum.name,
-          groupProfile: JSON.stringify({
-            ages: parseInt(ages) || 30,
-            groupSize: parseInt(groupSize) || 4,
-            interests: finalInterests,
-            tone: finalTone,
-            mobility,
-            difficulty,
-            theme,
-            stopCount,
-            huntType: "museum",
-            museum: {
-              name: selectedMuseum.name,
-              address: selectedMuseum.address,
-              lat: selectedMuseum.lat,
-              lng: selectedMuseum.lng,
-            },
-          }),
-        },
-      });
-    } else {
-      router.push({
-        pathname: "/generating",
-        params: {
-          city: city.trim(),
-          groupProfile: JSON.stringify({
-            ages: parseInt(ages) || 30,
-            groupSize: parseInt(groupSize) || 4,
-            interests: finalInterests,
-            tone: finalTone,
-            mobility,
-            difficulty,
-            theme,
-            stopCount,
-          }),
-        },
-      });
-    }
+    router.push({
+      pathname: "/generating",
+      params: {
+        city: city.trim(),
+        groupProfile: JSON.stringify({
+          ages: parseInt(ages) || 30,
+          groupSize: parseInt(groupSize) || 4,
+          interests: finalInterests,
+          tone: finalTone,
+          mobility,
+          difficulty,
+          theme,
+          stopCount,
+        }),
+      },
+    });
   };
 
   const SectionHeader = ({
@@ -191,89 +155,10 @@ export default function GroupProfileScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Build Your Hunt</Text>
+        <Text style={styles.pageTitle}>🏙️ City Hunt</Text>
         <Text style={styles.pageSubtitle}>
-          <Text>{"Tell us about your group and we'll do the rest"}</Text>
+          {"Tell us about your group and we'll do the rest"}
         </Text>
-
-        {/* Hunt Type */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🎯" title="Hunt Type" />
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                huntType === "regular" && styles.modeBtnActive,
-              ]}
-              onPress={() => {
-                setHuntType("regular");
-                setSelectedMuseum(null);
-              }}
-            >
-              <Text style={styles.modeEmoji}>🗺️</Text>
-              <Text
-                style={[
-                  styles.modeLabel,
-                  huntType === "regular" && styles.modeLabelActive,
-                ]}
-              >
-                City Hunt
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  huntType === "regular" && styles.modeSubActive,
-                ]}
-              >
-                Explore the city
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                huntType === "museum" && styles.modeBtnActive,
-              ]}
-              onPress={() => setHuntType("museum")}
-            >
-              <Text style={styles.modeEmoji}>🏛️</Text>
-              <Text
-                style={[
-                  styles.modeLabel,
-                  huntType === "museum" && styles.modeLabelActive,
-                ]}
-              >
-                Museum Hunt
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  huntType === "museum" && styles.modeSubActive,
-                ]}
-              >
-                Inside a museum
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Card>
-
-        {/* Museum picker — only shown when museum hunt selected */}
-        {huntType === "museum" && (
-          <Card style={styles.section}>
-            <SectionHeader emoji="🏛️" title="Select a Museum" />
-            <Text style={styles.hint}>Search nearby or type a museum name</Text>
-            <MuseumPicker onSelect={(museum) => setSelectedMuseum(museum)} />
-            {selectedMuseum && (
-              <View style={styles.selectedMuseumBanner}>
-                <Text style={styles.selectedMuseumName}>
-                  ✅ {selectedMuseum.name}
-                </Text>
-                <Text style={styles.selectedMuseumAddress}>
-                  {selectedMuseum.address}
-                </Text>
-              </View>
-            )}
-          </Card>
-        )}
 
         {/* City */}
         <Card style={styles.section}>
@@ -288,7 +173,7 @@ export default function GroupProfileScreen() {
             <View style={styles.halfField}>
               <Text style={styles.fieldLabel}>Average age</Text>
               <TextInput
-                style={[styles.input, styles.smallInput]}
+                style={styles.input}
                 value={ages}
                 onChangeText={setAges}
                 keyboardType="numeric"
@@ -300,7 +185,7 @@ export default function GroupProfileScreen() {
             <View style={styles.halfField}>
               <Text style={styles.fieldLabel}>Group size</Text>
               <TextInput
-                style={[styles.input, styles.smallInput]}
+                style={styles.input}
                 value={groupSize}
                 onChangeText={setGroupSize}
                 keyboardType="numeric"
@@ -316,8 +201,6 @@ export default function GroupProfileScreen() {
         <Card style={styles.section}>
           <SectionHeader emoji="🚩" title="How many stops?" />
           <Text style={styles.hint}>More stops = longer adventure</Text>
-
-          {/* Current value display */}
           <View style={styles.stopCountRow}>
             <TouchableOpacity
               style={styles.stopCountBtn}
@@ -325,12 +208,10 @@ export default function GroupProfileScreen() {
             >
               <Text style={styles.stopCountBtnText}>−</Text>
             </TouchableOpacity>
-
             <View style={styles.stopCountDisplay}>
               <Text style={styles.stopCountValue}>{stopCount}</Text>
               <Text style={styles.stopCountLabel}>stops</Text>
             </View>
-
             <TouchableOpacity
               style={styles.stopCountBtn}
               onPress={() => setStopCount((prev) => Math.min(12, prev + 1))}
@@ -338,8 +219,6 @@ export default function GroupProfileScreen() {
               <Text style={styles.stopCountBtnText}>+</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Visual slider dots */}
           <View style={styles.stopDots}>
             {Array.from({ length: 12 - 6 + 1 }, (_, i) => i + 6).map((n) => (
               <TouchableOpacity
@@ -357,8 +236,6 @@ export default function GroupProfileScreen() {
               </TouchableOpacity>
             ))}
           </View>
-
-          {/* Time estimate */}
           <Text style={styles.stopCountEstimate}>
             ⏱ Estimated time: {Math.round(stopCount * 12)}–
             {Math.round(stopCount * 18)} minutes
@@ -430,10 +307,7 @@ export default function GroupProfileScreen() {
               <TouchableOpacity
                 key={label}
                 style={[styles.optionRow, isSelected && styles.optionSelected]}
-                onPress={() => {
-                  const newTone = isSelected ? "" : label;
-                  setTone(newTone);
-                }}
+                onPress={() => setTone(isSelected ? "" : label)}
               >
                 <Text style={styles.optionEmoji}>{emoji}</Text>
                 <Text
@@ -476,7 +350,7 @@ export default function GroupProfileScreen() {
           ))}
         </Card>
 
-        {/* Difficulty — NOW INSIDE THE RETURN STATEMENT */}
+        {/* Difficulty */}
         <Card style={styles.section}>
           <SectionHeader emoji="🎯" title="Difficulty" />
           <Text style={styles.hint}>
@@ -521,7 +395,7 @@ export default function GroupProfileScreen() {
           </View>
         </Card>
 
-        {/* Theme — NOW INSIDE THE RETURN STATEMENT */}
+        {/* Theme */}
         <Card style={styles.section}>
           <SectionHeader emoji="🎨" title="Hunt Theme" />
           <Text style={styles.hint}>Sets the personality of your clues</Text>
@@ -584,10 +458,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   section: { marginBottom: SPACING.md },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  sectionHeader: { flexDirection: "row", alignItems: "center" },
   sectionEmoji: { fontSize: 22, marginRight: 8 },
   sectionTitle: {
     fontSize: FONTS.sizes.lg,
@@ -616,7 +487,6 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     backgroundColor: COLORS.offWhite,
   },
-  smallInput: {},
   chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
     flexDirection: "row",
@@ -671,9 +541,14 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
     color: COLORS.black,
     marginBottom: 2,
+    textAlign: "center",
   },
   diffLabelSelected: { color: COLORS.white },
-  diffSub: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
+  diffSub: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    textAlign: "center",
+  },
   sectionHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -773,45 +648,5 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     textAlign: "center",
     fontStyle: "italic",
-  },
-  modeRow: { flexDirection: "row", gap: SPACING.sm },
-  modeBtn: {
-    flex: 1,
-    alignItems: "center",
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 2,
-    borderColor: COLORS.midGray,
-    backgroundColor: COLORS.offWhite,
-  },
-  modeBtnActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  modeEmoji: { fontSize: 28, marginBottom: 6 },
-  modeLabel: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
-    color: COLORS.black,
-    marginBottom: 2,
-  },
-  modeLabelActive: { color: COLORS.white },
-  modeSub: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
-  modeSubActive: { color: "rgba(255,255,255,0.7)" },
-  selectedMuseumBanner: {
-    backgroundColor: COLORS.lgreen,
-    borderRadius: RADIUS.md,
-    padding: SPACING.sm,
-    marginTop: SPACING.sm,
-  },
-  selectedMuseumName: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
-    color: COLORS.lgreen,
-  },
-  selectedMuseumAddress: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.darkGray,
-    marginTop: 2,
   },
 });

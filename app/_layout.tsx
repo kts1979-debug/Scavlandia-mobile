@@ -42,6 +42,8 @@ function RootStack() {
         name="community-leaderboard"
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="hunt-type" options={{ headerShown: false }} />
+      <Stack.Screen name="museum-profile" options={{ headerShown: false }} />
       <Stack.Screen name="photo-album" options={{ headerShown: false }} />
     </Stack>
   );

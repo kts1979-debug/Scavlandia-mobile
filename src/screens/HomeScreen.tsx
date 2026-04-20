@@ -63,7 +63,7 @@ export default function HomeScreen() {
           </Text>
           <Button
             label="Start a Hunt"
-            onPress={() => router.push("/group-profile")}
+            onPress={() => router.push("/hunt-type")}
             variant="accent"
             size="lg"
             emoji="🚀"
