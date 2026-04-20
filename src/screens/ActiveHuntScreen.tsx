@@ -42,43 +42,40 @@ export default function ActiveHuntScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [hintDeductions, setHintDeductions] = useState(0);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [answerRevealed, setAnswerRevealed] = useState(false);
+  const [answerDeductions, setAnswerDeductions] = useState(0);
+  const [stopPhotos, setStopPhotos] = useState<Record<string, string>>({});
+  const [localPhotos, setLocalPhotos] = useState<Record<string, string>>({});
 
   // ── Difficulty & timer ─────────────────────────────────────────────
   const difficulty = hunt.groupProfile?.difficulty || "medium";
-  const timerMinutes = difficulty === "hard" ? 120 : null; // Only Amazing Race has a timer
-  const maxHints = difficulty === "hard" ? 2 : 3; // Amazing Race gets 2, others get 3
+  const timerMinutes = difficulty === "hard" ? 120 : null;
+  const maxHints = difficulty === "hard" ? 2 : 3;
 
-  const [answerRevealed, setAnswerRevealed] = useState(false);
-  const [answerDeductions, setAnswerDeductions] = useState(0);
-
-  const timer = useHuntTimer(
-    timerMinutes ?? 999, // 999 minutes = effectively no timer
-    () => {
-      // Only show time's up alert for Amazing Race
-      if (difficulty === "hard") {
-        Alert.alert(
-          "⏱ Time's Up!",
-          `Your Amazing Race has ended! You completed ${completedIndices.length} of ${hunt.stops.length} stops and earned ${totalPoints} points.`,
-          [
-            {
-              text: "See Results",
-              onPress: () =>
-                router.replace({
-                  pathname: "/hunt-complete",
-                  params: {
-                    hunt: JSON.stringify(hunt),
-                    totalPoints: String(totalPoints),
-                    completedStops: String(completedIndices.length),
-                    sessionCode,
-                    stopPhotos: JSON.stringify(stopPhotos),
-                  },
-                }),
-            },
-          ],
-        );
-      }
-    },
-  );
+  const timer = useHuntTimer(timerMinutes ?? 999, () => {
+    if (difficulty === "hard") {
+      Alert.alert(
+        "⏱ Time's Up!",
+        `Your Amazing Race has ended! You completed ${completedIndices.length} of ${hunt.stops.length} stops and earned ${totalPoints} points.`,
+        [
+          {
+            text: "See Results",
+            onPress: () =>
+              router.replace({
+                pathname: "/hunt-complete",
+                params: {
+                  hunt: JSON.stringify(hunt),
+                  totalPoints: String(totalPoints),
+                  completedStops: String(completedIndices.length),
+                  sessionCode,
+                  stopPhotos: JSON.stringify(localPhotos),
+                },
+              }),
+          },
+        ],
+      );
+    }
+  });
 
   const activeStop: HuntStop = hunt.stops[activeStopIndex];
 
@@ -100,14 +97,8 @@ export default function ActiveHuntScreen() {
   const handleTakePhoto = async () => {
     Alert.alert("📸 Add Photo", "How would you like to add your photo?", [
       { text: "Cancel", style: "cancel" },
-      {
-        text: "📷 Take Photo",
-        onPress: () => launchCamera(),
-      },
-      {
-        text: "🖼️ Choose from Library",
-        onPress: () => launchLibrary(),
-      },
+      { text: "📷 Take Photo", onPress: () => launchCamera() },
+      { text: "🖼️ Choose from Library", onPress: () => launchLibrary() },
     ]);
   };
 
@@ -123,15 +114,13 @@ export default function ActiveHuntScreen() {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ["images"],
       quality: 0.7,
-      allowsEditing: false, // ← no forced crop on camera
+      allowsEditing: false,
       exif: false,
     });
     if (!result.canceled && result.assets[0]) {
       await handleSubmitStop(result.assets[0].uri);
     }
   };
-
-  const [stopPhotos, setStopPhotos] = useState<Record<number, string>>({});
 
   const launchLibrary = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -145,7 +134,7 @@ export default function ActiveHuntScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       quality: 0.7,
-      allowsEditing: false, // ← no forced crop from library either
+      allowsEditing: false,
       exif: false,
     });
     if (!result.canceled && result.assets[0]) {
@@ -157,19 +146,30 @@ export default function ActiveHuntScreen() {
   const handleSubmitStop = async (photoUri: string) => {
     setSubmitting(true);
     try {
-      // Upload photo
       console.log("Uploading photo...");
+
+      // Save local URI immediately — used for album display
+      // Local URIs always load reliably on any device
+      const updatedLocalPhotos = {
+        ...localPhotos,
+        [String(activeStop.order)]: photoUri,
+      };
+      setLocalPhotos(updatedLocalPhotos);
+
+      // Upload to Firebase Storage
       const photoUrl = await uploadHuntPhoto(
         photoUri,
         hunt.huntId,
         activeStop.order,
       );
-      // Save photo URL for the album
-      setStopPhotos((prev) => ({
-        ...prev,
-        [String(activeStop.order)]: photoUrl,
-      }));
       console.log("Photo uploaded, submitting stop...");
+
+      // Save Firebase URL for permanent storage
+      const updatedPhotos = {
+        ...stopPhotos,
+        [String(activeStop.order)]: photoUrl,
+      };
+      setStopPhotos(updatedPhotos);
 
       // Save to backend
       await submitStop(
@@ -184,11 +184,10 @@ export default function ActiveHuntScreen() {
         totalPoints + activeStop.pointValue - answerDeductions;
       const newCompletedList = [...completedIndices, activeStopIndex];
 
-      // Update state
       setCompletedIndices(newCompletedList);
       setTotalPoints(newTotalPoints);
 
-      // Update session leaderboard if in a session
+      // Update session leaderboard
       if (sessionCode) {
         updateSessionScore(
           sessionCode,
@@ -204,7 +203,6 @@ export default function ActiveHuntScreen() {
       if (activeStopIndex >= hunt.stops.length - 1) {
         timer.stop();
 
-        // Update all-time stats
         updateAllTimeStats(newTotalPoints, hunt.city, hunt.huntTitle).catch(
           (err) => console.warn("All-time stats update failed:", err.message),
         );
@@ -216,7 +214,7 @@ export default function ActiveHuntScreen() {
             totalPoints: String(newTotalPoints - hintDeductions),
             completedStops: String(newCompletedList.length),
             sessionCode,
-            stopPhotos: JSON.stringify(stopPhotos),
+            stopPhotos: JSON.stringify(updatedLocalPhotos), // ← local URIs for display
           },
         });
         return;
@@ -291,7 +289,7 @@ export default function ActiveHuntScreen() {
           </View>
         </View>
 
-        {/* Timer — only shown for Amazing Race difficulty */}
+        {/* Timer — only shown for Amazing Race */}
         {difficulty === "hard" && (
           <View style={styles.timerSection}>
             <HuntTimer
@@ -365,11 +363,10 @@ export default function ActiveHuntScreen() {
             <Text style={styles.clueText}>{activeStop.clue}</Text>
           </View>
 
-          {/* Answer reveal — shown before arrival */}
+          {/* Answer reveal */}
           {!atLocation && (
             <View style={styles.answerSection}>
               {answerRevealed ? (
-                // Answer revealed — show location name
                 <View style={styles.answerRevealed}>
                   <Text style={styles.answerRevealedLabel}>
                     📍 Location Answer
@@ -385,7 +382,6 @@ export default function ActiveHuntScreen() {
                   </Text>
                 </View>
               ) : (
-                // Show answer button
                 <TouchableOpacity
                   style={styles.showAnswerBtn}
                   onPress={() => {
@@ -414,7 +410,7 @@ export default function ActiveHuntScreen() {
             </View>
           )}
 
-          {/* Hints panel */}
+          {/* Hints */}
           {activeStop.hints && activeStop.hints.length > 0 && (
             <HintsPanel
               hints={activeStop.hints}
@@ -430,7 +426,7 @@ export default function ActiveHuntScreen() {
             </View>
           )}
 
-          {/* Task card — shown after arrival */}
+          {/* Task card */}
           {atLocation && (
             <View style={styles.taskCard}>
               <Text style={styles.taskLabel}>🎯 Your Task</Text>

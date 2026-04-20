@@ -1,9 +1,5 @@
 // src/services/storageService.ts
-// Handles uploading photos to Firebase Storage.
-// Uses fetch() to convert the photo URI to a blob —
-// avoids any expo-file-system dependency entirely.
-
-import { getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
+import { getStorage, ref, uploadBytes } from "firebase/storage";
 import { auth } from "../utils/firebaseConfig";
 
 const storage = getStorage();
@@ -13,13 +9,14 @@ export async function uploadHuntPhoto(
   huntId: string,
   stopOrder: number,
 ): Promise<string> {
+  console.log("🔥 NEW storageService running - stopOrder:", stopOrder);
+
   const user = auth.currentUser;
   if (!user) throw new Error("Must be logged in to upload photos");
 
   console.log("Starting photo upload...");
 
   // Convert the local photo URI to a blob using fetch()
-  // This approach works on all Expo versions without any file system API
   const response = await fetch(photoUri);
   const blob = await response.blob();
 
@@ -34,9 +31,19 @@ export async function uploadHuntPhoto(
   const storageRef = ref(storage, storagePath);
   await uploadBytes(storageRef, blob, { contentType: "image/jpeg" });
 
-  // Get and return the permanent download URL
-  const downloadURL = await getDownloadURL(storageRef);
-  console.log("Upload successful:", downloadURL);
+  // Build download URL manually with encoded slashes
+  const encodedPath = `huntPhotos%2F${user.uid}%2F${huntId}%2F${fileName}`;
+  const bucket = "daytripper-prod.firebasestorage.app";
 
+  // Fetch the download token from Firebase Storage metadata
+  const metaResponse = await fetch(
+    `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}`,
+  );
+  const metadata = await metaResponse.json();
+  const token = metadata.downloadTokens;
+
+  const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}?alt=media&token=${token}`;
+
+  console.log("Upload successful:", downloadURL);
   return downloadURL;
 }

@@ -229,7 +229,9 @@ export default function PhotoAlbumScreen() {
             >
               <View style={styles.photoMarker}>
                 <Image
-                  source={{ uri: getPhoto(stop.order) }}
+                  source={{
+                    uri: getPhoto(stop.order),
+                  }}
                   style={styles.photoMarkerImage}
                 />
                 <View style={styles.photoMarkerBadge}>
@@ -271,8 +273,18 @@ export default function PhotoAlbumScreen() {
               {stopsWithPhotos.map((stop) => (
                 <View key={stop.order} style={styles.gridPhotoContainer}>
                   <Image
-                    source={{ uri: getPhoto(stop.order) }}
+                    source={{
+                      uri: getPhoto(stop.order),
+                    }}
                     style={styles.gridPhoto}
+                    onError={(e) =>
+                      console.log(
+                        "Image load error stop",
+                        stop.order,
+                        e.nativeEvent.error,
+                      )
+                    }
+                    onLoad={() => console.log("Image loaded stop", stop.order)}
                   />
                   <View style={styles.gridPhotoOverlay}>
                     <Text style={styles.gridPhotoNum}>{stop.order}</Text>
@@ -301,9 +313,15 @@ export default function PhotoAlbumScreen() {
         <ViewShot ref={slideshowRef} options={{ format: "png", quality: 0.9 }}>
           <View style={styles.slideContainer}>
             <Image
-              source={{ uri: getPhoto(stop.order) }}
+              source={{
+                uri: getPhoto(stop.order),
+              }}
               style={styles.slidePhoto}
               resizeMode="cover"
+              onError={(e) =>
+                console.log("Slideshow image error:", e.nativeEvent.error)
+              }
+              onLoad={() => console.log("Slideshow image loaded")}
             />
             <View style={styles.slideOverlay}>
               <View style={styles.slideStopBadge}>
