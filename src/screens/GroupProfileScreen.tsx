@@ -54,9 +54,6 @@ const MOBILITY = [
   { label: "Mix of walking & driving", emoji: "🚗" },
 ];
 
-const [huntType, setHuntType] = useState<"regular" | "museum">("regular");
-const [selectedMuseum, setSelectedMuseum] = useState<any>(null);
-
 export default function GroupProfileScreen() {
   const [city, setCity] = useState("");
   const [ages, setAges] = useState("30");
@@ -67,6 +64,8 @@ export default function GroupProfileScreen() {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium",
   );
+  const [huntType, setHuntType] = useState<"regular" | "museum">("regular");
+  const [selectedMuseum, setSelectedMuseum] = useState<any>(null);
   const [theme, setTheme] = useState("adventure");
   const [stopCount, setStopCount] = useState(9);
 
@@ -808,7 +807,7 @@ const styles = StyleSheet.create({
   selectedMuseumName: {
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
-    color: COLORS.green,
+    color: COLORS.lgreen,
   },
   selectedMuseumAddress: {
     fontSize: FONTS.sizes.sm,

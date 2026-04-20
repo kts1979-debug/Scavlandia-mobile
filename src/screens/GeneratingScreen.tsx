@@ -28,13 +28,10 @@ const MUSEUM_STEPS = [
 export default function GeneratingScreen() {
   const params = useLocalSearchParams();
   const [city, setCity] = useState(params.city as string);
-  const [groupProfile, setGroupProfile] = useState(
-    JSON.parse(params.groupProfile as string),
-  );
+  const [groupProfile] = useState(JSON.parse(params.groupProfile as string));
   const [step, setStep] = useState(0);
   const [dots, setDots] = useState("");
   const [showSuggestion, setShowSuggestion] = useState(false);
-  const [generating, setGenerating] = useState(true);
 
   // Determine which step messages to use
   const isMuseumHunt = groupProfile.huntType === "museum";
@@ -56,8 +53,6 @@ export default function GeneratingScreen() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const runGeneration = async (huntCity: string, profile: any) => {
-    setGenerating(true);
-    setShowSuggestion(false);
     try {
       let result;
 

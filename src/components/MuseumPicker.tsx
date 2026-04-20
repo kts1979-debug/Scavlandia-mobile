@@ -67,7 +67,7 @@ export default function MuseumPicker({ onSelect }: MuseumPickerProps) {
         );
         setMode("type");
       }
-    } catch (err) {
+    } catch {
       Alert.alert(
         "Error",
         "Could not search for museums. Please try typing a name instead.",
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectedBannerText: {
-    color: COLORS.green,
+    color: COLORS.lgreen,
     fontSize: FONTS.sizes.sm,
     fontWeight: FONTS.weights.bold,
   },
