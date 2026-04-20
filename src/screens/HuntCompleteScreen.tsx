@@ -14,6 +14,7 @@ export default function HuntCompleteScreen() {
   const totalPoints = parseInt(params.totalPoints as string);
   const completedStops = parseInt(params.completedStops as string);
   const sessionCode = (params.sessionCode as string) || "";
+  const stopPhotos = (params.stopPhotos as string) || "{}";
 
   const handleShare = async () => {
     try {
@@ -88,6 +89,22 @@ export default function HuntCompleteScreen() {
           variant="accent"
           size="lg"
           emoji="📤"
+          style={styles.btn}
+        />
+        <Button
+          label="View Photo Album"
+          onPress={() =>
+            router.push({
+              pathname: "/photo-album",
+              params: {
+                hunt: JSON.stringify(hunt),
+                stopPhotos,
+              },
+            })
+          }
+          variant="primary"
+          size="lg"
+          emoji="📸"
           style={styles.btn}
         />
         <Button

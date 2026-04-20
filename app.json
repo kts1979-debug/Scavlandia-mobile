@@ -52,7 +52,8 @@
           "locationWhenInUsePermission": "Allow Daytripper to use your location to detect your city for hunt generation."
         }
       ],
-      "expo-camera"
+      "expo-camera",
+      "expo-media-library"
     ]
   }
 }

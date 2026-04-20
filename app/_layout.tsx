@@ -42,6 +42,7 @@ function RootStack() {
         name="community-leaderboard"
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="photo-album" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -70,6 +70,7 @@ export default function ActiveHuntScreen() {
                     totalPoints: String(totalPoints),
                     completedStops: String(completedIndices.length),
                     sessionCode,
+                    stopPhotos: JSON.stringify(stopPhotos),
                   },
                 }),
             },
@@ -130,6 +131,8 @@ export default function ActiveHuntScreen() {
     }
   };
 
+  const [stopPhotos, setStopPhotos] = useState<Record<number, string>>({});
+
   const launchLibrary = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -161,6 +164,8 @@ export default function ActiveHuntScreen() {
         hunt.huntId,
         activeStop.order,
       );
+      // Save photo URL for the album
+      setStopPhotos((prev) => ({ ...prev, [activeStop.order]: photoUrl }));
       console.log("Photo uploaded, submitting stop...");
 
       // Save to backend
@@ -208,6 +213,7 @@ export default function ActiveHuntScreen() {
             totalPoints: String(newTotalPoints - hintDeductions),
             completedStops: String(newCompletedList.length),
             sessionCode,
+            stopPhotos: JSON.stringify(stopPhotos),
           },
         });
         return;
