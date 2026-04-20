@@ -96,13 +96,10 @@ export default function HuntCompleteScreen() {
           onPress={() =>
             router.push({
               pathname: "/photo-album",
-              params: {
-                hunt: JSON.stringify(hunt),
-                stopPhotos,
-              },
+              params: { hunt: JSON.stringify(hunt), stopPhotos },
             })
           }
-          variant="primary"
+          variant="secondary" // ← change from 'primary' to 'secondary'
           size="lg"
           emoji="📸"
           style={styles.btn}

@@ -13,7 +13,6 @@ import {
   Alert,
   Dimensions,
   Image,
-  SafeAreaView,
   ScrollView,
   Share,
   StyleSheet,
@@ -22,6 +21,7 @@ import {
   View,
 } from "react-native";
 import MapView, { Callout, Marker } from "react-native-maps";
+import { SafeAreaView } from "react-native-safe-area-context";
 import ViewShot from "react-native-view-shot";
 import { Hunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
@@ -37,6 +37,12 @@ export default function PhotoAlbumScreen() {
   const hunt: Hunt = JSON.parse(params.hunt as string);
   const stopPhotos: Record<number, string> = JSON.parse(
     (params.stopPhotos as string) || "{}",
+  );
+  console.log("Stop photos received:", JSON.stringify(stopPhotos));
+  console.log("Number of photos:", Object.keys(stopPhotos).length);
+  console.log(
+    "Hunt stops:",
+    hunt.stops.map((s) => s.order),
   );
 
   const [activeTab, setActiveTab] = useState<TabType>("grid");
@@ -499,6 +505,22 @@ export default function PhotoAlbumScreen() {
         </ScrollView>
       )}
 
+      {/* Download Modal */}
+      <Modal
+        visible={showFormatMenu}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowFormatMenu(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <ScrollView>
+              <DownloadMenu />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Tab bar */}
       {!showFormatMenu && (
         <>
@@ -848,5 +870,17 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     textAlign: "center",
     lineHeight: 22,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContainer: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    maxHeight: "80%",
+    paddingBottom: 40,
   },
 });
