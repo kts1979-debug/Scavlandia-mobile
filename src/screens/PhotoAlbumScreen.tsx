@@ -1,8 +1,4 @@
 // src/screens/PhotoAlbumScreen.tsx
-// Photo album shown after hunt completion.
-// Three views: Map, Grid, Slideshow.
-// Supports download and social sharing.
-
 import * as MediaLibrary from "expo-media-library";
 import * as Print from "expo-print";
 import { router, useLocalSearchParams } from "expo-router";
@@ -13,6 +9,7 @@ import {
   Alert,
   Dimensions,
   Image,
+  Modal,
   ScrollView,
   Share,
   StyleSheet,
@@ -27,7 +24,6 @@ import { Hunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const COLLAGE_SIZE = SCREEN_WIDTH - SPACING.lg * 2;
 
 type TabType = "map" | "grid" | "slideshow";
 type FormatType = "square" | "story" | "landscape";
@@ -35,9 +31,18 @@ type FormatType = "square" | "story" | "landscape";
 export default function PhotoAlbumScreen() {
   const params = useLocalSearchParams();
   const hunt: Hunt = JSON.parse(params.hunt as string);
-  const stopPhotos: Record<number, string> = JSON.parse(
-    (params.stopPhotos as string) || "{}",
-  );
+  const rawPhotos = JSON.parse((params.stopPhotos as string) || "{}");
+
+  // Normalize all keys to strings
+  const stopPhotos: Record<string, string> = {};
+  Object.keys(rawPhotos).forEach((k) => {
+    stopPhotos[String(k)] = rawPhotos[k];
+  });
+
+  // Helper to get photo URL by stop order
+  const getPhoto = (order: number): string | undefined =>
+    stopPhotos[String(order)];
+
   console.log("Stop photos received:", JSON.stringify(stopPhotos));
   console.log("Number of photos:", Object.keys(stopPhotos).length);
   console.log(
@@ -50,24 +55,16 @@ export default function PhotoAlbumScreen() {
   const [downloading, setDownloading] = useState(false);
   const [showFormatMenu, setShowFormatMenu] = useState(false);
 
-  const gridRef = useRef<ViewShot>(null);
-  const slideshowRef = useRef<ViewShot>(null);
-  const collageRef = useRef<ViewShot>(null);
+  const collageRef = useRef<ViewShot | null>(null);
+  const slideshowRef = useRef<ViewShot | null>(null);
 
-  // Build list of stops that have photos
-  const stopsWithPhotos = hunt.stops.filter((stop) => stopPhotos[stop.order]);
-
+  // Only include stops that have photos
+  const stopsWithPhotos = hunt.stops.filter((stop) => !!getPhoto(stop.order));
   const totalPhotos = stopsWithPhotos.length;
 
-  // ── Request media library permissions ─────────────────────────
-  const requestPermission = async () => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    return status === "granted";
-  };
-
-  // ── Capture a view as an image ─────────────────────────────────
+  // ── Capture view as image ──────────────────────────────────────
   const captureView = async (
-    ref: React.RefObject<ViewShot>,
+    ref: React.RefObject<ViewShot | null>,
   ): Promise<string | null> => {
     try {
       const uri = await ref.current?.capture?.();
@@ -78,55 +75,56 @@ export default function PhotoAlbumScreen() {
     }
   };
 
-  // ── Save to camera roll ────────────────────────────────────────
+  // ── Save individual photos to camera roll ──────────────────────
   const saveToPhotos = async () => {
-    const hasPermission = await requestPermission();
-    if (!hasPermission) {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== "granted") {
       Alert.alert(
         "Permission needed",
         "Please allow photo library access in settings.",
       );
       return;
     }
-
     setDownloading(true);
     try {
-      // Save each individual stop photo
       let saved = 0;
       for (const stop of stopsWithPhotos) {
-        const url = stopPhotos[stop.order];
+        const url = getPhoto(stop.order);
         if (url) {
           await MediaLibrary.saveToLibraryAsync(url);
           saved++;
         }
       }
       Alert.alert("✅ Saved!", `${saved} photos saved to your camera roll.`);
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Could not save photos. Please try again.");
     } finally {
       setDownloading(false);
     }
   };
 
-  // ── Save as collage ────────────────────────────────────────────
+  // ── Save collage to camera roll ────────────────────────────────
   const saveAsCollage = async () => {
-    const hasPermission = await requestPermission();
-    if (!hasPermission) {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status !== "granted") {
       Alert.alert(
         "Permission needed",
         "Please allow photo library access in settings.",
       );
       return;
     }
-
     setDownloading(true);
     try {
+      // Switch to grid tab so collageRef is rendered
+      setActiveTab("grid");
+      setShowFormatMenu(false);
+      await new Promise((r) => setTimeout(r, 500));
       const uri = await captureView(collageRef);
       if (uri) {
         await MediaLibrary.saveToLibraryAsync(uri);
         Alert.alert("✅ Saved!", "Collage saved to your camera roll.");
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Could not save collage. Please try again.");
     } finally {
       setDownloading(false);
@@ -137,56 +135,39 @@ export default function PhotoAlbumScreen() {
   const saveAsPDF = async () => {
     setDownloading(true);
     try {
-      const htmlContent = generatePDFHtml();
-      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+      const stopRows = stopsWithPhotos
+        .map(
+          (stop) => `
+        <div style="page-break-inside:avoid;margin-bottom:30px;">
+          <h2 style="color:#1A3A5C;">${stop.order}. ${stop.locationName}</h2>
+          <p style="color:#666;">${stop.address}</p>
+          <img src="${getPhoto(stop.order)}"
+            style="width:100%;max-height:300px;object-fit:cover;border-radius:8px;" />
+          <p style="color:#444;font-style:italic;">💡 ${stop.funFact}</p>
+        </div>
+      `,
+        )
+        .join("");
+
+      const html = `
+        <html><head><meta charset="utf-8">
+        <style>body{font-family:Arial,sans-serif;padding:40px;}</style></head>
+        <body>
+          <h1 style="color:#1A3A5C;">${hunt.huntTitle}</h1>
+          <p style="color:#E8622A;">📍 ${hunt.city} · ${totalPhotos} stops</p>
+          ${stopRows}
+        </body></html>`;
+
+      const { uri } = await Print.printToFileAsync({ html });
       await Sharing.shareAsync(uri, {
         mimeType: "application/pdf",
         dialogTitle: `${hunt.huntTitle} — Photo Album`,
       });
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Could not generate PDF. Please try again.");
     } finally {
       setDownloading(false);
     }
-  };
-
-  // ── Generate PDF HTML ──────────────────────────────────────────
-  const generatePDFHtml = () => {
-    const stopRows = stopsWithPhotos
-      .map(
-        (stop) => `
-      <div style="page-break-inside: avoid; margin-bottom: 30px;">
-        <h2 style="color: #1A3A5C; margin-bottom: 8px;">
-          Stop ${stop.order}: ${stop.locationName}
-        </h2>
-        <p style="color: #666; margin-bottom: 12px;">${stop.address}</p>
-        <img src="${stopPhotos[stop.order]}"
-          style="width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px;" />
-        <p style="margin-top: 12px; color: #444; font-style: italic;">
-          💡 ${stop.funFact}
-        </p>
-      </div>
-    `,
-      )
-      .join("");
-
-    return `
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-            h1   { color: #1A3A5C; margin-bottom: 4px; }
-            .subtitle { color: #E8622A; margin-bottom: 30px; }
-          </style>
-        </head>
-        <body>
-          <h1>${hunt.huntTitle}</h1>
-          <p class="subtitle">📍 ${hunt.city} • ${totalPhotos} stops completed</p>
-          ${stopRows}
-        </body>
-      </html>
-    `;
   };
 
   // ── Share via social ───────────────────────────────────────────
@@ -194,10 +175,10 @@ export default function PhotoAlbumScreen() {
     setShowFormatMenu(false);
     setDownloading(true);
     try {
+      setActiveTab("grid");
+      await new Promise((r) => setTimeout(r, 500));
       const uri = await captureView(collageRef);
-      if (!uri) throw new Error("Could not capture image");
-
-      if (await Sharing.isAvailableAsync()) {
+      if (uri && (await Sharing.isAvailableAsync())) {
         await Sharing.shareAsync(uri, {
           mimeType: "image/png",
           dialogTitle: "Share your Daytripper adventure!",
@@ -206,28 +187,37 @@ export default function PhotoAlbumScreen() {
         await Share.share({
           message:
             `🗺️ Just completed a Daytripper hunt in ${hunt.city?.split(",")[0]}!\n\n` +
-            `Visited ${totalPhotos} amazing stops. Check out my adventure! 🏆`,
+            `Visited ${totalPhotos} amazing stops. 🏆`,
         });
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Could not share. Please try again.");
     } finally {
       setDownloading(false);
     }
   };
 
+  // ── Empty state ────────────────────────────────────────────────
+  const EmptyState = () => (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyEmoji}>📷</Text>
+      <Text style={styles.emptyTitle}>No photos yet</Text>
+      <Text style={styles.emptySub}>
+        Complete stops and take photos to build your album
+      </Text>
+    </View>
+  );
+
   // ── Map View ───────────────────────────────────────────────────
   const MapTab = () => {
     if (stopsWithPhotos.length === 0) return <EmptyState />;
-
-    const firstStop = stopsWithPhotos[0];
+    const first = stopsWithPhotos[0];
     const region = {
-      latitude: firstStop.lat,
-      longitude: firstStop.lng,
+      latitude: first.lat,
+      longitude: first.lng,
       latitudeDelta: 0.05,
       longitudeDelta: 0.05,
     };
-
     return (
       <View style={styles.mapContainer}>
         <MapView style={styles.map} initialRegion={region}>
@@ -239,7 +229,7 @@ export default function PhotoAlbumScreen() {
             >
               <View style={styles.photoMarker}>
                 <Image
-                  source={{ uri: stopPhotos[stop.order] }}
+                  source={{ uri: getPhoto(stop.order) }}
                   style={styles.photoMarkerImage}
                 />
                 <View style={styles.photoMarkerBadge}>
@@ -266,13 +256,10 @@ export default function PhotoAlbumScreen() {
   // ── Grid View ──────────────────────────────────────────────────
   const GridTab = () => {
     if (stopsWithPhotos.length === 0) return <EmptyState />;
-
     return (
       <ScrollView contentContainerStyle={styles.gridScroll}>
-        {/* Collage — this is what gets captured for sharing */}
         <ViewShot ref={collageRef} options={{ format: "png", quality: 0.9 }}>
           <View style={styles.collageContainer}>
-            {/* Album header */}
             <View style={styles.collageHeader}>
               <Text style={styles.collageTitle}>{hunt.huntTitle}</Text>
               <Text style={styles.collageCity}>📍 {hunt.city}</Text>
@@ -280,13 +267,11 @@ export default function PhotoAlbumScreen() {
                 {totalPhotos} stops · Daytripper
               </Text>
             </View>
-
-            {/* Photo grid */}
             <View style={styles.photoGrid}>
-              {stopsWithPhotos.map((stop, index) => (
+              {stopsWithPhotos.map((stop) => (
                 <View key={stop.order} style={styles.gridPhotoContainer}>
                   <Image
-                    source={{ uri: stopPhotos[stop.order] }}
+                    source={{ uri: getPhoto(stop.order) }}
                     style={styles.gridPhoto}
                   />
                   <View style={styles.gridPhotoOverlay}>
@@ -298,8 +283,6 @@ export default function PhotoAlbumScreen() {
                 </View>
               ))}
             </View>
-
-            {/* Album footer */}
             <View style={styles.collageFooter}>
               <Text style={styles.collageFooterText}>🗺️ daytripper.app</Text>
             </View>
@@ -313,128 +296,103 @@ export default function PhotoAlbumScreen() {
   const SlideshowTab = () => {
     if (stopsWithPhotos.length === 0) return <EmptyState />;
     const stop = stopsWithPhotos[slideIndex];
-
     return (
-      <ViewShot ref={slideshowRef} options={{ format: "png", quality: 0.9 }}>
-        <View style={styles.slideContainer}>
-          {/* Photo */}
-          <Image
-            source={{ uri: stopPhotos[stop.order] }}
-            style={styles.slidePhoto}
-            resizeMode="cover"
-          />
-
-          {/* Stop info overlay */}
-          <View style={styles.slideOverlay}>
-            <View style={styles.slideStopBadge}>
-              <Text style={styles.slideStopNum}>Stop {stop.order}</Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <ViewShot ref={slideshowRef} options={{ format: "png", quality: 0.9 }}>
+          <View style={styles.slideContainer}>
+            <Image
+              source={{ uri: getPhoto(stop.order) }}
+              style={styles.slidePhoto}
+              resizeMode="cover"
+            />
+            <View style={styles.slideOverlay}>
+              <View style={styles.slideStopBadge}>
+                <Text style={styles.slideStopNum}>Stop {stop.order}</Text>
+              </View>
+              <Text style={styles.slideName}>{stop.locationName}</Text>
+              <Text style={styles.slideAddress}>{stop.address}</Text>
             </View>
-            <Text style={styles.slideName}>{stop.locationName}</Text>
-            <Text style={styles.slideAddress}>{stop.address}</Text>
           </View>
-
-          {/* Fun fact */}
-          <View style={styles.slideFact}>
-            <Text style={styles.slideFactLabel}>💡 Fun Fact</Text>
-            <Text style={styles.slideFactText}>{stop.funFact}</Text>
-          </View>
-
-          {/* Navigation */}
-          <View style={styles.slideNav}>
-            <TouchableOpacity
-              style={[
-                styles.slideNavBtn,
-                slideIndex === 0 && styles.slideNavBtnDisabled,
-              ]}
-              onPress={() => setSlideIndex((i) => Math.max(0, i - 1))}
-              disabled={slideIndex === 0}
-            >
-              <Text style={styles.slideNavText}>‹ Prev</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.slideCounter}>
-              {slideIndex + 1} / {stopsWithPhotos.length}
-            </Text>
-
-            <TouchableOpacity
-              style={[
-                styles.slideNavBtn,
-                slideIndex === stopsWithPhotos.length - 1 &&
-                  styles.slideNavBtnDisabled,
-              ]}
-              onPress={() =>
-                setSlideIndex((i) =>
-                  Math.min(stopsWithPhotos.length - 1, i + 1),
-                )
-              }
-              disabled={slideIndex === stopsWithPhotos.length - 1}
-            >
-              <Text style={styles.slideNavText}>Next ›</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Hunt branding */}
-          <View style={styles.slideBrand}>
-            <Text style={styles.slideBrandText}>
-              {hunt.huntTitle} · 🗺️ Daytripper
-            </Text>
-          </View>
+        </ViewShot>
+        <View style={styles.slideFact}>
+          <Text style={styles.slideFactLabel}>💡 Fun Fact</Text>
+          <Text style={styles.slideFactText}>{stop.funFact}</Text>
         </View>
-      </ViewShot>
+        <View style={styles.slideNav}>
+          <TouchableOpacity
+            style={[
+              styles.slideNavBtn,
+              slideIndex === 0 && styles.slideNavBtnDisabled,
+            ]}
+            onPress={() => setSlideIndex((i) => Math.max(0, i - 1))}
+            disabled={slideIndex === 0}
+          >
+            <Text style={styles.slideNavText}>‹ Prev</Text>
+          </TouchableOpacity>
+          <Text style={styles.slideCounter}>
+            {slideIndex + 1} / {stopsWithPhotos.length}
+          </Text>
+          <TouchableOpacity
+            style={[
+              styles.slideNavBtn,
+              slideIndex === stopsWithPhotos.length - 1 &&
+                styles.slideNavBtnDisabled,
+            ]}
+            onPress={() =>
+              setSlideIndex((i) => Math.min(stopsWithPhotos.length - 1, i + 1))
+            }
+            disabled={slideIndex === stopsWithPhotos.length - 1}
+          >
+            <Text style={styles.slideNavText}>Next ›</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.slideBrand}>
+          <Text style={styles.slideBrandText}>
+            {hunt.huntTitle} · 🗺️ Daytripper
+          </Text>
+        </View>
+      </ScrollView>
     );
   };
-
-  // ── Empty state ────────────────────────────────────────────────
-  const EmptyState = () => (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyEmoji}>📷</Text>
-      <Text style={styles.emptyTitle}>No photos yet</Text>
-      <Text style={styles.emptySub}>
-        Complete stops and take photos to build your album
-      </Text>
-    </View>
-  );
 
   // ── Download menu ──────────────────────────────────────────────
   const DownloadMenu = () => (
     <View style={styles.downloadMenu}>
       <Text style={styles.downloadMenuTitle}>Save or Share</Text>
-
-      <TouchableOpacity style={styles.downloadOption} onPress={saveToPhotos}>
-        <Text style={styles.downloadOptionEmoji}>📱</Text>
-        <View style={styles.downloadOptionText}>
-          <Text style={styles.downloadOptionTitle}>
-            Save Photos to Camera Roll
-          </Text>
-          <Text style={styles.downloadOptionSub}>
-            Save each stop photo individually
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.downloadOption} onPress={saveAsCollage}>
-        <Text style={styles.downloadOptionEmoji}>🖼️</Text>
-        <View style={styles.downloadOptionText}>
-          <Text style={styles.downloadOptionTitle}>Save as Collage</Text>
-          <Text style={styles.downloadOptionSub}>
-            Single image with all photos
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.downloadOption} onPress={saveAsPDF}>
-        <Text style={styles.downloadOptionEmoji}>📄</Text>
-        <View style={styles.downloadOptionText}>
-          <Text style={styles.downloadOptionTitle}>Save as PDF</Text>
-          <Text style={styles.downloadOptionSub}>
-            Full album with fun facts
-          </Text>
-        </View>
-      </TouchableOpacity>
-
+      {[
+        {
+          emoji: "📱",
+          title: "Save to Camera Roll",
+          sub: "Save each stop photo individually",
+          onPress: saveToPhotos,
+        },
+        {
+          emoji: "🖼️",
+          title: "Save as Collage",
+          sub: "Single image with all photos",
+          onPress: saveAsCollage,
+        },
+        {
+          emoji: "📄",
+          title: "Save as PDF",
+          sub: "Full album with fun facts",
+          onPress: saveAsPDF,
+        },
+      ].map((item) => (
+        <TouchableOpacity
+          key={item.title}
+          style={styles.downloadOption}
+          onPress={item.onPress}
+        >
+          <Text style={styles.downloadOptionEmoji}>{item.emoji}</Text>
+          <View style={styles.downloadOptionText}>
+            <Text style={styles.downloadOptionTitle}>{item.title}</Text>
+            <Text style={styles.downloadOptionSub}>{item.sub}</Text>
+          </View>
+        </TouchableOpacity>
+      ))}
       <View style={styles.downloadDivider} />
       <Text style={styles.downloadShareLabel}>Share Format</Text>
-
       {(["square", "story", "landscape"] as FormatType[]).map((format) => (
         <TouchableOpacity
           key={format}
@@ -463,7 +421,6 @@ export default function PhotoAlbumScreen() {
           </View>
         </TouchableOpacity>
       ))}
-
       <TouchableOpacity
         style={styles.downloadCancelBtn}
         onPress={() => setShowFormatMenu(false)}
@@ -475,7 +432,7 @@ export default function PhotoAlbumScreen() {
 
   // ── Main render ────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -487,7 +444,7 @@ export default function PhotoAlbumScreen() {
         </View>
         <TouchableOpacity
           style={styles.shareBtn}
-          onPress={() => setShowFormatMenu(!showFormatMenu)}
+          onPress={() => setShowFormatMenu(true)}
           disabled={downloading}
         >
           {downloading ? (
@@ -498,14 +455,40 @@ export default function PhotoAlbumScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Download menu */}
-      {showFormatMenu && (
-        <ScrollView style={styles.downloadMenuContainer}>
-          <DownloadMenu />
-        </ScrollView>
-      )}
+      {/* Tab bar */}
+      <View style={styles.tabs}>
+        {(
+          [
+            { key: "map", label: "🗺️ Map" },
+            { key: "grid", label: "⊞ Grid" },
+            { key: "slideshow", label: "▶ Slideshow" },
+          ] as { key: TabType; label: string }[]
+        ).map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            onPress={() => setActiveTab(tab.key)}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === tab.key && styles.tabTextActive,
+              ]}
+            >
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
-      {/* Download Modal */}
+      {/* Tab content */}
+      <View style={styles.content}>
+        {activeTab === "map" && <MapTab />}
+        {activeTab === "grid" && <GridTab />}
+        {activeTab === "slideshow" && <SlideshowTab />}
+      </View>
+
+      {/* Download Modal — slides up from bottom */}
       <Modal
         visible={showFormatMenu}
         animationType="slide"
@@ -513,50 +496,13 @@ export default function PhotoAlbumScreen() {
         onRequestClose={() => setShowFormatMenu(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
+          <SafeAreaView edges={["bottom"]} style={styles.modalContainer}>
             <ScrollView>
               <DownloadMenu />
             </ScrollView>
-          </View>
+          </SafeAreaView>
         </View>
       </Modal>
-
-      {/* Tab bar */}
-      {!showFormatMenu && (
-        <>
-          <View style={styles.tabs}>
-            {(
-              [
-                { key: "map", label: "🗺️ Map" },
-                { key: "grid", label: "⊞ Grid" },
-                { key: "slideshow", label: "▶ Slideshow" },
-              ] as { key: TabType; label: string }[]
-            ).map((tab) => (
-              <TouchableOpacity
-                key={tab.key}
-                style={[styles.tab, activeTab === tab.key && styles.tabActive]}
-                onPress={() => setActiveTab(tab.key)}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    activeTab === tab.key && styles.tabTextActive,
-                  ]}
-                >
-                  {tab.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Tab content */}
-          <View style={styles.content}>
-            {activeTab === "map" && <MapTab />}
-            {activeTab === "grid" && <GridTab />}
-            {activeTab === "slideshow" && <SlideshowTab />}
-          </View>
-        </>
-      )}
     </SafeAreaView>
   );
 }
@@ -607,8 +553,6 @@ const styles = StyleSheet.create({
   },
   tabTextActive: { color: COLORS.accent, fontWeight: FONTS.weights.bold },
   content: { flex: 1 },
-
-  // Map styles
   mapContainer: { flex: 1 },
   map: { flex: 1 },
   photoMarker: {
@@ -659,8 +603,6 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   mapOverlayCity: { fontSize: FONTS.sizes.sm, color: "#AED6F1", marginTop: 2 },
-
-  // Grid styles
   gridScroll: { padding: SPACING.md },
   collageContainer: {
     backgroundColor: COLORS.white,
@@ -723,17 +665,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.lightGray,
   },
   collageFooterText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
-
-  // Slideshow styles
   slideContainer: { backgroundColor: COLORS.black },
   slidePhoto: { width: SCREEN_WIDTH, height: SCREEN_WIDTH * 1.2 },
   slideOverlay: {
     position: "absolute",
-    bottom: SCREEN_WIDTH * 0.4,
+    bottom: 0,
     left: 0,
     right: 0,
     padding: SPACING.md,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   slideStopBadge: {
     backgroundColor: COLORS.accent,
@@ -772,6 +712,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: SPACING.md,
+    paddingBottom: SPACING.xl,
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: COLORS.lightGray,
@@ -799,9 +740,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   slideBrandText: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
-
-  // Download menu styles
-  downloadMenuContainer: { backgroundColor: COLORS.white, maxHeight: "80%" },
   downloadMenu: { padding: SPACING.lg },
   downloadMenuTitle: {
     fontSize: FONTS.sizes.xl,
@@ -850,8 +788,6 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     fontWeight: FONTS.weights.bold,
   },
-
-  // Empty state
   emptyState: {
     flex: 1,
     justifyContent: "center",
@@ -881,6 +817,5 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     maxHeight: "80%",
-    paddingBottom: 40,
   },
 });

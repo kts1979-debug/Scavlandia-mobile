@@ -165,7 +165,10 @@ export default function ActiveHuntScreen() {
         activeStop.order,
       );
       // Save photo URL for the album
-      setStopPhotos((prev) => ({ ...prev, [activeStop.order]: photoUrl }));
+      setStopPhotos((prev) => ({
+        ...prev,
+        [String(activeStop.order)]: photoUrl,
+      }));
       console.log("Photo uploaded, submitting stop...");
 
       // Save to backend
