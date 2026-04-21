@@ -26,6 +26,7 @@ function RootStack() {
   return (
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="museum-profile" options={{ headerShown: false }} />
       <Stack.Screen
         name="group-profile"
         options={{ headerShown: true, title: "Your Group" }}
@@ -43,7 +44,7 @@ function RootStack() {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="hunt-type" options={{ headerShown: false }} />
-      <Stack.Screen name="museum-profile" options={{ headerShown: false }} />
+
       <Stack.Screen name="photo-album" options={{ headerShown: false }} />
     </Stack>
   );

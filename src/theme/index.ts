@@ -13,6 +13,7 @@ export const COLORS = {
   accentPale: "#FEF0E8", // Very pale orange — backgrounds
   lred: "#FADBD8", // Pale red — answer reveal background
   lgreen: "#D5F5E3", // Pale green — success backgrounds
+  lyellow: "#FEF9E7",
 
   // Gameplay colors
   gold: "#F39C12", // Gold — points and achievements

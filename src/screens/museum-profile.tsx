@@ -1,2 +1,2 @@
-import MuseumProfileScreen from "../src/screens/MuseumProfileScreen";
+import MuseumProfileScreen from "./MuseumProfileScreen";
 export default MuseumProfileScreen;

@@ -100,7 +100,11 @@ export default function MuseumProfileScreen() {
           </TouchableOpacity>
           <Text style={styles.pageTitle}>🏛️ Museum Hunt</Text>
           <Text style={styles.pageSubtitle}>
-            Find a museum and we'll build an art-based scavenger hunt inside it
+            <Text>
+              {
+                "Find a museum and we'll build an art-based scavenger hunt inside it"
+              }
+            </Text>
           </Text>
         </View>
 
