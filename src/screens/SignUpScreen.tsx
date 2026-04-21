@@ -1,4 +1,5 @@
-// src/screens/SignUpScreen.tsx — Playful redesign
+// src/screens/SignUpScreen.tsx
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -15,8 +16,47 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
+import { ONBOARDING_KEY } from "../screens/OnboardingScreen";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
 
+// ── InputField defined OUTSIDE the component ──────────────────────
+// This prevents remounting on every keystroke which dismisses the keyboard
+interface InputFieldProps {
+  label: string;
+  value: string;
+  onChange: (text: string) => void;
+  placeholder: string;
+  secure?: boolean;
+  keyboardType?: any;
+}
+
+const InputField = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+  secure = false,
+  keyboardType = "default",
+}: InputFieldProps) => (
+  <View style={styles.fieldGroup}>
+    <Text style={styles.label}>{label}</Text>
+    <TextInput
+      style={styles.input}
+      value={value}
+      onChangeText={onChange}
+      placeholder={placeholder}
+      placeholderTextColor={COLORS.midGray}
+      secureTextEntry={secure}
+      autoCapitalize={
+        secure || keyboardType === "email-address" ? "none" : "words"
+      }
+      autoCorrect={false}
+      keyboardType={keyboardType}
+    />
+  </View>
+);
+
+// ── Main component ─────────────────────────────────────────────────
 export default function SignUpScreen() {
   const { signUp } = useAuth();
   const [displayName, setDisplayName] = useState("");
@@ -43,7 +83,12 @@ export default function SignUpScreen() {
     setLoading(true);
     try {
       await signUp(email.trim(), password, displayName.trim());
-      router.replace("/(tabs)");
+      const hasSeenOnboarding = await AsyncStorage.getItem(ONBOARDING_KEY);
+      if (hasSeenOnboarding) {
+        router.replace("/(tabs)");
+      } else {
+        router.replace("/onboarding");
+      }
     } catch (error: any) {
       let message = "Sign up failed. Please try again.";
       if (error.code === "auth/email-already-in-use")
@@ -57,32 +102,6 @@ export default function SignUpScreen() {
       setLoading(false);
     }
   };
-
-  const InputField = ({
-    label,
-    value,
-    onChange,
-    placeholder,
-    secure = false,
-    keyboardType = "default" as any,
-  }: any) => (
-    <View style={styles.fieldGroup}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        style={styles.input}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={COLORS.midGray}
-        secureTextEntry={secure}
-        autoCapitalize={
-          secure || keyboardType === "email-address" ? "none" : "words"
-        }
-        autoCorrect={false}
-        keyboardType={keyboardType}
-      />
-    </View>
-  );
 
   return (
     <SafeAreaView style={styles.container}>
