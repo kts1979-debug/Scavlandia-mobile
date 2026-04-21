@@ -7,6 +7,12 @@ import LiveLeaderboard from "../components/LiveLeaderboard";
 import ProgressBar from "../components/ui/ProgressBar";
 import { useHuntTimer } from "../hooks/useHuntTimer";
 import {
+  Hunt,
+  HuntStop,
+  saveHuntPhotos,
+  submitStop,
+} from "../services/apiService";
+import {
   updateAllTimeStats,
   updateSessionScore,
 } from "../services/leaderboardService";
@@ -25,12 +31,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import HuntMap from "../components/HuntMap";
 import { useLocation } from "../hooks/useLocation";
-import {
-  Hunt,
-  HuntStop,
-  submitStop,
-  saveHuntPhotos,
-} from "../services/apiService";
 
 export default function ActiveHuntScreen() {
   // ── Params ─────────────────────────────────────────────────────────
@@ -38,13 +38,29 @@ export default function ActiveHuntScreen() {
   const hunt: Hunt = JSON.parse(params.hunt as string);
   const sessionCode = (params.sessionCode as string) || "";
 
+  // Resume at a specific stop if returning from stop complete screen
+  const resumeAtStop = params.resumeAtStop
+    ? parseInt(params.resumeAtStop as string) - 1
+    : 0;
+
+  // Restore stop photos if returning from stop complete screen
+  const restoredPhotos: Record<string, string> = params.stopPhotos
+    ? JSON.parse(params.stopPhotos as string)
+    : {};
+
+  // Pre-fill completed indices based on resume point
+  const initialCompleted = Array.from({ length: resumeAtStop }, (_, i) => i);
+
   // ── Museum mode ────────────────────────────────────────────────────
   const isMuseumHunt = !!(hunt as any).isMuseumHunt;
 
   // ── State ──────────────────────────────────────────────────────────
-  const [activeStopIndex, setActiveStopIndex] = useState(0);
-  const [completedIndices, setCompletedIndices] = useState<number[]>([]);
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [activeStopIndex] = useState(resumeAtStop);
+  const [completedIndices, setCompletedIndices] =
+    useState<number[]>(initialCompleted);
+  const [totalPoints, setTotalPoints] = useState(
+    params.totalPoints ? parseInt(params.totalPoints as string) : 0,
+  );
   const [atLocation, setAtLocation] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,7 +69,8 @@ export default function ActiveHuntScreen() {
   const [answerRevealed, setAnswerRevealed] = useState(false);
   const [answerDeductions, setAnswerDeductions] = useState(0);
   const [stopPhotos, setStopPhotos] = useState<Record<string, string>>({});
-  const [localPhotos, setLocalPhotos] = useState<Record<string, string>>({});
+  const [localPhotos, setLocalPhotos] =
+    useState<Record<string, string>>(restoredPhotos);
 
   // ── Difficulty & timer ─────────────────────────────────────────────
   const difficulty = hunt.groupProfile?.difficulty || "medium";
@@ -206,38 +223,32 @@ export default function ActiveHuntScreen() {
         );
       }
 
-      // Check if hunt is complete
-      if (activeStopIndex >= hunt.stops.length - 1) {
-        timer.stop();
+      // Navigate to stop complete screen for both last and non-last stops
+      const isLastStop = activeStopIndex >= hunt.stops.length - 1;
 
+      if (isLastStop) {
+        timer.stop();
         updateAllTimeStats(newTotalPoints, hunt.city, hunt.huntTitle).catch(
           (err) => console.warn("All-time stats update failed:", err.message),
         );
-
-        // Save Firebase URLs to Firestore for history view
         saveHuntPhotos(hunt.huntId, updatedPhotos).catch((err) =>
           console.warn("Save photos failed:", err.message),
         );
-
-        router.replace({
-          pathname: "/hunt-complete",
-          params: {
-            hunt: JSON.stringify(hunt),
-            totalPoints: String(newTotalPoints - hintDeductions),
-            completedStops: String(newCompletedList.length),
-            sessionCode,
-            stopPhotos: JSON.stringify(updatedLocalPhotos),
-          },
-        });
-        return;
       }
 
-      // Move to next stop
-      setActiveStopIndex((i) => i + 1);
-      setAtLocation(false);
-      setHintDeductions(0);
-      setAnswerRevealed(false);
-      setAnswerDeductions(0);
+      router.replace({
+        pathname: "/stop-complete",
+        params: {
+          stopName: activeStop.locationName,
+          stopOrder: String(activeStop.order),
+          totalStops: String(hunt.stops.length),
+          pointsEarned: String(activeStop.pointValue - answerDeductions),
+          totalPoints: String(newTotalPoints - hintDeductions),
+          hunt: JSON.stringify(hunt),
+          sessionCode,
+          stopPhotos: JSON.stringify(updatedLocalPhotos),
+        },
+      });
     } catch (error: any) {
       console.error("Submit stop error:", error.message);
       Alert.alert(
@@ -342,7 +353,7 @@ export default function ActiveHuntScreen() {
         </View>
       )}
 
-      {/* Clue / Map toggle — hide map tab for museum hunts */}
+      {/* Clue / Map toggle */}
       <View style={styles.toggleRow}>
         <TouchableOpacity
           style={[styles.toggle, !showMap && styles.toggleActive]}
@@ -368,7 +379,7 @@ export default function ActiveHuntScreen() {
         )}
       </View>
 
-      {/* Map view — not available for museum hunts */}
+      {/* Map view */}
       {showMap && !isMuseumHunt && (
         <View style={styles.mapContainer}>
           <HuntMap
@@ -456,7 +467,7 @@ export default function ActiveHuntScreen() {
             />
           )}
 
-          {/* Distance — hidden for museum hunts (GPS unreliable indoors) */}
+          {/* Distance — hidden for museum hunts */}
           {distanceToStop !== null && !atLocation && !isMuseumHunt && (
             <View style={styles.distanceCard}>
               <Text style={styles.distanceText}>📡 {distanceToStop}m away</Text>
