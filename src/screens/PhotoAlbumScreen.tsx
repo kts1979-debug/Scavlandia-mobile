@@ -181,12 +181,12 @@ export default function PhotoAlbumScreen() {
       if (uri && (await Sharing.isAvailableAsync())) {
         await Sharing.shareAsync(uri, {
           mimeType: "image/png",
-          dialogTitle: "Share your Daytripper adventure!",
+          dialogTitle: "Share your Scavlandia adventure!",
         });
       } else {
         await Share.share({
           message:
-            `🗺️ Just completed a Daytripper hunt in ${hunt.city?.split(",")[0]}!\n\n` +
+            `🗺️ Just completed a Scavlandia hunt in ${hunt.city?.split(",")[0]}!\n\n` +
             `Visited ${totalPhotos} amazing stops. 🏆`,
         });
       }
@@ -266,7 +266,7 @@ export default function PhotoAlbumScreen() {
               <Text style={styles.collageTitle}>{hunt.huntTitle}</Text>
               <Text style={styles.collageCity}>📍 {hunt.city}</Text>
               <Text style={styles.collageMeta}>
-                {totalPhotos} stops · Daytripper
+                {totalPhotos} stops · Scavlandia
               </Text>
             </View>
             <View style={styles.photoGrid}>
@@ -296,7 +296,7 @@ export default function PhotoAlbumScreen() {
               ))}
             </View>
             <View style={styles.collageFooter}>
-              <Text style={styles.collageFooterText}>🗺️ daytripper.app</Text>
+              <Text style={styles.collageFooterText}>🗺️ Scavlandia.app</Text>
             </View>
           </View>
         </ViewShot>
@@ -366,7 +366,7 @@ export default function PhotoAlbumScreen() {
         </View>
         <View style={styles.slideBrand}>
           <Text style={styles.slideBrandText}>
-            {hunt.huntTitle} · 🗺️ Daytripper
+            {hunt.huntTitle} · 🗺️ Scavlandia
           </Text>
         </View>
       </ScrollView>

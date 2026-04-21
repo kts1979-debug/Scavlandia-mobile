@@ -4,13 +4,8 @@
 
 import { router } from "expo-router";
 import React from "react";
-import {
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
 
@@ -19,9 +14,9 @@ export default function HuntTypeScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         {/* Header */}
-        <Text style={styles.title}>What kind of{"\n"}adventure? 🗺️</Text>
+        <Text style={styles.title}>Welcome to{"\n"}Scavlandia! 🗺️</Text>
         <Text style={styles.subtitle}>
-          Choose your hunt type to get started
+          Choose your adventure type to get started
         </Text>
 
         {/* City Hunt */}
@@ -34,8 +29,8 @@ export default function HuntTypeScreen() {
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>City Hunt</Text>
             <Text style={styles.cardDesc}>
-              Explore a city with AI-generated clues at real locations. Perfect
-              for any group in any city.
+              Explore a city or museum with personalized clues at real
+              locations. Perfect for any group in any city.
             </Text>
             <View style={styles.tagRow}>
               {["Outdoors", "GPS tracking", "Any city", "6–12 stops"].map(

@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Text } from "react-native";
+import { Platform, Text } from "react-native";
 
 export default function TabLayout() {
   return (
@@ -7,7 +7,24 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: "#1A5276",
         tabBarInactiveTintColor: "#95A5A6",
-        tabBarStyle: { paddingBottom: 5, height: 60 },
+        tabBarStyle: {
+          paddingBottom: Platform.OS === "ios" ? 24 : 12,
+          paddingTop: 8,
+          height: Platform.OS === "ios" ? 84 : 68,
+          backgroundColor: "#FFFFFF",
+          borderTopWidth: 1,
+          borderTopColor: "#E5E7EB",
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 4,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
+          marginTop: 2,
+        },
         headerShown: false,
       }}
     >
@@ -16,7 +33,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>🏠</Text>
+            <Text style={{ color, fontSize: 22 }}>🏠</Text>
           ),
         }}
       />
@@ -25,7 +42,7 @@ export default function TabLayout() {
         options={{
           title: "Past Hunts",
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>📋</Text>
+            <Text style={{ color, fontSize: 22 }}>📋</Text>
           ),
         }}
       />
@@ -34,7 +51,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>👤</Text>
+            <Text style={{ color, fontSize: 22 }}>👤</Text>
           ),
         }}
       />

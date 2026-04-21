@@ -40,11 +40,11 @@ export default function HistoryScreen() {
       const cityName = hunt.city?.split(",")[0] || hunt.city;
       await Share.share({
         message:
-          `🗺️ I explored ${cityName} with Daytripper!\n\n` +
+          `🗺️ I explored ${cityName} with Scavlandia!\n\n` +
           `🚩 ${hunt.stopCount} stops\n` +
           `⭐ ${hunt.totalPoints} points possible\n\n` +
-          `Plan your own city adventure at Daytripper! 🚀`,
-        title: `Daytripper — ${cityName}`,
+          `Plan your own city adventure at Scavlandia! 🚀`,
+        title: `Scavlandia — ${cityName}`,
       });
     } catch (error) {
       console.log("Share cancelled:", error);
@@ -148,7 +148,7 @@ export default function HistoryScreen() {
           <Text style={styles.stateEmoji}>🗺️</Text>
           <Text style={styles.stateTitle}>No adventures yet!</Text>
           <Text style={styles.stateSubtitle}>
-            Generate your first hunt and it will show up here.
+            Build your first hunt and it will show up here.
           </Text>
           <Button
             label="Start a Hunt"

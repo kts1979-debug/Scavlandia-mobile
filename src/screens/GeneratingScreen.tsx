@@ -10,7 +10,7 @@ import { COLORS, FONTS, SPACING } from "../theme";
 const STEPS = [
   { emoji: "🗺️", text: "Mapping your city..." },
   { emoji: "📍", text: "Finding real locations..." },
-  { emoji: "🤖", text: "AI is designing your hunt..." },
+  { emoji: "⚙️", text: "Crafting your hunt..." },
   { emoji: "✍️", text: "Writing custom clues..." },
   { emoji: "🎯", text: "Ordering stops perfectly..." },
   { emoji: "✨", text: "Almost ready..." },
@@ -19,7 +19,7 @@ const STEPS = [
 const MUSEUM_STEPS = [
   { emoji: "🏛️", text: "Exploring the museum..." },
   { emoji: "🎨", text: "Finding iconic artworks..." },
-  { emoji: "🤖", text: "AI is crafting art clues..." },
+  { emoji: "⚙️", text: "Crafting your art clues..." },
   { emoji: "🔍", text: "Writing mystery riddles..." },
   { emoji: "🗺️", text: "Mapping gallery stops..." },
   { emoji: "✨", text: "Your hunt is almost ready..." },
@@ -75,7 +75,6 @@ export default function GeneratingScreen() {
         params: { hunt: JSON.stringify(result.hunt) },
       });
     } catch (error: any) {
-      setGenerating(false);
       const errorMsg = error.response?.data?.error || "";
 
       if (
@@ -127,7 +126,9 @@ export default function GeneratingScreen() {
           {isMuseumHunt ? "🏛️" : "📍"} {city}
         </Text>
         <Text style={styles.title}>
-          {isMuseumHunt ? "Building your museum hunt" : "Building your hunt"}
+          {isMuseumHunt
+            ? "Building your museum adventure"
+            : "Building your adventure"}
           {dots}
         </Text>
         <ActivityIndicator
@@ -146,7 +147,7 @@ export default function GeneratingScreen() {
         </View>
         <Text style={styles.note}>
           {isMuseumHunt
-            ? "Claude is crafting artwork clues..."
+            ? "Crafting your artwork clues..."
             : "This takes about 20–30 seconds"}
         </Text>
       </View>

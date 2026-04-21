@@ -66,7 +66,7 @@ export default function LoginScreen() {
           {/* Logo */}
           <View style={styles.logoSection}>
             <Text style={styles.logoEmoji}>🗺️</Text>
-            <Text style={styles.appName}>Daytripper</Text>
+            <Text style={styles.appName}>Scavlandia</Text>
             <Text style={styles.tagline}>Your next adventure awaits</Text>
           </View>
 

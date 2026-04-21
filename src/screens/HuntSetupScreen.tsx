@@ -98,11 +98,11 @@ export default function HuntSetupScreen() {
           onPress: async () => {
             await Share.share({
               message:
-                `🗺️ Join my Daytripper scavenger hunt!\n\n` +
+                `🗺️ Join my Scavlandia scavenger hunt!\n\n` +
                 `Use session code: ${sessionCode}\n\n` +
-                `Open Daytripper, start a hunt in any city, ` +
+                `Open Scavlandia, start a hunt in any city, ` +
                 `tap "Compete" and enter this code to join my leaderboard. Let's see who wins! 🏆`,
-              title: "Join my Daytripper Hunt!",
+              title: "Join my Scavlandia Hunt!",
             });
           },
         },
@@ -131,7 +131,7 @@ export default function HuntSetupScreen() {
       );
       Alert.alert(
         "✅ Joined Session!",
-        `You joined: ${result.huntTitle || "Daytripper Hunt"}`,
+        `You joined: ${result.huntTitle || "Scavlandia Hunt"}`,
         [
           {
             text: "Start Hunt",

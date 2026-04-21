@@ -1,5 +1,5 @@
 // src/theme/index.ts
-// The single source of truth for all design decisions in Daytripper.
+// The single source of truth for all design decisions in Scavlandia.
 // Import from this file in every screen instead of hardcoding values.
 
 // ── COLOR PALETTE ────────────────────────────────────────────────

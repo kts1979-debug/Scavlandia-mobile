@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Daytripper",
-    "slug": "daytripper",
-    "scheme": "daytripper",
+    "name": "Scavlandia",
+    "slug": "scavlandia",
+    "scheme": "scavlandia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -14,15 +14,15 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.katesauls.daytripper",
+      "bundleIdentifier": "com.katesauls.scavlandia",
       "config": {
         "googleMapsApiKey": "AIzaSyD3WYNDd0gJLfGcAsvWIQFQdHt1Tv9rGYg"
       },
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Daytripper needs your location to show you where hunt stops are and detect when you arrive.",
-        "NSLocationAlwaysUsageDescription": "Daytripper uses your location to track hunt progress.",
-        "NSCameraUsageDescription": "Daytripper needs camera access to take photos at hunt stops.",
-        "NSPhotoLibraryUsageDescription": "Daytripper saves hunt photos to your photo library."
+        "NSLocationWhenInUseUsageDescription": "Scavlandia needs your location to show you where hunt stops are and detect when you arrive.",
+        "NSLocationAlwaysUsageDescription": "Scavlandia uses your location to track hunt progress.",
+        "NSCameraUsageDescription": "Scavlandia needs camera access to take photos at hunt stops.",
+        "NSPhotoLibraryUsageDescription": "Scavlandia saves hunt photos to your photo library."
       }
     },
     "android": {
@@ -30,7 +30,7 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#1A5276"
       },
-      "package": "com.katesauls.daytripper",
+      "package": "com.katesauls.scavlandia",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyD3WYNDd0gJLfGcAsvWIQFQdHt1Tv9rGYg"
@@ -48,8 +48,8 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Daytripper to use your location to detect your city for hunt generation.",
-          "locationWhenInUsePermission": "Allow Daytripper to use your location to detect your city for hunt generation."
+          "locationAlwaysAndWhenInUsePermission": "Allow Scavlandia to use your location to detect your city for hunt generation.",
+          "locationWhenInUsePermission": "Allow Scavlandia to use your location to detect your city for hunt generation."
         }
       ],
       "expo-camera",

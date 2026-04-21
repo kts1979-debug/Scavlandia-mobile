@@ -282,11 +282,11 @@ export default function MuseumProfileScreen() {
         </View>
 
         <Button
-          label="Generate Museum Hunt"
+          label="Build Museum Hunt"
           onPress={handleGenerate}
           variant="accent"
           size="lg"
-          emoji="🤖"
+          emoji="⚙️"
           style={styles.generateBtn}
         />
       </ScrollView>

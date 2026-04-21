@@ -6,7 +6,6 @@ import HuntTimer from "../components/HuntTimer";
 import LiveLeaderboard from "../components/LiveLeaderboard";
 import ProgressBar from "../components/ui/ProgressBar";
 import { useHuntTimer } from "../hooks/useHuntTimer";
-import { Hunt, HuntStop, submitStop } from "../services/apiService";
 import {
   updateAllTimeStats,
   updateSessionScore,
@@ -26,6 +25,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import HuntMap from "../components/HuntMap";
 import { useLocation } from "../hooks/useLocation";
+import {
+  Hunt,
+  HuntStop,
+  submitStop,
+  saveHuntPhotos,
+} from "../services/apiService";
 
 export default function ActiveHuntScreen() {
   // ── Params ─────────────────────────────────────────────────────────
@@ -209,6 +214,11 @@ export default function ActiveHuntScreen() {
           (err) => console.warn("All-time stats update failed:", err.message),
         );
 
+        // Save Firebase URLs to Firestore for history view
+        saveHuntPhotos(hunt.huntId, updatedPhotos).catch((err) =>
+          console.warn("Save photos failed:", err.message),
+        );
+
         router.replace({
           pathname: "/hunt-complete",
           params: {
@@ -253,11 +263,11 @@ export default function ActiveHuntScreen() {
       const cityName = hunt.city?.split(",")[0] || hunt.city;
       await Share.share({
         message:
-          `🗺️ I'm on a Daytripper scavenger hunt in ${cityName}!\n\n` +
+          `🗺️ I'm on a Scavlandia scavenger hunt in ${cityName}!\n\n` +
           `✅ Completed ${completedIndices.length} of ${hunt.stops.length} stops\n` +
           `⭐ Earned ${totalPoints} points so far\n\n` +
-          `Join me on my next adventure — try Daytripper! 🚀`,
-        title: `Daytripper Hunt in ${cityName}`,
+          `Join me on my next adventure — try Scavlandia! 🚀`,
+        title: `Scavlandia Hunt in ${cityName}`,
       });
     } catch (error) {
       console.log("Share cancelled:", error);
@@ -319,7 +329,7 @@ export default function ActiveHuntScreen() {
       {/* Progress bar */}
       <View style={styles.progressContainer}>
         <ProgressBar
-          current={completedIndices.length}
+          current={Math.min(completedIndices.length + 1, hunt.stops.length)}
           total={hunt.stops.length}
           showLabel={true}
         />
@@ -439,6 +449,7 @@ export default function ActiveHuntScreen() {
           {/* Hints */}
           {activeStop.hints && activeStop.hints.length > 0 && (
             <HintsPanel
+              key={`hints-stop-${activeStop.order}`}
               hints={activeStop.hints}
               maxHints={maxHints}
               onHintUsed={(cost) => setHintDeductions((prev) => prev + cost)}

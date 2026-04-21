@@ -48,7 +48,7 @@ export function useLocation(
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        setLocationError("Location permission is required to play Daytripper.");
+        setLocationError("Location permission is required to play Scavlandia.");
         return;
       }
       setPermission(true);

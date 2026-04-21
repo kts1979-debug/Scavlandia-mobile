@@ -98,7 +98,7 @@ export default function SignUpScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerEmoji}>🎉</Text>
-            <Text style={styles.headerTitle}>Join Daytripper</Text>
+            <Text style={styles.headerTitle}>Join Scavlandia</Text>
             <Text style={styles.headerSub}>
               Create your free account and start exploring
             </Text>

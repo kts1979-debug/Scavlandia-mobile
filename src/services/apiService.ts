@@ -122,6 +122,16 @@ export interface GroupProfile {
   mobility: string;
 }
 
+export const saveHuntPhotos = async (
+  huntId: string,
+  stopPhotos: Record<string, string>,
+) => {
+  const response = await api.post(`/api/hunts/${huntId}/save-photos`, {
+    stopPhotos,
+  });
+  return response.data;
+};
+
 export interface HuntStop {
   order: number;
   locationName: string;

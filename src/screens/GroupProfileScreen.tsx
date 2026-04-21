@@ -155,7 +155,7 @@ export default function GroupProfileScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>🏙️ City Hunt</Text>
+        <Text style={styles.pageTitle}>🏙️ City Adventure</Text>
         <Text style={styles.pageSubtitle}>
           {"Tell us about your group and we'll do the rest"}
         </Text>
@@ -431,11 +431,11 @@ export default function GroupProfileScreen() {
 
         {/* Generate button */}
         <Button
-          label="Generate My Hunt"
+          label="Build My Hunt"
           onPress={handleGenerate}
           variant="accent"
           size="lg"
-          emoji="🤖"
+          emoji="⚙️"
           style={styles.generateBtn}
         />
       </ScrollView>
