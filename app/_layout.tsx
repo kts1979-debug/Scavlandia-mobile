@@ -45,6 +45,7 @@ function RootStack() {
       />
       <Stack.Screen name="hunt-detail" options={{ headerShown: false }} />
       <Stack.Screen name="hunt-type" options={{ headerShown: false }} />
+      <Stack.Screen name="safety-warning" options={{ headerShown: false }} />
 
       <Stack.Screen name="photo-album" options={{ headerShown: false }} />
     </Stack>

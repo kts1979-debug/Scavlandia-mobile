@@ -34,7 +34,7 @@ export default function HuntSetupScreen() {
 
   const handleStartHunt = async (sessionCode?: string) => {
     router.replace({
-      pathname: "/active-hunt",
+      pathname: "/safety-warning",
       params: {
         hunt: JSON.stringify(hunt),
         sessionCode: sessionCode || "",
