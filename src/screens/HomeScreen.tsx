@@ -1,6 +1,6 @@
 // src/screens/HomeScreen.tsx
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -12,10 +12,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
-import { COLORS, FONTS, SPACING } from "../theme";
+import { getActiveHunt } from "../services/apiService";
+import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 export default function HomeScreen() {
   const { user } = useAuth();
+  const [activeHunt, setActiveHunt] = useState<any>(null);
+
+  useEffect(() => {
+    if (user) {
+      getActiveHunt()
+        .then((data) => setActiveHunt(data.activeHunt))
+        .catch(() => {}); // non-critical
+    } else {
+      setActiveHunt(null);
+    }
+  }, [user]);
 
   const stats = [
     { emoji: "🗺️", label: "Cities", value: "500+" },
@@ -53,13 +65,46 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Resume Hunt Banner */}
+        {activeHunt && (
+          <TouchableOpacity
+            style={styles.resumeBanner}
+            onPress={() => {
+              const state = activeHunt.activeState;
+              router.push({
+                pathname: "/active-hunt",
+                params: {
+                  hunt: JSON.stringify(activeHunt),
+                  resumeAtStop: String((state?.activeStopIndex || 0) + 1),
+                  totalPoints: String(state?.totalPoints || 0),
+                  stopPhotos: JSON.stringify(state?.stopPhotos || {}),
+                  skippedStops: JSON.stringify(state?.skippedStops || []),
+                  swapsUsed: String(state?.swapsUsed || 0),
+                },
+              });
+            }}
+          >
+            <View style={styles.resumeBannerLeft}>
+              <Text style={styles.resumeBannerEmoji}>▶️</Text>
+              <View>
+                <Text style={styles.resumeBannerTitle}>Resume Your Hunt</Text>
+                <Text style={styles.resumeBannerSub} numberOfLines={1}>
+                  {activeHunt.huntTitle}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.resumeBannerArrow}>›</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Hero Banner */}
         <Card variant="primary" style={styles.heroBanner}>
           <Text style={styles.heroEmoji}>🗺️</Text>
-          <Text style={styles.heroTitle}>Welcome to{`\n`}Scavlandia!</Text>
+          <Text style={styles.heroTitle}>{"Welcome to\nScavlandia!"}</Text>
           <Text style={styles.heroSub}>
-            Tell us about your group and we'll build{`\n`}a personalized hunt in
-            any city or museum
+            {
+              "Tell us about your group and we'll build\na personalized hunt in any city or museum"
+            }
           </Text>
           <Button
             label="Start a Hunt"
@@ -188,6 +233,37 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.bold,
+  },
+  resumeBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  resumeBannerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.md,
+    flex: 1,
+  },
+  resumeBannerEmoji: { fontSize: 28 },
+  resumeBannerTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+  },
+  resumeBannerSub: {
+    fontSize: FONTS.sizes.sm,
+    color: "rgba(255,255,255,0.8)",
+    marginTop: 2,
+  },
+  resumeBannerArrow: {
+    fontSize: FONTS.sizes.xxl,
+    color: COLORS.white,
+    fontWeight: FONTS.weights.heavy,
   },
   heroBanner: {
     marginBottom: SPACING.lg,

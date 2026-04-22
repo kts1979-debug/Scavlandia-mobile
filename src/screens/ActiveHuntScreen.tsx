@@ -1,6 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import AudioButton from "../components/AudioButton";
 import HintsPanel from "../components/HintsPanel";
 import HuntTimer from "../components/HuntTimer";
@@ -10,6 +10,8 @@ import { useHuntTimer } from "../hooks/useHuntTimer";
 import {
   Hunt,
   HuntStop,
+  clearActiveHuntState,
+  saveActiveHuntState,
   saveHuntPhotos,
   submitStop,
 } from "../services/apiService";
@@ -114,6 +116,34 @@ export default function ActiveHuntScreen() {
   });
 
   const activeStop: HuntStop = hunt.stops[activeStopIndex];
+
+  // ── Save state for resume ──────────────────────────────────────────
+  const saveState = useCallback(() => {
+    saveActiveHuntState(
+      hunt.huntId,
+      activeStopIndex,
+      completedIndices,
+      totalPoints,
+      stopPhotos,
+      skippedStops,
+      swapsUsed,
+    ).catch((err) => console.warn("Save state failed:", err.message));
+  }, [
+    hunt.huntId,
+    activeStopIndex,
+    completedIndices,
+    totalPoints,
+    stopPhotos,
+    skippedStops,
+    swapsUsed,
+  ]);
+
+  // Save state whenever progress changes
+  useEffect(() => {
+    if (completedIndices.length > 0 || skippedStops.length > 0) {
+      saveState();
+    }
+  }, [completedIndices.length, skippedStops.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Location ───────────────────────────────────────────────────────
   const handleArrival = useCallback(() => {
@@ -238,6 +268,9 @@ export default function ActiveHuntScreen() {
         saveHuntPhotos(hunt.huntId, updatedPhotos).catch((err) =>
           console.warn("Save photos failed:", err.message),
         );
+        clearActiveHuntState(hunt.huntId).catch((err) =>
+          console.warn("Clear state failed:", err.message),
+        );
       }
 
       router.replace({
@@ -345,7 +378,7 @@ export default function ActiveHuntScreen() {
 
             Alert.alert(
               "✅ Stop Swapped!",
-              `This stop has been replaced with a new location. Your new clue is waiting!`,
+              "This stop has been replaced with a new location. Your new clue is waiting!",
               [
                 {
                   text: "OK",

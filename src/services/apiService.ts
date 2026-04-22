@@ -146,6 +146,38 @@ export interface HuntStop {
   galleryOrRoom?: string;
   photoUrl?: string;
 }
+// Save active hunt state for resume later
+export const saveActiveHuntState = async (
+  huntId: string,
+  activeStopIndex: number,
+  completedIndices: number[],
+  totalPoints: number,
+  stopPhotos: Record<string, string>,
+  skippedStops: number[],
+  swapsUsed: number,
+) => {
+  const response = await api.post(`/api/hunts/${huntId}/save-active-state`, {
+    activeStopIndex,
+    completedIndices,
+    totalPoints,
+    stopPhotos,
+    skippedStops,
+    swapsUsed,
+  });
+  return response.data;
+};
+
+// Clear active hunt state on completion
+export const clearActiveHuntState = async (huntId: string) => {
+  const response = await api.delete(`/api/hunts/${huntId}/save-active-state`);
+  return response.data;
+};
+
+// Get currently active hunt
+export const getActiveHunt = async () => {
+  const response = await api.get("/api/hunts/active");
+  return response.data;
+};
 
 export interface Hunt {
   huntId: string;
