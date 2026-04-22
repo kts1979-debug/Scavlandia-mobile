@@ -34,6 +34,11 @@ export default function StopCompleteScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
 
+  const wasSkipped = params.wasSkipped === "true";
+  const skippedStops: number[] = params.skippedStops
+    ? JSON.parse(params.skippedStops as string)
+    : [];
+
   useEffect(() => {
     // Sequence: pop in badge → fade in content → bounce points
     Animated.sequence([
@@ -71,6 +76,8 @@ export default function StopCompleteScreen() {
         sessionCode,
         stopPhotos,
         resumeAtStop: String(stopOrder + 1),
+        totalPoints: String(totalPoints),
+        skippedStops: JSON.stringify(skippedStops),
       },
     });
   };
@@ -85,6 +92,7 @@ export default function StopCompleteScreen() {
         sessionCode,
         stopPhotos,
         quitEarly: "true",
+        skippedStops: JSON.stringify(skippedStops),
       },
     });
   };
@@ -97,7 +105,9 @@ export default function StopCompleteScreen() {
           style={[styles.badgeContainer, { transform: [{ scale: scaleAnim }] }]}
         >
           <View style={styles.badge}>
-            <Text style={styles.badgeEmoji}>{isLastStop ? "🏆" : "✅"}</Text>
+            <Text style={styles.badgeEmoji}>
+              {wasSkipped ? "⏭" : isLastStop ? "🏆" : "✅"}
+            </Text>
           </View>
           <View style={styles.confettiRow}>
             {["🎉", "⭐", "🎊", "✨", "🎉"].map((e, i) => (
@@ -111,14 +121,24 @@ export default function StopCompleteScreen() {
         {/* Main message */}
         <Animated.View style={{ opacity: fadeAnim }}>
           <Text style={styles.congrats}>
-            {isLastStop ? "Hunt Complete!" : "Stop Complete!"}
+            {wasSkipped
+              ? "Stop Skipped"
+              : isLastStop
+                ? "Hunt Complete!"
+                : "Stop Complete!"}
           </Text>
           <Text style={styles.stopName} numberOfLines={2}>
             {stopName}
           </Text>
-          <Text style={styles.progress}>
-            Stop {stopOrder} of {totalStops} completed
-          </Text>
+          {wasSkipped ? (
+            <Text style={styles.skippedNote}>
+              You can complete this stop at the end of the hunt
+            </Text>
+          ) : (
+            <Text style={styles.progress}>
+              Stop {stopOrder} of {totalStops} completed
+            </Text>
+          )}
         </Animated.View>
 
         {/* Points earned */}
@@ -309,5 +329,12 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.6)",
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.medium,
+  },
+  skippedNote: {
+    fontSize: FONTS.sizes.md,
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+    marginBottom: SPACING.xl,
+    fontStyle: "italic",
   },
 });

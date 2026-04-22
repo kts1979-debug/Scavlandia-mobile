@@ -34,6 +34,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import HuntMap from "../components/HuntMap";
 import { useLocation } from "../hooks/useLocation";
 
+// ── Constants ──────────────────────────────────────────────────────
+const MAX_SWAPS = 2;
+
 export default function ActiveHuntScreen() {
   // ── Params ─────────────────────────────────────────────────────────
   const params = useLocalSearchParams();
@@ -47,6 +50,10 @@ export default function ActiveHuntScreen() {
   const restoredPhotos: Record<string, string> = params.stopPhotos
     ? JSON.parse(params.stopPhotos as string)
     : {};
+
+  const restoredSkipped: number[] = params.skippedStops
+    ? JSON.parse(params.skippedStops as string)
+    : [];
 
   const initialCompleted = Array.from({ length: resumeAtStop }, (_, i) => i);
 
@@ -70,6 +77,10 @@ export default function ActiveHuntScreen() {
   const [stopPhotos, setStopPhotos] = useState<Record<string, string>>({});
   const [localPhotos, setLocalPhotos] =
     useState<Record<string, string>>(restoredPhotos);
+  const [skippedStops, setSkippedStops] = useState<number[]>(restoredSkipped);
+  const [swapsUsed, setSwapsUsed] = useState(
+    params.swapsUsed ? parseInt(params.swapsUsed as string) : 0,
+  );
 
   // ── Difficulty & timer ─────────────────────────────────────────────
   const difficulty = hunt.groupProfile?.difficulty || "medium";
@@ -93,6 +104,7 @@ export default function ActiveHuntScreen() {
                   completedStops: String(completedIndices.length),
                   sessionCode,
                   stopPhotos: JSON.stringify(localPhotos),
+                  skippedStops: JSON.stringify(skippedStops),
                 },
               }),
           },
@@ -239,6 +251,8 @@ export default function ActiveHuntScreen() {
           hunt: JSON.stringify(hunt),
           sessionCode,
           stopPhotos: JSON.stringify(updatedLocalPhotos),
+          skippedStops: JSON.stringify(skippedStops),
+          swapsUsed: String(swapsUsed),
         },
       });
     } catch (error: any) {
@@ -250,6 +264,111 @@ export default function ActiveHuntScreen() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // ── Skip stop ──────────────────────────────────────────────────────
+  const handleSkipStop = () => {
+    Alert.alert(
+      "⏭ Skip This Stop?",
+      `You won't earn points for ${activeStop.locationName} if you skip it.\n\nYou can come back to it at the end of the hunt.`,
+      [
+        { text: "Keep Trying", style: "cancel" },
+        {
+          text: "Skip Stop",
+          style: "destructive",
+          onPress: () => {
+            const updatedSkipped = [...skippedStops, activeStop.order];
+            setSkippedStops(updatedSkipped);
+            router.replace({
+              pathname: "/stop-complete",
+              params: {
+                stopName: activeStop.locationName,
+                stopOrder: String(activeStop.order),
+                totalStops: String(hunt.stops.length),
+                pointsEarned: "0",
+                totalPoints: String(totalPoints - hintDeductions),
+                hunt: JSON.stringify(hunt),
+                sessionCode,
+                stopPhotos: JSON.stringify(localPhotos),
+                skippedStops: JSON.stringify(updatedSkipped),
+                swapsUsed: String(swapsUsed),
+                wasSkipped: "true",
+              },
+            });
+          },
+        },
+      ],
+    );
+  };
+
+  // ── Swap stop ──────────────────────────────────────────────────────
+  const handleSwapStop = () => {
+    if (swapsUsed >= MAX_SWAPS) {
+      Alert.alert("No Swaps Left", "You have used all 2 swaps for this hunt.");
+      return;
+    }
+
+    const reserveStops = (hunt as any).reserveStops || [];
+    if (reserveStops.length === 0) {
+      Alert.alert(
+        "No Swaps Available",
+        "There are no alternative stops available for this hunt.",
+      );
+      return;
+    }
+
+    const swapsRemaining = MAX_SWAPS - swapsUsed;
+
+    Alert.alert(
+      "🔄 Swap This Stop?",
+      `Replace ${activeStop.locationName} with a different location?\n\nYou have ${swapsRemaining} swap${swapsRemaining > 1 ? "s" : ""} remaining.`,
+      [
+        { text: "Keep This Stop", style: "cancel" },
+        {
+          text: "Swap It",
+          onPress: () => {
+            const newStop = reserveStops[swapsUsed];
+            const updatedStops = [...hunt.stops];
+            updatedStops[activeStopIndex] = {
+              ...newStop,
+              order: activeStop.order,
+            };
+
+            const updatedHunt = {
+              ...(hunt as any),
+              stops: updatedStops,
+              reserveStops: reserveStops.slice(swapsUsed + 1),
+            };
+
+            const newSwapsUsed = swapsUsed + 1;
+            setSwapsUsed(newSwapsUsed);
+
+            Alert.alert(
+              "✅ Stop Swapped!",
+              `${activeStop.locationName} has been replaced with ${newStop.locationName}.`,
+              [
+                {
+                  text: "OK",
+                  onPress: () =>
+                    router.replace({
+                      pathname: "/active-hunt",
+                      params: {
+                        hunt: JSON.stringify(updatedHunt),
+                        sessionCode,
+                        stopPhotos: JSON.stringify(localPhotos),
+                        resumeAtStop: String(activeStop.order),
+                        totalPoints: String(totalPoints),
+                        skippedStops: JSON.stringify(skippedStops),
+                        swapsUsed: String(newSwapsUsed),
+                      },
+                    }),
+                },
+              ],
+            );
+          },
+        },
+      ],
+    );
   };
 
   // ── Manual arrival ─────────────────────────────────────────────────
@@ -383,7 +502,7 @@ export default function ActiveHuntScreen() {
         </View>
       )}
 
-      {/* Clue view — everything inside ScrollView */}
+      {/* Clue view */}
       {!showMap && (
         <ScrollView style={styles.clueContainer}>
           {/* Clue card */}
@@ -508,6 +627,32 @@ export default function ActiveHuntScreen() {
                     : isMuseumHunt
                       ? "📸  Photograph the Artwork"
                       : "📸  Add Photo to Complete"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Skip and swap buttons — shown before arrival */}
+          {!atLocation && (
+            <View style={styles.skipSwapRow}>
+              <TouchableOpacity style={styles.skipBtn} onPress={handleSkipStop}>
+                <Text style={styles.skipBtnText}>⏭ Skip</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.swapBtn,
+                  swapsUsed >= MAX_SWAPS && styles.swapBtnDisabled,
+                ]}
+                onPress={handleSwapStop}
+                disabled={swapsUsed >= MAX_SWAPS}
+              >
+                <Text
+                  style={[
+                    styles.swapBtnText,
+                    swapsUsed >= MAX_SWAPS && styles.swapBtnTextDisabled,
+                  ]}
+                >
+                  🔄 Swap ({MAX_SWAPS - swapsUsed} left)
                 </Text>
               </TouchableOpacity>
             </View>
@@ -669,6 +814,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   photoButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
+  skipSwapRow: {
+    flexDirection: "row",
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  skipBtn: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    alignItems: "center",
+    backgroundColor: COLORS.white,
+  },
+  skipBtnText: {
+    color: COLORS.darkGray,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.medium,
+  },
+  swapBtn: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    alignItems: "center",
+    backgroundColor: COLORS.white,
+  },
+  swapBtnDisabled: { borderColor: COLORS.midGray },
+  swapBtnText: {
+    color: COLORS.primary,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.medium,
+  },
+  swapBtnTextDisabled: { color: COLORS.midGray },
   arrivalButton: {
     backgroundColor: "#FFFFFF",
     borderRadius: 10,

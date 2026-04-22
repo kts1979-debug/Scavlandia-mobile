@@ -155,6 +155,7 @@ export interface Hunt {
   totalPossiblePoints: number;
   city: string;
   stops: HuntStop[];
+  reserveStops?: HuntStop[];
   groupProfile?: {
     // ← add this entire block
     ages: number;
