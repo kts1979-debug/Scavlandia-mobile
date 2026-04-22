@@ -35,6 +35,7 @@ export default function StopCompleteScreen() {
   const bounceAnim = useRef(new Animated.Value(0)).current;
 
   const wasSkipped = params.wasSkipped === "true";
+  const swapsUsed = (params.swapsUsed as string) || "0";
   const skippedStops: number[] = params.skippedStops
     ? JSON.parse(params.skippedStops as string)
     : [];
@@ -78,6 +79,7 @@ export default function StopCompleteScreen() {
         resumeAtStop: String(stopOrder + 1),
         totalPoints: String(totalPoints),
         skippedStops: JSON.stringify(skippedStops),
+        swapsUsed,
       },
     });
   };
@@ -93,6 +95,7 @@ export default function StopCompleteScreen() {
         stopPhotos,
         quitEarly: "true",
         skippedStops: JSON.stringify(skippedStops),
+        swapsUsed,
       },
     });
   };
@@ -174,10 +177,53 @@ export default function StopCompleteScreen() {
         {/* Action buttons */}
         <Animated.View style={[styles.buttons, { opacity: fadeAnim }]}>
           {isLastStop ? (
-            // Last stop — only show see results
-            <TouchableOpacity style={styles.continueBtn} onPress={handleQuit}>
-              <Text style={styles.continueBtnText}>🏆 See My Results</Text>
-            </TouchableOpacity>
+            skippedStops.length > 0 ? (
+              // Has skipped stops — ask before showing results
+              <View style={styles.skippedPrompt}>
+                <Text style={styles.skippedPromptTitle}>
+                  ⏭ You skipped {skippedStops.length} stop
+                  {skippedStops.length > 1 ? "s" : ""}
+                </Text>
+                <Text style={styles.skippedPromptDesc}>
+                  Would you like to complete{" "}
+                  {skippedStops.length > 1 ? "them" : "it"} before seeing your
+                  results?
+                </Text>
+                <TouchableOpacity
+                  style={styles.continueBtn}
+                  onPress={() => {
+                    const firstSkippedOrder = skippedStops[0];
+                    const remainingSkipped = skippedStops.slice(1);
+                    router.replace({
+                      pathname: "/active-hunt",
+                      params: {
+                        hunt,
+                        sessionCode,
+                        stopPhotos,
+                        resumeAtStop: String(firstSkippedOrder),
+                        totalPoints: String(totalPoints),
+                        skippedStops: JSON.stringify(remainingSkipped),
+                        swapsUsed,
+                      },
+                    });
+                  }}
+                >
+                  <Text style={styles.continueBtnText}>
+                    ✅ Complete Skipped Stop
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.quitBtn} onPress={handleQuit}>
+                  <Text style={styles.quitBtnText}>
+                    Skip — See My Results 🏆
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              // No skipped stops — go straight to results
+              <TouchableOpacity style={styles.continueBtn} onPress={handleQuit}>
+                <Text style={styles.continueBtnText}>🏆 See My Results</Text>
+              </TouchableOpacity>
+            )
           ) : (
             <>
               <TouchableOpacity
@@ -336,5 +382,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: SPACING.xl,
     fontStyle: "italic",
+  },
+  skippedPrompt: { width: "100%", gap: SPACING.sm },
+  skippedPromptTitle: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+    textAlign: "center",
+  },
+  skippedPromptDesc: {
+    fontSize: FONTS.sizes.md,
+    color: "rgba(255,255,255,0.7)",
+    textAlign: "center",
+    marginBottom: SPACING.sm,
   },
 });

@@ -130,7 +130,7 @@ export default function HuntCompleteScreen() {
                 style={styles.skippedYesBtn}
                 onPress={handleReturnToSkippedStop}
               >
-                <Text style={styles.skippedYesBtnText}>Yes, let's go!</Text>
+                <Text style={styles.message}>{"Yes, let's go!"}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.skippedNoBtn}

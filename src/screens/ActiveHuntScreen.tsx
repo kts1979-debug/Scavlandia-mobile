@@ -345,7 +345,7 @@ export default function ActiveHuntScreen() {
 
             Alert.alert(
               "✅ Stop Swapped!",
-              `${activeStop.locationName} has been replaced with ${newStop.locationName}.`,
+              `This stop has been replaced with a new location. Your new clue is waiting!`,
               [
                 {
                   text: "OK",
