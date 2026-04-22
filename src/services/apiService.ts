@@ -143,6 +143,8 @@ export interface HuntStop {
   funFact: string;
   pointValue: number;
   hints?: string[];
+  galleryOrRoom?: string;
+  photoUrl?: string;
 }
 
 export interface Hunt {

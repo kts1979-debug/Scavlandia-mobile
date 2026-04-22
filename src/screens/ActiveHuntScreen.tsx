@@ -21,6 +21,7 @@ import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 import {
   Alert,
+  Image,
   ScrollView,
   Share,
   StyleSheet,
@@ -418,6 +419,17 @@ export default function ActiveHuntScreen() {
                   <Text style={styles.answerRevealedLabel}>
                     {isMuseumHunt ? "🎨 Artwork Answer" : "📍 Location Answer"}
                   </Text>
+
+                  {/* Location photo */}
+                  {activeStop.photoUrl && (
+                    <Image
+                      source={{ uri: activeStop.photoUrl }}
+                      style={styles.answerPhoto}
+                      resizeMode="cover"
+                      onError={() => console.log("Answer photo failed to load")}
+                    />
+                  )}
+
                   <Text style={styles.answerRevealedName}>
                     {activeStop.locationName}
                   </Text>
@@ -712,5 +724,12 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.xs,
     color: COLORS.danger,
     fontStyle: "italic",
+  },
+  answerPhoto: {
+    width: "100%",
+    height: 180,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.sm,
+    marginTop: SPACING.xs,
   },
 });
