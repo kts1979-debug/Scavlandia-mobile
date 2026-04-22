@@ -1,6 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
+import AudioButton from "../components/AudioButton";
 import HintsPanel from "../components/HintsPanel";
 import HuntTimer from "../components/HuntTimer";
 import LiveLeaderboard from "../components/LiveLeaderboard";
@@ -39,17 +40,14 @@ export default function ActiveHuntScreen() {
   const hunt: Hunt = JSON.parse(params.hunt as string);
   const sessionCode = (params.sessionCode as string) || "";
 
-  // Resume at a specific stop if returning from stop complete screen
   const resumeAtStop = params.resumeAtStop
     ? parseInt(params.resumeAtStop as string) - 1
     : 0;
 
-  // Restore stop photos if returning from stop complete screen
   const restoredPhotos: Record<string, string> = params.stopPhotos
     ? JSON.parse(params.stopPhotos as string)
     : {};
 
-  // Pre-fill completed indices based on resume point
   const initialCompleted = Array.from({ length: resumeAtStop }, (_, i) => i);
 
   // ── Museum mode ────────────────────────────────────────────────────
@@ -174,14 +172,12 @@ export default function ActiveHuntScreen() {
     try {
       console.log("Uploading photo...");
 
-      // Save local URI immediately for album display
       const updatedLocalPhotos = {
         ...localPhotos,
         [String(activeStop.order)]: photoUri,
       };
       setLocalPhotos(updatedLocalPhotos);
 
-      // Upload to Firebase Storage
       const photoUrl = await uploadHuntPhoto(
         photoUri,
         hunt.huntId,
@@ -189,14 +185,12 @@ export default function ActiveHuntScreen() {
       );
       console.log("Photo uploaded, submitting stop...");
 
-      // Save Firebase URL for permanent storage
       const updatedPhotos = {
         ...stopPhotos,
         [String(activeStop.order)]: photoUrl,
       };
       setStopPhotos(updatedPhotos);
 
-      // Save to backend
       await submitStop(
         hunt.huntId,
         activeStop.order,
@@ -204,7 +198,6 @@ export default function ActiveHuntScreen() {
         activeStop.pointValue,
       );
 
-      // Calculate new totals
       const newTotalPoints =
         totalPoints + activeStop.pointValue - answerDeductions;
       const newCompletedList = [...completedIndices, activeStopIndex];
@@ -212,7 +205,6 @@ export default function ActiveHuntScreen() {
       setCompletedIndices(newCompletedList);
       setTotalPoints(newTotalPoints);
 
-      // Update session leaderboard
       if (sessionCode) {
         updateSessionScore(
           sessionCode,
@@ -224,7 +216,6 @@ export default function ActiveHuntScreen() {
         );
       }
 
-      // Navigate to stop complete screen for both last and non-last stops
       const isLastStop = activeStopIndex >= hunt.stops.length - 1;
 
       if (isLastStop) {
@@ -392,12 +383,19 @@ export default function ActiveHuntScreen() {
         </View>
       )}
 
-      {/* Clue view */}
+      {/* Clue view — everything inside ScrollView */}
       {!showMap && (
         <ScrollView style={styles.clueContainer}>
           {/* Clue card */}
           <View style={styles.clueCard}>
-            <Text style={styles.clueLabel}>🔍 Your Clue</Text>
+            <View style={styles.clueLabelRow}>
+              <Text style={styles.clueLabel}>🔍 Your Clue</Text>
+              <AudioButton
+                text={activeStop.clue}
+                label="Read clue"
+                compact={true}
+              />
+            </View>
             <Text style={styles.clueText}>{activeStop.clue}</Text>
           </View>
 
@@ -419,8 +417,6 @@ export default function ActiveHuntScreen() {
                   <Text style={styles.answerRevealedLabel}>
                     {isMuseumHunt ? "🎨 Artwork Answer" : "📍 Location Answer"}
                   </Text>
-
-                  {/* Location photo */}
                   {activeStop.photoUrl && (
                     <Image
                       source={{ uri: activeStop.photoUrl }}
@@ -429,7 +425,6 @@ export default function ActiveHuntScreen() {
                       onError={() => console.log("Answer photo failed to load")}
                     />
                   )}
-
                   <Text style={styles.answerRevealedName}>
                     {activeStop.locationName}
                   </Text>
@@ -489,9 +484,16 @@ export default function ActiveHuntScreen() {
           {/* Task card */}
           {atLocation && (
             <View style={styles.taskCard}>
-              <Text style={styles.taskLabel}>
-                {isMuseumHunt ? "🎨 Your Task" : "🎯 Your Task"}
-              </Text>
+              <View style={styles.clueLabelRow}>
+                <Text style={styles.taskLabel}>
+                  {isMuseumHunt ? "🎨 Your Task" : "🎯 Your Task"}
+                </Text>
+                <AudioButton
+                  text={activeStop.task}
+                  label="Read task"
+                  compact={true}
+                />
+              </View>
               <Text style={styles.taskText}>{activeStop.task}</Text>
               <Text style={styles.funFactLabel}>💡 Fun Fact</Text>
               <Text style={styles.funFactText}>{activeStop.funFact}</Text>
@@ -600,12 +602,13 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 12,
   },
-  clueLabel: {
-    fontSize: 13,
-    color: "#AED6F1",
+  clueLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
-    fontWeight: "600",
   },
+  clueLabel: { fontSize: 13, color: "#AED6F1", fontWeight: "600" },
   clueText: { fontSize: 17, color: "#FFFFFF", lineHeight: 26 },
   galleryCard: {
     backgroundColor: "#EBF5FB",
@@ -640,12 +643,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 12,
   },
-  taskLabel: {
-    fontSize: 13,
-    color: "#2E86C1",
-    marginBottom: 8,
-    fontWeight: "600",
-  },
+  taskLabel: { fontSize: 13, color: "#2E86C1", fontWeight: "600" },
   taskText: {
     fontSize: 16,
     color: "#2C3E50",

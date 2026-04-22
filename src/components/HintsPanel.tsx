@@ -1,18 +1,16 @@
 // src/components/HintsPanel.tsx
-// Shows progressive hints for the current stop.
-// Each hint revealed costs points.
-
 import React, { useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import AudioButton from "./AudioButton";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 interface HintsPanelProps {
-  hints: string[]; // Array of 3 hint strings from Claude
-  maxHints: number; // Based on difficulty: Hard=1, Medium=2, Easy=3
-  onHintUsed: (cost: number) => void; // Deducts points when hint revealed
+  hints: string[];
+  maxHints: number;
+  onHintUsed: (cost: number) => void;
 }
 
-const HINT_COST = 5; // Points deducted per hint used
+const HINT_COST = 5;
 
 export default function HintsPanel({
   hints,
@@ -21,7 +19,6 @@ export default function HintsPanel({
 }: HintsPanelProps) {
   const [revealedCount, setRevealedCount] = useState(0);
 
-  // Don't render if no hints available
   if (!hints || hints.length === 0) return null;
 
   const handleRevealHint = () => {
@@ -71,7 +68,10 @@ export default function HintsPanel({
             <Text style={styles.hintNumberText}>{i + 1}</Text>
           </View>
           <View style={styles.hintTextContainer}>
-            <Text style={styles.hintLabel}>Hint {i + 1}</Text>
+            <View style={styles.hintLabelRow}>
+              <Text style={styles.hintLabel}>Hint {i + 1}</Text>
+              <AudioButton text={hints[i]} compact={true} />
+            </View>
             <Text style={styles.hintText}>{hints[i]}</Text>
           </View>
         </View>
@@ -178,11 +178,16 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
   },
   hintTextContainer: { flex: 1 },
+  hintLabelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 2,
+  },
   hintLabel: {
     fontSize: FONTS.sizes.xs,
     color: COLORS.hint,
     fontWeight: FONTS.weights.bold,
-    marginBottom: 2,
   },
   hintText: {
     fontSize: FONTS.sizes.sm,
