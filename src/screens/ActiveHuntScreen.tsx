@@ -15,6 +15,7 @@ import {
   saveActiveHuntState,
   saveHuntPhotos,
   submitStop,
+  completeHunt,
 } from "../services/apiService";
 import {
   updateAllTimeStats,
@@ -281,6 +282,16 @@ export default function ActiveHuntScreen() {
         clearActiveHuntState(hunt.huntId).catch((err) =>
           console.warn("Clear state failed:", err.message),
         );
+
+        // Save visited locations for novel hunt insurance
+        const visitedPlaceIds = hunt.stops
+          .map((s: any) => s.placeId)
+          .filter(Boolean);
+        if (visitedPlaceIds.length > 0) {
+          completeHunt(hunt.huntId, visitedPlaceIds).catch((err) =>
+            console.warn("Save visited locations failed:", err.message),
+          );
+        }
       }
 
       router.replace({

@@ -166,6 +166,7 @@ export interface HuntStop {
   hints?: string[];
   galleryOrRoom?: string;
   photoUrl?: string;
+  placeId?: string;
   trivia?: {
     question: string;
     options: string[];
@@ -206,6 +207,15 @@ export const getActiveHunt = async () => {
   return response.data;
 };
 
+export const completeHunt = async (
+  huntId: string,
+  visitedPlaceIds: string[],
+) => {
+  const response = await api.post(`/api/hunts/${huntId}/complete`, {
+    visitedPlaceIds,
+  });
+  return response.data;
+};
 export interface Hunt {
   huntId: string;
   huntTitle: string;
