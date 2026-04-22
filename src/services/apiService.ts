@@ -107,6 +107,27 @@ export const submitStop = async (
   return response.data;
 };
 
+export const generateMicroHunt = async (
+  lat: number,
+  lng: number,
+  stopCount: number = 2,
+  difficulty: string = "easy",
+  theme: string = "adventure",
+  vibe: string = "fun and engaging",
+  interests: string[] = [],
+) => {
+  const response = await api.post("/api/hunts/generate-micro", {
+    lat,
+    lng,
+    stopCount,
+    difficulty,
+    theme,
+    vibe,
+    interests,
+  });
+  return response.data;
+};
+
 // ── Save user profile ─────────────────────────────────────────────
 export const saveUserProfile = async (displayName: string) => {
   const response = await api.post("/api/users/profile", { displayName });

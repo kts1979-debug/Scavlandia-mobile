@@ -133,26 +133,36 @@ export default function HomeScreen() {
           {
             emoji: "🏙️",
             title: "City Hunt",
-            desc: "Explore a city with custom clues at real locations. Works in 500+ cities worldwide.",
+            desc: "Explore any city with custom clues that fit your vibe. Works in 500+ cities worldwide.",
+            onPress: () => router.push("/hunt-type"),
           },
           {
             emoji: "🏛️",
             title: "Museum Hunt",
             desc: "Discover artworks and exhibits inside a museum with riddle-based clues.",
+            onPress: () => router.push("/hunt-type"),
           },
           {
             emoji: "⚡",
             title: "Micro Hunt",
             desc: "A quick 1–2 stop adventure within half a mile of you. Perfect for a short break.",
+            onPress: () => router.push("/micro-hunt"),
           },
         ].map((item) => (
-          <Card key={item.title} style={styles.huntTypeCard}>
-            <Text style={styles.huntTypeEmoji}>{item.emoji}</Text>
-            <View style={styles.huntTypeContent}>
-              <Text style={styles.huntTypeTitle}>{item.title}</Text>
-              <Text style={styles.huntTypeDesc}>{item.desc}</Text>
-            </View>
-          </Card>
+          <TouchableOpacity
+            key={item.title}
+            onPress={item.onPress}
+            activeOpacity={0.85}
+          >
+            <Card style={styles.huntTypeCard}>
+              <Text style={styles.huntTypeEmoji}>{item.emoji}</Text>
+              <View style={styles.huntTypeContent}>
+                <Text style={styles.huntTypeTitle}>{item.title}</Text>
+                <Text style={styles.huntTypeDesc}>{item.desc}</Text>
+              </View>
+              <Text style={styles.huntTypeArrow}>›</Text>
+            </Card>
+          </TouchableOpacity>
         ))}
 
         {/* How it works */}
@@ -350,4 +360,5 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   stepDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
+  huntTypeArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
 });

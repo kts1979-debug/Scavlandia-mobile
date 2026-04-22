@@ -48,6 +48,7 @@ function RootStack() {
       <Stack.Screen name="safety-warning" options={{ headerShown: false }} />
       <Stack.Screen name="stop-complete" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="micro-hunt" options={{ headerShown: false }} />
 
       <Stack.Screen name="photo-album" options={{ headerShown: false }} />
     </Stack>

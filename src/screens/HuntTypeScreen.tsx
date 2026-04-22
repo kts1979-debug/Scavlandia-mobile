@@ -1,10 +1,13 @@
 // src/screens/HuntTypeScreen.tsx
-// Shown after tapping "Start a Hunt" on the home screen.
-// User chooses between a city hunt or museum hunt.
-
 import { router } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
@@ -12,9 +15,12 @@ import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
 export default function HuntTypeScreen() {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
-        <Text style={styles.title}>Welcome to{"\n"}Scavlandia! 🗺️</Text>
+        <Text style={styles.title}>{"Welcome to\nScavlandia! 🗺️"}</Text>
         <Text style={styles.subtitle}>
           Choose your adventure type to get started
         </Text>
@@ -29,8 +35,8 @@ export default function HuntTypeScreen() {
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>City Hunt</Text>
             <Text style={styles.cardDesc}>
-              Explore a city or museum with personalized clues at real
-              locations. Perfect for any group in any city.
+              Explore a city with personalized clues at real locations. Perfect
+              for any group in any city.
             </Text>
             <View style={styles.tagRow}>
               {["Outdoors", "GPS tracking", "Any city", "6–12 stops"].map(
@@ -73,6 +79,34 @@ export default function HuntTypeScreen() {
           <Text style={styles.cardArrow}>›</Text>
         </TouchableOpacity>
 
+        {/* Micro Hunt */}
+        <TouchableOpacity
+          style={[styles.card, styles.cardMicro]}
+          onPress={() => router.push("/micro-hunt")}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.cardEmoji}>⚡</Text>
+          <View style={styles.cardText}>
+            <Text style={styles.cardTitle}>Micro Hunt</Text>
+            <Text style={styles.cardDesc}>
+              A quick 1–2 stop adventure built around where you are right now.
+              No setup needed — just go!
+            </Text>
+            <View style={styles.tagRow}>
+              {["Nearby spots", "10–20 min", "No setup", "Quick fun"].map(
+                (tag) => (
+                  <View key={tag} style={[styles.tag, styles.tagMicro]}>
+                    <Text style={[styles.tagText, styles.tagTextMicro]}>
+                      {tag}
+                    </Text>
+                  </View>
+                ),
+              )}
+            </View>
+          </View>
+          <Text style={styles.cardArrow}>›</Text>
+        </TouchableOpacity>
+
         {/* Back */}
         <Button
           label="Back to Home"
@@ -81,14 +115,14 @@ export default function HuntTypeScreen() {
           size="md"
           style={styles.backBtn}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
-  content: { flex: 1, padding: SPACING.lg, justifyContent: "center" },
+  content: { padding: SPACING.lg, justifyContent: "center", paddingBottom: 40 },
   title: {
     fontSize: FONTS.sizes.hero,
     fontWeight: FONTS.weights.heavy,
@@ -116,6 +150,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.accent,
   },
+  cardMicro: {
+    backgroundColor: "#FEF9E7",
+    borderWidth: 2,
+    borderColor: COLORS.gold,
+  },
   cardEmoji: { fontSize: 40, marginTop: 4 },
   cardText: { flex: 1 },
   cardTitle: {
@@ -138,12 +177,18 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   tagMuseum: { backgroundColor: COLORS.accentPale },
+  tagMicro: {
+    backgroundColor: "#FEF9E7",
+    borderWidth: 1,
+    borderColor: COLORS.gold,
+  },
   tagText: {
     fontSize: FONTS.sizes.xs,
     color: COLORS.darkGray,
     fontWeight: FONTS.weights.medium,
   },
   tagTextMuseum: { color: COLORS.accent },
+  tagTextMicro: { color: "#B7950B" },
   cardArrow: {
     fontSize: FONTS.sizes.xxl,
     color: COLORS.midGray,
