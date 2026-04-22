@@ -6,6 +6,7 @@ import HintsPanel from "../components/HintsPanel";
 import HuntTimer from "../components/HuntTimer";
 import LiveLeaderboard from "../components/LiveLeaderboard";
 import ProgressBar from "../components/ui/ProgressBar";
+import TriviaChallenge from "../components/TriviaChallenge";
 import { useHuntTimer } from "../hooks/useHuntTimer";
 import {
   Hunt,
@@ -83,6 +84,8 @@ export default function ActiveHuntScreen() {
   const [swapsUsed, setSwapsUsed] = useState(
     params.swapsUsed ? parseInt(params.swapsUsed as string) : 0,
   );
+  const [triviaCompleted, setTriviaCompleted] = useState(false);
+  const [triviaBonus, setTriviaBonus] = useState(0);
 
   // ── Difficulty & timer ─────────────────────────────────────────────
   const difficulty = hunt.groupProfile?.difficulty || "medium";
@@ -144,6 +147,12 @@ export default function ActiveHuntScreen() {
       saveState();
     }
   }, [completedIndices.length, skippedStops.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reset trivia state when stop changes
+  useEffect(() => {
+    setTriviaCompleted(false);
+    setTriviaBonus(0);
+  }, [activeStopIndex]);
 
   // ── Location ───────────────────────────────────────────────────────
   const handleArrival = useCallback(() => {
@@ -240,8 +249,9 @@ export default function ActiveHuntScreen() {
         activeStop.pointValue,
       );
 
+      // Include trivia bonus in points calculation
       const newTotalPoints =
-        totalPoints + activeStop.pointValue - answerDeductions;
+        totalPoints + activeStop.pointValue - answerDeductions + triviaBonus;
       const newCompletedList = [...completedIndices, activeStopIndex];
 
       setCompletedIndices(newCompletedList);
@@ -279,7 +289,9 @@ export default function ActiveHuntScreen() {
           stopName: activeStop.locationName,
           stopOrder: String(activeStop.order),
           totalStops: String(hunt.stops.length),
-          pointsEarned: String(activeStop.pointValue - answerDeductions),
+          pointsEarned: String(
+            activeStop.pointValue - answerDeductions + triviaBonus,
+          ),
           totalPoints: String(newTotalPoints - hintDeductions),
           hunt: JSON.stringify(hunt),
           sessionCode,
@@ -441,7 +453,8 @@ export default function ActiveHuntScreen() {
           </Text>
           <View style={styles.headerRight}>
             <Text style={styles.points}>
-              ⭐ {totalPoints - hintDeductions - answerDeductions} pts
+              ⭐ {totalPoints - hintDeductions - answerDeductions + triviaBonus}{" "}
+              pts
             </Text>
             {sessionCode ? (
               <TouchableOpacity
@@ -649,19 +662,42 @@ export default function ActiveHuntScreen() {
               <Text style={styles.taskText}>{activeStop.task}</Text>
               <Text style={styles.funFactLabel}>💡 Fun Fact</Text>
               <Text style={styles.funFactText}>{activeStop.funFact}</Text>
-              <TouchableOpacity
-                style={styles.photoButton}
-                onPress={handleTakePhoto}
-                disabled={submitting}
-              >
-                <Text style={styles.photoButtonText}>
-                  {submitting
-                    ? "⬆️  Uploading photo..."
-                    : isMuseumHunt
-                      ? "📸  Photograph the Artwork"
-                      : "📸  Add Photo to Complete"}
-                </Text>
-              </TouchableOpacity>
+
+              {/* Trivia challenge — shown before photo if trivia exists */}
+              {activeStop.trivia && !triviaCompleted && (
+                <TriviaChallenge
+                  question={activeStop.trivia.question}
+                  options={activeStop.trivia.options}
+                  answerIndex={activeStop.trivia.answerIndex}
+                  funFact={activeStop.trivia.funFact}
+                  onCorrect={() => {
+                    setTriviaBonus((prev) => prev + 10);
+                    setTriviaCompleted(true);
+                  }}
+                  onWrong={() => {
+                    setTriviaBonus((prev) => prev - 5);
+                    setTriviaCompleted(true);
+                  }}
+                  onSkip={() => setTriviaCompleted(true)}
+                />
+              )}
+
+              {/* Photo button — only shown after trivia or if no trivia */}
+              {(!activeStop.trivia || triviaCompleted) && (
+                <TouchableOpacity
+                  style={styles.photoButton}
+                  onPress={handleTakePhoto}
+                  disabled={submitting}
+                >
+                  <Text style={styles.photoButtonText}>
+                    {submitting
+                      ? "⬆️  Uploading photo..."
+                      : isMuseumHunt
+                        ? "📸  Photograph the Artwork"
+                        : "📸  Add Photo to Complete"}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 

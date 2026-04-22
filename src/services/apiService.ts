@@ -145,6 +145,12 @@ export interface HuntStop {
   hints?: string[];
   galleryOrRoom?: string;
   photoUrl?: string;
+  trivia?: {
+    question: string;
+    options: string[];
+    answerIndex: number;
+    funFact: string;
+  };
 }
 // Save active hunt state for resume later
 export const saveActiveHuntState = async (
