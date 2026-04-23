@@ -15,6 +15,7 @@ import CityPicker from "../components/CityPicker";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, THEMES } from "../theme";
+import { canGenerateHunt } from "../services/purchaseService";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍕" },
@@ -104,7 +105,7 @@ export default function GroupProfileScreen() {
     setTone(RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)]);
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!city.trim())
       return Alert.alert("Missing info", "Please enter a city name");
     if (!mobility)
@@ -118,20 +119,42 @@ export default function GroupProfileScreen() {
     const finalTone =
       tone || RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
 
+    const groupProfile = {
+      ages: parseInt(ages) || 30,
+      groupSize: parseInt(groupSize) || 4,
+      interests: finalInterests,
+      tone: finalTone,
+      mobility,
+      difficulty,
+      theme,
+      stopCount,
+    };
+
+    // Check if user can generate a city hunt
+    const canGenerate = await canGenerateHunt("city");
+
+    if (!canGenerate) {
+      // Show paywall
+      router.push({
+        pathname: "/paywall",
+        params: {
+          huntType: "city",
+          nextRoute: "/generating",
+          nextParams: JSON.stringify({
+            city: city.trim(),
+            groupProfile: JSON.stringify(groupProfile),
+          }),
+        },
+      });
+      return;
+    }
+
+    // Has entitlement — go straight to generating
     router.push({
       pathname: "/generating",
       params: {
         city: city.trim(),
-        groupProfile: JSON.stringify({
-          ages: parseInt(ages) || 30,
-          groupSize: parseInt(groupSize) || 4,
-          interests: finalInterests,
-          tone: finalTone,
-          mobility,
-          difficulty,
-          theme,
-          stopCount,
-        }),
+        groupProfile: JSON.stringify(groupProfile),
       },
     });
   };

@@ -1,6 +1,6 @@
-// src/screens/ProfileScreen.tsx — Playful redesign
+// src/screens/ProfileScreen.tsx
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -14,10 +14,12 @@ import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
+import { deleteAccount } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 export default function ProfileScreen() {
   const { user, signOut, loading } = useAuth();
+  const [deleting, setDeleting] = useState(false);
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -31,6 +33,55 @@ export default function ProfileScreen() {
         },
       },
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "⚠️ Delete Account",
+      "This will permanently delete your account and all your data including hunt history and photos. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete My Account",
+          style: "destructive",
+          onPress: () => confirmDelete(),
+        },
+      ],
+    );
+  };
+
+  const confirmDelete = () => {
+    // Second confirmation
+    Alert.alert(
+      "Are you absolutely sure?",
+      "All your hunts, photos, and progress will be permanently deleted.",
+      [
+        { text: "No, keep my account", style: "cancel" },
+        {
+          text: "Yes, delete everything",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await deleteAccount();
+              await signOut();
+              Alert.alert(
+                "Account Deleted",
+                "Your account and all data have been permanently deleted.",
+                [{ text: "OK", onPress: () => router.replace("/login") }],
+              );
+            } catch {
+              Alert.alert(
+                "Error",
+                "Could not delete your account. Please try again or contact support@scavlandia.com",
+              );
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
   };
 
   if (loading) {
@@ -75,7 +126,6 @@ export default function ProfileScreen() {
     );
   }
 
-  // Logged in
   const initial = user.displayName?.charAt(0).toUpperCase() || "?";
   const memberSince = user.metadata.creationTime
     ? new Date(user.metadata.creationTime).toLocaleDateString("en-US", {
@@ -167,10 +217,13 @@ export default function ProfileScreen() {
           <View style={styles.upgradeText}>
             <Text style={styles.upgradeTitle}>Go Unlimited</Text>
             <Text style={styles.upgradeSub}>
-              Unlimited hunts for $9.99/month
+              Unlimited hunts for $19.99/month
             </Text>
           </View>
-          <TouchableOpacity style={styles.upgradeBtn}>
+          <TouchableOpacity
+            style={styles.upgradeBtn}
+            onPress={() => router.push("/paywall")}
+          >
             <Text style={styles.upgradeBtnText}>Upgrade</Text>
           </TouchableOpacity>
         </Card>
@@ -184,6 +237,37 @@ export default function ProfileScreen() {
           emoji="👋"
           style={styles.signOutBtn}
         />
+
+        {/* Danger Zone */}
+        <View style={styles.dangerZone}>
+          <Text style={styles.dangerZoneTitle}>⚠️ Danger Zone</Text>
+          <Text style={styles.dangerZoneDesc}>
+            Permanently delete your account and all associated data including
+            hunt history and photos. This cannot be undone.
+          </Text>
+          <TouchableOpacity
+            style={[styles.deleteBtn, deleting && styles.deleteBtnDisabled]}
+            onPress={handleDeleteAccount}
+            disabled={deleting}
+          >
+            <Text style={styles.deleteBtnText}>
+              {deleting ? "Deleting..." : "🗑️ Delete My Account"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Privacy Policy & Data links */}
+        <View style={styles.legalLinks}>
+          <TouchableOpacity
+            onPress={() => router.push("/community-leaderboard")}
+          >
+            <Text style={styles.legalLink}>Privacy Policy</Text>
+          </TouchableOpacity>
+          <Text style={styles.legalDot}>·</Text>
+          <TouchableOpacity>
+            <Text style={styles.legalLink}>Data Deletion</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -318,7 +402,48 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     fontWeight: FONTS.weights.bold,
   },
-  signOutBtn: { marginTop: SPACING.sm },
+  signOutBtn: { marginTop: SPACING.sm, marginBottom: SPACING.lg },
+  dangerZone: {
+    backgroundColor: COLORS.lred,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.danger,
+  },
+  dangerZoneTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.danger,
+    marginBottom: SPACING.sm,
+  },
+  dangerZoneDesc: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    lineHeight: 20,
+    marginBottom: SPACING.md,
+  },
+  deleteBtn: {
+    backgroundColor: COLORS.danger,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    alignItems: "center",
+  },
+  deleteBtnDisabled: { opacity: 0.5 },
+  deleteBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+  },
+  legalLinks: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: SPACING.sm,
+    marginBottom: SPACING.xl,
+  },
+  legalLink: { fontSize: FONTS.sizes.xs, color: COLORS.accent },
+  legalDot: { fontSize: FONTS.sizes.xs, color: COLORS.midGray },
   leaderboardLink: {
     flexDirection: "row",
     alignItems: "center",

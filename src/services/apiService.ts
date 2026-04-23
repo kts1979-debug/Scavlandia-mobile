@@ -216,6 +216,10 @@ export const completeHunt = async (
   });
   return response.data;
 };
+export const deleteAccount = async () => {
+  const response = await api.delete("/api/users/account");
+  return response.data;
+};
 export interface Hunt {
   huntId: string;
   huntTitle: string;

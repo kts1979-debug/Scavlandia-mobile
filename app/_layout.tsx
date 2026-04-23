@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-gesture-handler";
-import { AuthProvider, useAuth } from "../src/context/AuthContext";
+import { AuthProvider, useAuth } from "../src/context/AuthContext.tsx";
 import { COLORS } from "../src/theme";
 import "../src/utils/firebaseConfig";
 
@@ -49,6 +49,7 @@ function RootStack() {
       <Stack.Screen name="stop-complete" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="micro-hunt" options={{ headerShown: false }} />
+      <Stack.Screen name="paywall" options={{ headerShown: false }} />
 
       <Stack.Screen name="photo-album" options={{ headerShown: false }} />
     </Stack>

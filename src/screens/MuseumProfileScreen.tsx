@@ -18,6 +18,7 @@ import MuseumPicker from "../components/MuseumPicker";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING } from "../theme";
+import { canGenerateHunt } from "../services/purchaseService";
 
 const TONES = [
   { label: "Educational", emoji: "📚" },
@@ -51,7 +52,7 @@ export default function MuseumProfileScreen() {
     </View>
   );
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!selectedMuseum) {
       return Alert.alert("Missing info", "Please select a museum first");
     }
@@ -59,27 +60,48 @@ export default function MuseumProfileScreen() {
     const finalTone =
       tone || RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
 
+    const groupProfile = {
+      ages: parseInt(ages) || 30,
+      groupSize: parseInt(groupSize) || 4,
+      interests: ["Art", "History", "Architecture"],
+      tone: finalTone,
+      mobility: "Walking only",
+      difficulty,
+      theme: "mystery",
+      stopCount,
+      huntType: "museum",
+      museum: {
+        name: selectedMuseum.name,
+        address: selectedMuseum.address,
+        lat: selectedMuseum.lat,
+        lng: selectedMuseum.lng,
+      },
+    };
+
+    // Check if user can generate a museum hunt
+    const canGenerate = await canGenerateHunt("museum");
+
+    if (!canGenerate) {
+      router.push({
+        pathname: "/paywall",
+        params: {
+          huntType: "museum",
+          nextRoute: "/generating",
+          nextParams: JSON.stringify({
+            city: selectedMuseum.name,
+            groupProfile: JSON.stringify(groupProfile),
+          }),
+        },
+      });
+      return;
+    }
+
+    // Has entitlement — go straight to generating
     router.push({
       pathname: "/generating",
       params: {
         city: selectedMuseum.name,
-        groupProfile: JSON.stringify({
-          ages: parseInt(ages) || 30,
-          groupSize: parseInt(groupSize) || 4,
-          interests: ["Art", "History", "Architecture"],
-          tone: finalTone,
-          mobility: "Walking only",
-          difficulty,
-          theme: "mystery",
-          stopCount,
-          huntType: "museum",
-          museum: {
-            name: selectedMuseum.name,
-            address: selectedMuseum.address,
-            lat: selectedMuseum.lat,
-            lng: selectedMuseum.lng,
-          },
-        }),
+        groupProfile: JSON.stringify(groupProfile),
       },
     });
   };

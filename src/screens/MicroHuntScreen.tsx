@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/ui/Card";
 import { generateMicroHunt } from "../services/apiService";
 import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, THEMES } from "../theme";
+import { canGenerateHunt } from "../services/purchaseService";
 
 type Phase = "intro" | "locating" | "generating" | "error";
 
@@ -126,6 +127,20 @@ export default function MicroHuntScreen() {
         location.coords.latitude,
         location.coords.longitude,
       );
+
+      const canGenerate = await canGenerateHunt("micro");
+      if (!canGenerate) {
+        setPhase("intro");
+        router.push({
+          pathname: "/paywall",
+          params: {
+            huntType: "micro",
+            nextRoute: "/micro-hunt",
+            nextParams: JSON.stringify({}),
+          },
+        });
+        return;
+      }
 
       const hunt = await generateMicroHunt(
         location.coords.latitude,
