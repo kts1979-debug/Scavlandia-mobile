@@ -3,7 +3,7 @@
     "name": "Scavlandia",
     "slug": "scavlandia",
     "scheme": "scavlandia",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
@@ -22,7 +22,8 @@
         "NSLocationWhenInUseUsageDescription": "Scavlandia needs your location to show you where hunt stops are and detect when you arrive.",
         "NSLocationAlwaysUsageDescription": "Scavlandia uses your location to track hunt progress.",
         "NSCameraUsageDescription": "Scavlandia needs camera access to take photos at hunt stops.",
-        "NSPhotoLibraryUsageDescription": "Scavlandia saves hunt photos to your photo library."
+        "NSPhotoLibraryUsageDescription": "Scavlandia saves hunt photos to your photo library.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -31,6 +32,7 @@
         "backgroundColor": "#1A5276"
       },
       "package": "com.katesauls.scavlandia",
+      "versionCode": 3,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyD3WYNDd0gJLfGcAsvWIQFQdHt1Tv9rGYg"
@@ -63,11 +65,18 @@
           "locationWhenInUsePermission": "Allow Scavlandia to use your location to detect your city for hunt generation."
         }
       ],
+      [
+        "react-native-maps",
+        {
+          "googleMapsApiKey": "AIzaSyD3WYNDd0gJLfGcAsvWIQFQdHt1Tv9rGYg"
+        }
+      ],
       "expo-camera",
       "expo-media-library",
       "expo-font",
       "expo-image",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-sharing"
     ],
     "extra": {
       "eas": {
