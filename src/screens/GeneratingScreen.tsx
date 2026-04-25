@@ -1,11 +1,20 @@
 // src/screens/GeneratingScreen.tsx
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import NearbyCitySuggestion from "../components/NearbyCitySuggestion";
 import { generateHunt, generateMuseumHunt } from "../services/apiService";
 import { COLORS, FONTS, SPACING } from "../theme";
+
+const LOGO_FULL = require("../../assets/images/scavlandia_matched_height.png");
 
 const STEPS = [
   { emoji: "🗺️", text: "Mapping your city..." },
@@ -33,7 +42,6 @@ export default function GeneratingScreen() {
   const [dots, setDots] = useState("");
   const [showSuggestion, setShowSuggestion] = useState(false);
 
-  // Determine which step messages to use
   const isMuseumHunt = groupProfile.huntType === "museum";
   const activeSteps = isMuseumHunt ? MUSEUM_STEPS : STEPS;
 
@@ -57,7 +65,6 @@ export default function GeneratingScreen() {
       let result;
 
       if (profile.huntType === "museum" && profile.museum) {
-        // Museum hunt — use museum endpoint
         result = await generateMuseumHunt(
           profile.museum.name,
           profile.museum.address,
@@ -66,7 +73,6 @@ export default function GeneratingScreen() {
           profile,
         );
       } else {
-        // Regular city hunt
         result = await generateHunt(huntCity, profile);
       }
 
@@ -120,7 +126,7 @@ export default function GeneratingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Dynamic emoji and text based on hunt type */}
+        {/* Dynamic emoji */}
         <Text style={styles.bigEmoji}>{activeSteps[step].emoji}</Text>
         <Text style={styles.city}>
           {isMuseumHunt ? "🏛️" : "📍"} {city}
@@ -128,7 +134,7 @@ export default function GeneratingScreen() {
         <Text style={styles.title}>
           {isMuseumHunt
             ? "Building your museum adventure"
-            : "Building your adventure"}
+            : "Building your hunt"}
           {dots}
         </Text>
         <ActivityIndicator
@@ -150,6 +156,16 @@ export default function GeneratingScreen() {
             ? "Crafting your artwork clues..."
             : "This takes about 20–30 seconds"}
         </Text>
+
+        {/* Logo watermark */}
+        <View style={styles.watermark}>
+          <Image
+            source={LOGO_FULL}
+            style={styles.watermarkLogo}
+            resizeMode="contain"
+          />
+          <Text style={styles.watermarkText}>Scavlandia</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -193,6 +209,23 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.3)",
   },
   dotActive: { backgroundColor: COLORS.accent, width: 24 },
-  note: { fontSize: FONTS.sizes.sm, color: "#7FB3D3" },
+  note: {
+    fontSize: FONTS.sizes.sm,
+    color: "#7FB3D3",
+    marginBottom: SPACING.xl,
+  },
+  watermark: {
+    position: "absolute",
+    bottom: SPACING.xl,
+    alignItems: "center",
+    opacity: 0.45,
+  },
+  watermarkLogo: { width: 64, height: 64, marginBottom: 4 },
+  watermarkText: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.white,
+    fontWeight: FONTS.weights.bold,
+    letterSpacing: 2,
+  },
   suggestionContent: { flex: 1, justifyContent: "center", padding: SPACING.lg },
 });

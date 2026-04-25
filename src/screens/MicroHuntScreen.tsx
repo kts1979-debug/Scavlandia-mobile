@@ -20,6 +20,7 @@ type Phase = "intro" | "locating" | "generating" | "error";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍕" },
+  { label: "Beer & Bars", emoji: "🍺" },
   { label: "History", emoji: "🏛️" },
   { label: "Art", emoji: "🎨" },
   { label: "Sports", emoji: "⚽" },
@@ -28,15 +29,10 @@ const INTERESTS = [
   { label: "Architecture", emoji: "🏗️" },
   { label: "Games", emoji: "🎮" },
   { label: "Shopping", emoji: "🛍️" },
-  { label: "Birds", emoji: "🦅" },
   { label: "True Crime", emoji: "🔪" },
   { label: "Ghosts", emoji: "👻" },
   { label: "Street Art", emoji: "🖌️" },
-  { label: "Coffee", emoji: "☕" },
-  { label: "Beer & Bars", emoji: "🍺" },
   { label: "Hidden Gems", emoji: "💎" },
-  { label: "Street Food", emoji: "🌮" },
-  { label: "Parks", emoji: "🌳" },
   { label: "Photography", emoji: "📷" },
   { label: "Film & TV", emoji: "🎬" },
 ];
@@ -60,8 +56,6 @@ const RANDOM_INTERESTS = [
   "Sports",
   "Hidden Gems",
   "Street Art",
-  "Coffee",
-  "Parks",
   "Photography",
 ];
 
@@ -159,6 +153,11 @@ export default function MicroHuntScreen() {
     } catch (err: any) {
       console.error("Micro hunt error:", err.message);
       console.error("Micro hunt error detail:", err.response?.data);
+      console.error("Micro hunt error status:", err.response?.status);
+      console.error(
+        "Micro hunt full error:",
+        JSON.stringify(err.response?.data),
+      );
       setError(
         err.response?.data?.error ||
           "Could not generate a micro hunt. Please try again.",

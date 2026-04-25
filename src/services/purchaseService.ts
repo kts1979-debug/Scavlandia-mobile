@@ -1,16 +1,19 @@
 // src/services/purchaseService.ts
 // Handles all in-app purchase logic via RevenueCat.
-// // src/services/purchaseService.ts
-// Handles all in-app purchase logic via RevenueCat.
 // Abstracts purchase state so the rest of the app
 // doesn't need to know about RevenueCat directly.
 
+import Constants from "expo-constants";
 import Purchases, {
+  CustomerInfo,
   LOG_LEVEL,
   PurchasesOffering,
-  CustomerInfo,
 } from "react-native-purchases";
 import { Platform } from "react-native";
+
+// ── Expo Go detection ──────────────────────────────────────────────
+// RevenueCat cannot run in Expo Go — skip all purchase logic during testing
+const isExpoGo = Constants.appOwnership === "expo";
 
 // ── RevenueCat API Keys ────────────────────────────────────────────
 const API_KEYS = {
@@ -36,8 +39,11 @@ export const ENTITLEMENTS = {
 
 // ── Initialize RevenueCat ──────────────────────────────────────────
 export const initializePurchases = (userId?: string) => {
+  if (isExpoGo) {
+    console.log("💰 RevenueCat skipped — running in Expo Go");
+    return;
+  }
   const apiKey = Platform.OS === "ios" ? API_KEYS.ios : API_KEYS.android;
-
   Purchases.setLogLevel(LOG_LEVEL.WARN);
   Purchases.configure({ apiKey, appUserID: userId || null });
   console.log("💰 RevenueCat initialized");
@@ -47,6 +53,7 @@ export const initializePurchases = (userId?: string) => {
 export const hasEntitlement = async (
   entitlementId: string,
 ): Promise<boolean> => {
+  if (isExpoGo) return true;
   try {
     const customerInfo = await Purchases.getCustomerInfo();
     return entitlementId in customerInfo.entitlements.active;
@@ -60,14 +67,18 @@ export const hasEntitlement = async (
 export const canGenerateHunt = async (
   huntType: "city" | "museum" | "micro",
 ): Promise<boolean> => {
+  if (isExpoGo) {
+    console.log(
+      "💰 Expo Go — skipping purchase check, allowing hunt generation",
+    );
+    return true;
+  }
   try {
     const customerInfo = await Purchases.getCustomerInfo();
     const active = customerInfo.entitlements.active;
 
-    // Premium subscription covers all hunt types
     if (ENTITLEMENTS.premium in active) return true;
 
-    // Check specific entitlement
     const entitlementMap = {
       city: ENTITLEMENTS.cityHunt,
       museum: ENTITLEMENTS.museumHunt,
@@ -84,6 +95,7 @@ export const canGenerateHunt = async (
 // ── Get current offering ───────────────────────────────────────────
 export const getCurrentOffering =
   async (): Promise<PurchasesOffering | null> => {
+    if (isExpoGo) return null;
     try {
       const offerings = await Purchases.getOfferings();
       return offerings.current;

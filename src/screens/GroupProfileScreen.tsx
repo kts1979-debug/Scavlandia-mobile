@@ -19,6 +19,7 @@ import { canGenerateHunt } from "../services/purchaseService";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍕" },
+  { label: "Beer & Bars", emoji: "🍺" },
   { label: "History", emoji: "🏛️" },
   { label: "Art", emoji: "🎨" },
   { label: "Sports", emoji: "⚽" },
@@ -27,15 +28,10 @@ const INTERESTS = [
   { label: "Architecture", emoji: "🏗️" },
   { label: "Games", emoji: "🎮" },
   { label: "Shopping", emoji: "🛍️" },
-  { label: "Birds", emoji: "🦅" },
   { label: "True Crime", emoji: "🔪" },
   { label: "Ghosts", emoji: "👻" },
   { label: "Street Art", emoji: "🖌️" },
-  { label: "Coffee", emoji: "☕" },
-  { label: "Beer & Bars", emoji: "🍺" },
   { label: "Hidden Gems", emoji: "💎" },
-  { label: "Street Food", emoji: "🌮" },
-  { label: "Parks", emoji: "🌳" },
   { label: "Photography", emoji: "📷" },
   { label: "Film & TV", emoji: "🎬" },
 ];
@@ -66,8 +62,6 @@ const RANDOM_INTERESTS = [
   "Sports",
   "Hidden Gems",
   "Street Art",
-  "Coffee",
-  "Parks",
   "Photography",
 ];
 

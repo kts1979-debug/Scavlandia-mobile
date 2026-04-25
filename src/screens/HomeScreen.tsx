@@ -2,6 +2,8 @@
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +17,9 @@ import { useAuth } from "../context/AuthContext";
 import { getActiveHunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
+const LOGO_FULL = require("../../assets/images/scavlandia_matched_height.png");
+const LOGO_ICON = require("../../assets/images/scavlandia_icon.png");
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const [activeHunt, setActiveHunt] = useState<any>(null);
@@ -23,7 +28,7 @@ export default function HomeScreen() {
     if (user) {
       getActiveHunt()
         .then((data) => setActiveHunt(data.activeHunt))
-        .catch(() => {}); // non-critical
+        .catch(() => {});
     } else {
       setActiveHunt(null);
     }
@@ -41,6 +46,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header */}
         {/* Header */}
         <View style={styles.header}>
           <View>
@@ -99,8 +105,11 @@ export default function HomeScreen() {
 
         {/* Hero Banner */}
         <Card variant="primary" style={styles.heroBanner}>
-          <Text style={styles.heroEmoji}>🗺️</Text>
-          <Text style={styles.heroTitle}>{"Welcome to\nScavlandia!"}</Text>
+          <Image
+            source={LOGO_FULL}
+            style={styles.heroLogo}
+            resizeMode="contain"
+          />
           <Text style={styles.heroSub}>
             {
               "Tell us about your group and we'll build\na personalized hunt in any city or museum"
@@ -212,7 +221,10 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.offWhite },
-  scroll: { padding: SPACING.md, paddingBottom: 40 },
+  scroll: {
+    padding: SPACING.md,
+    paddingBottom: Platform.OS === "android" ? 100 : 40,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -224,13 +236,13 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
     color: COLORS.primary,
   },
+  headerLogo: { height: 36, width: 180 },
   greeting: {
     fontSize: FONTS.sizes.md,
     color: COLORS.accent,
     fontWeight: FONTS.weights.medium,
     marginTop: 2,
   },
-  tagline: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, marginTop: 2 },
   avatarBtn: {
     width: 44,
     height: 44,
@@ -278,9 +290,10 @@ const styles = StyleSheet.create({
   heroBanner: {
     marginBottom: SPACING.lg,
     alignItems: "center",
-    paddingVertical: SPACING.xl,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
   },
-  heroEmoji: { fontSize: 56, marginBottom: SPACING.sm },
+  heroLogo: { width: "90%", height: 160, marginBottom: SPACING.md },
   heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
@@ -332,6 +345,7 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     lineHeight: 18,
   },
+  huntTypeArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
   stepCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -360,5 +374,5 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   stepDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
-  huntTypeArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
+  tagline: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, marginTop: 2 },
 });

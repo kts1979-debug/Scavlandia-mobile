@@ -1,7 +1,4 @@
 // src/screens/PaywallScreen.tsx
-// Shown when a user tries to generate a hunt without a purchase.
-// Displays pricing options and handles the purchase flow.
-
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -12,8 +9,11 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Linking,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 import {
   getCurrentOffering,
   purchasePackage,
@@ -21,8 +21,11 @@ import {
   PRODUCT_IDS,
 } from "../services/purchaseService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+import Purchases from "react-native-purchases";
 
 type HuntType = "city" | "museum" | "micro";
+
+const isExpoGo = Constants.appOwnership === "expo";
 
 const HUNT_INFO = {
   city: {
@@ -51,6 +54,27 @@ const HUNT_INFO = {
   },
 };
 
+const handlePromoCode = async () => {
+  if (isExpoGo) {
+    Alert.alert("Test Mode", "Promo codes not available in Expo Go.");
+    return;
+  }
+  try {
+    if (Platform.OS === "ios") {
+      await Purchases.presentCodeRedemptionSheet();
+    } else {
+      // Android — open Google Play redeem URL
+      const url = "https://play.google.com/redeem";
+      await Linking.openURL(url);
+    }
+  } catch {
+    Alert.alert(
+      "Error",
+      "Could not open promo code redemption. Please try again.",
+    );
+  }
+};
+
 export default function PaywallScreen() {
   const params = useLocalSearchParams();
   const huntType = (params.huntType as HuntType) || "city";
@@ -63,6 +87,7 @@ export default function PaywallScreen() {
   const [purchasing, setPurchasing] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [offering, setOffering] = useState<any>(null);
+  const [offerError, setOfferError] = useState<string | null>(null);
 
   const huntInfo = HUNT_INFO[huntType];
 
@@ -72,24 +97,60 @@ export default function PaywallScreen() {
 
   const loadOffering = async () => {
     try {
+      setOfferError(null);
       const current = await getCurrentOffering();
       setOffering(current);
-    } catch (err) {
+      if (!current) {
+        console.warn("No offering returned from RevenueCat");
+        setOfferError(
+          "Could not load pricing. Please check your connection and try again.",
+        );
+      }
+    } catch (err: any) {
       console.warn("Could not load offering:", err);
+      setOfferError("Could not load pricing. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  const proceedAfterPurchase = () => {
+    router.replace({ pathname: nextRoute as any, params: nextParams });
+  };
+
   const handlePurchaseSingle = async () => {
-    if (!offering) return;
+    // In Expo Go — skip purchase and proceed directly for testing
+    if (isExpoGo) {
+      Alert.alert(
+        "Test Mode",
+        "Purchase skipped in Expo Go. Proceeding to hunt.",
+        [{ text: "OK", onPress: proceedAfterPurchase }],
+      );
+      return;
+    }
+
+    if (!offering) {
+      Alert.alert(
+        "Not Available",
+        "Pricing could not be loaded. Please check your connection and try again.",
+        [{ text: "Retry", onPress: loadOffering }, { text: "Cancel" }],
+      );
+      return;
+    }
 
     const pkg = offering.availablePackages.find(
       (p: any) => p.identifier === huntInfo.packageId,
     );
 
     if (!pkg) {
-      Alert.alert("Error", "Could not find this product. Please try again.");
+      console.warn(
+        "Available packages:",
+        offering.availablePackages?.map((p: any) => p.identifier),
+      );
+      Alert.alert(
+        "Product Not Found",
+        `Could not find ${huntInfo.title} in the store. Please try restoring purchases or contact support.`,
+      );
       return;
     }
 
@@ -108,20 +169,15 @@ export default function PaywallScreen() {
         entitlementMap[huntType] in entitlements ||
         "premium" in entitlements
       ) {
-        // Purchase successful — proceed to hunt generation
         Alert.alert(
           "✅ Purchase Successful!",
           `Your ${huntInfo.title} is ready. Let's go!`,
-          [
-            {
-              text: "Let's Hunt!",
-              onPress: () =>
-                router.replace({
-                  pathname: nextRoute as any,
-                  params: nextParams,
-                }),
-            },
-          ],
+          [{ text: "Let's Hunt!", onPress: proceedAfterPurchase }],
+        );
+      } else {
+        Alert.alert(
+          "Purchase Issue",
+          "Purchase completed but entitlement not found. Please restore purchases.",
         );
       }
     } catch (err: any) {
@@ -137,14 +193,38 @@ export default function PaywallScreen() {
   };
 
   const handlePurchaseSubscription = async () => {
-    if (!offering) return;
+    // In Expo Go — skip purchase and proceed directly for testing
+    if (isExpoGo) {
+      Alert.alert(
+        "Test Mode",
+        "Subscription skipped in Expo Go. Proceeding to hunt.",
+        [{ text: "OK", onPress: proceedAfterPurchase }],
+      );
+      return;
+    }
+
+    if (!offering) {
+      Alert.alert(
+        "Not Available",
+        "Pricing could not be loaded. Please check your connection and try again.",
+        [{ text: "Retry", onPress: loadOffering }, { text: "Cancel" }],
+      );
+      return;
+    }
 
     const pkg = offering.availablePackages.find(
       (p: any) => p.identifier === "$rc_monthly",
     );
 
     if (!pkg) {
-      Alert.alert("Error", "Could not find subscription. Please try again.");
+      console.warn(
+        "Available packages:",
+        offering.availablePackages?.map((p: any) => p.identifier),
+      );
+      Alert.alert(
+        "Subscription Not Found",
+        "Could not find the subscription in the store. Please try again later.",
+      );
       return;
     }
 
@@ -156,16 +236,12 @@ export default function PaywallScreen() {
         Alert.alert(
           "✅ Welcome to Scavlandia Premium!",
           "You now have unlimited hunts. Let the adventure begin!",
-          [
-            {
-              text: "Let's Hunt!",
-              onPress: () =>
-                router.replace({
-                  pathname: nextRoute as any,
-                  params: nextParams,
-                }),
-            },
-          ],
+          [{ text: "Let's Hunt!", onPress: proceedAfterPurchase }],
+        );
+      } else {
+        Alert.alert(
+          "Subscription Issue",
+          "Subscription completed but access not granted. Please restore purchases.",
         );
       }
     } catch (err: any) {
@@ -181,6 +257,11 @@ export default function PaywallScreen() {
   };
 
   const handleRestore = async () => {
+    if (isExpoGo) {
+      Alert.alert("Test Mode", "Restore skipped in Expo Go.", [{ text: "OK" }]);
+      return;
+    }
+
     try {
       setRestoring(true);
       const customerInfo = await restorePurchases();
@@ -190,16 +271,7 @@ export default function PaywallScreen() {
         Alert.alert(
           "✅ Purchases Restored",
           "Your previous purchases have been restored.",
-          [
-            {
-              text: "Continue",
-              onPress: () =>
-                router.replace({
-                  pathname: nextRoute as any,
-                  params: nextParams,
-                }),
-            },
-          ],
+          [{ text: "Continue", onPress: proceedAfterPurchase }],
         );
       } else {
         Alert.alert(
@@ -242,6 +314,15 @@ export default function PaywallScreen() {
           {huntInfo.title}
         </Text>
         <Text style={styles.heroDesc}>{huntInfo.desc}</Text>
+
+        {/* Offer error banner */}
+        {offerError && (
+          <TouchableOpacity style={styles.errorBanner} onPress={loadOffering}>
+            <Text style={styles.errorBannerText}>
+              ⚠️ {offerError} Tap to retry.
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* What you get */}
         <View style={styles.featureCard}>
@@ -314,12 +395,20 @@ export default function PaywallScreen() {
           </Text>
         </TouchableOpacity>
 
+        {/* Promo code */}
+        <TouchableOpacity
+          style={styles.promoBtn}
+          onPress={handlePromoCode}
+          disabled={purchasing || restoring}
+        >
+          <Text style={styles.promoBtnText}>🎟️ Have a promo code?</Text>
+        </TouchableOpacity>
+
         {/* Legal */}
         <Text style={styles.legal}>
-          Payment will be charged to your App Store account. Subscriptions
-          automatically renew unless cancelled at least 24 hours before the end
-          of the current period. You can manage subscriptions in your App Store
-          account settings.
+          {
+            "Payment will be charged to your App Store account. Subscriptions automatically renew unless cancelled at least 24 hours before the end of the current period. You can manage subscriptions in your App Store account settings."
+          }
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -355,6 +444,19 @@ const styles = StyleSheet.create({
     color: "#AED6F1",
     textAlign: "center",
     marginBottom: SPACING.xl,
+  },
+  errorBanner: {
+    backgroundColor: "rgba(255,100,100,0.2)",
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: "rgba(255,100,100,0.4)",
+  },
+  errorBannerText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.sm,
+    textAlign: "center",
   },
   featureCard: {
     backgroundColor: "rgba(255,255,255,0.1)",
@@ -430,5 +532,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 16,
     marginTop: SPACING.sm,
+  },
+  promoBtn: { alignItems: "center", padding: SPACING.sm },
+  promoBtnText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: FONTS.sizes.sm,
+    textDecorationLine: "underline",
   },
 });
