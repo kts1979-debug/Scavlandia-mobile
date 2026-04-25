@@ -116,12 +116,6 @@ export default function MicroHuntScreen() {
       const finalTone =
         tone || RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
 
-      console.log(
-        "📍 Starting micro hunt at:",
-        location.coords.latitude,
-        location.coords.longitude,
-      );
-
       const canGenerate = await canGenerateHunt("micro");
       if (!canGenerate) {
         setPhase("intro");
