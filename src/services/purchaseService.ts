@@ -120,8 +120,3 @@ export const restorePurchases = async (): Promise<CustomerInfo> => {
 export const getCustomerInfo = async (): Promise<CustomerInfo> => {
   return await Purchases.getCustomerInfo();
 };
-
-const API_KEYS = {
-  ios: "appl_RhtBfqfVHnAfrOQtEgDCaMSxRwM",
-  android: "goog_ITlqwUuNFHSvNZZtMxMxUuyMQuJ", // ← paste your key here
-};

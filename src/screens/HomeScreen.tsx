@@ -18,7 +18,6 @@ import { getActiveHunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 const LOGO_FULL = require("../../assets/images/scavlandia_matched_height.png");
-const LOGO_ICON = require("../../assets/images/scavlandia_icon.png");
 
 export default function HomeScreen() {
   const { user } = useAuth();
