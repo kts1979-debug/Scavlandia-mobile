@@ -18,7 +18,7 @@ const isExpoGo = Constants.appOwnership === "expo";
 // ── RevenueCat API Keys ────────────────────────────────────────────
 const API_KEYS = {
   ios: "appl_RhtBfqfVHnAfrOQtEgDCaMSxRwM",
-  android: "goog_REPLACE_WITH_YOUR_ANDROID_KEY",
+  android: "goog_ITlqwUuNFHSvNZZtMxMxUuyMQuJ",
 };
 
 // ── Product IDs ────────────────────────────────────────────────────
