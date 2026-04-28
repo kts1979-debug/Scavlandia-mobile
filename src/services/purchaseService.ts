@@ -12,7 +12,6 @@ import Purchases, {
 import { Platform } from "react-native";
 
 // ── Expo Go detection ──────────────────────────────────────────────
-// RevenueCat cannot run in Expo Go — skip all purchase logic during testing
 const isExpoGo = Constants.appOwnership === "expo";
 
 // ── RevenueCat API Keys ────────────────────────────────────────────
@@ -64,32 +63,12 @@ export const hasEntitlement = async (
 };
 
 // ── Check entitlement for hunt type ───────────────────────────────
+// TEMPORARY: Allow all hunts for closed testing
+// TODO: Remove return true before public launch and uncomment below
 export const canGenerateHunt = async (
   huntType: "city" | "museum" | "micro",
 ): Promise<boolean> => {
-  if (isExpoGo) {
-    console.log(
-      "💰 Expo Go — skipping purchase check, allowing hunt generation",
-    );
-    return true;
-  }
-  try {
-    const customerInfo = await Purchases.getCustomerInfo();
-    const active = customerInfo.entitlements.active;
-
-    if (ENTITLEMENTS.premium in active) return true;
-
-    const entitlementMap = {
-      city: ENTITLEMENTS.cityHunt,
-      museum: ENTITLEMENTS.museumHunt,
-      micro: ENTITLEMENTS.microHunt,
-    };
-
-    return entitlementMap[huntType] in active;
-  } catch (err) {
-    console.warn("Could not check hunt entitlement:", err);
-    return false;
-  }
+  return true; // ← REMOVE THIS LINE BEFORE PUBLIC LAUNCH
 };
 
 // ── Get current offering ───────────────────────────────────────────
