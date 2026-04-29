@@ -32,7 +32,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.katesauls.scavlandia",
-      "versionCode": 5,
+      "versionCode": 6,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyD3WYNDd0gJLfGcAsvWIQFQdHt1Tv9rGYg"
