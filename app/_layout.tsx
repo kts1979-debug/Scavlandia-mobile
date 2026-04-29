@@ -1,14 +1,40 @@
-import { Stack } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router, Stack } from "expo-router";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-gesture-handler";
-import { AuthProvider, useAuth } from "../src/context/AuthContext.tsx";
+import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { COLORS } from "../src/theme";
 import "../src/utils/firebaseConfig";
 
 function RootStack() {
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    const checkFirstLaunch = async () => {
+      try {
+        if (!loading) {
+          if (!user) {
+            const hasOnboarded = await AsyncStorage.getItem(
+              "scavlandia_onboarding_complete",
+            );
+            if (!hasOnboarded) {
+              router.replace("/onboarding");
+            } else {
+              router.replace("/login");
+            }
+          }
+          setCheckingOnboarding(false);
+        }
+      } catch {
+        setCheckingOnboarding(false);
+      }
+    };
+    checkFirstLaunch();
+  }, [loading, user]);
+
+  if (loading || checkingOnboarding) {
     return (
       <View
         style={{
@@ -49,7 +75,6 @@ function RootStack() {
       <Stack.Screen name="stop-complete" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="micro-hunt" options={{ headerShown: false }} />
-
       <Stack.Screen name="photo-album" options={{ headerShown: false }} />
     </Stack>
   );

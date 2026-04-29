@@ -99,7 +99,7 @@ export default function HuntMap({
         </MapView>
       </View>
     );
-  } catch (error) {
+  } catch {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorEmoji}>🗺️</Text>
