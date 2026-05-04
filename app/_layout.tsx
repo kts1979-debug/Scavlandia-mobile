@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, Stack } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
@@ -9,32 +9,40 @@ import "../src/utils/firebaseConfig";
 
 function RootStack() {
   const { loading, user } = useAuth();
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
-    const checkFirstLaunch = async () => {
-      try {
-        if (!loading) {
-          if (!user) {
-            const hasOnboarded = await AsyncStorage.getItem(
-              "scavlandia_onboarding_complete",
-            );
-            if (!hasOnboarded) {
-              router.replace("/onboarding");
-            } else {
-              router.replace("/login");
-            }
-          }
-          setCheckingOnboarding(false);
+    if (loading) return;
+
+    if (hasNavigated.current) return;
+
+    const handleNavigation = async () => {
+      hasNavigated.current = true;
+
+      if (!user) {
+        // Not logged in — go to login
+        router.replace("/login");
+      } else {
+        // Logged in — check if they need onboarding
+        const hasOnboarded = await AsyncStorage.getItem(
+          "scavlandia_onboarding_complete",
+        );
+        if (!hasOnboarded) {
+          // First time user — show onboarding
+          router.replace("/onboarding");
+        } else {
+          // Existing user — go straight to home
+          router.replace("/(tabs)");
         }
-      } catch {
-        setCheckingOnboarding(false);
       }
+      setCheckingAuth(false);
     };
-    checkFirstLaunch();
+
+    handleNavigation();
   }, [loading, user]);
 
-  if (loading || checkingOnboarding) {
+  if (loading || checkingAuth) {
     return (
       <View
         style={{

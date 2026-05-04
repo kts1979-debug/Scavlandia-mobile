@@ -61,7 +61,7 @@ export default function HomeScreen() {
             )}
           </View>
           <TouchableOpacity
-            onPress={() => router.push("/login")}
+            onPress={() => router.push("/(tabs)/profile")}
             style={styles.avatarBtn}
           >
             <Text style={styles.avatarText}>
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.offWhite },
   scroll: {
     padding: SPACING.md,
-    paddingBottom: Platform.OS === "android" ? 100 : 40,
+    paddingBottom: Platform.OS === "android" ? 140 : 40,
   },
   header: {
     flexDirection: "row",

@@ -11,6 +11,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { saveUserProfile } from "../services/apiService";
 import { initializePurchases } from "../services/purchaseService";
 import { auth } from "../utils/firebaseConfig";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ── Define what the context provides to every screen ─────────────
 interface AuthContextType {
@@ -79,6 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
     await updateProfile(userCredential.user, { displayName });
     await saveUserProfile(displayName);
+    // Mark that this user needs onboarding — will be cleared after they complete it
+    await AsyncStorage.removeItem("scavlandia_onboarding_complete");
   };
 
   const signIn = async (email: string, password: string) => {
