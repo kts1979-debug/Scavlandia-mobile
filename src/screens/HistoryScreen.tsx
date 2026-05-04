@@ -76,13 +76,18 @@ export default function HistoryScreen() {
   };
 
   const formatDate = (timestamp: any) => {
-    if (!timestamp) return "";
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+    if (!timestamp) return "Date unknown";
+    try {
+      const date = new Date(timestamp); // now just a number in ms
+      if (isNaN(date.getTime())) return "Date unknown";
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch {
+      return "Date unknown";
+    }
   };
 
   // Not logged in

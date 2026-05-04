@@ -1,6 +1,6 @@
 // src/screens/ProfileScreen.tsx
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   ScrollView,
@@ -14,12 +14,34 @@ import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
-import { deleteAccount } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+import { deleteAccount, getUserHunts } from "../services/apiService";
 
 export default function ProfileScreen() {
   const { user, signOut, loading } = useAuth();
   const [deleting, setDeleting] = useState(false);
+
+  const [stats, setStats] = useState({ hunts: 0, points: 0, best: 0 });
+
+  useEffect(() => {
+    if (user) {
+      getUserHunts()
+        .then((data) => {
+          const hunts = data.hunts || [];
+          const totalHunts = hunts.length;
+          const totalPoints = hunts.reduce(
+            (sum: number, h: any) => sum + (h.totalPoints || 0),
+            0,
+          );
+          const bestScore = hunts.reduce(
+            (best: number, h: any) => Math.max(best, h.totalPoints || 0),
+            0,
+          );
+          setStats({ hunts: totalHunts, points: totalPoints, best: bestScore });
+        })
+        .catch(() => {});
+    }
+  }, [user]);
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -162,9 +184,21 @@ export default function ProfileScreen() {
         {/* Stats Row */}
         <View style={styles.statsRow}>
           {[
-            { emoji: "🗺️", label: "Hunts", value: "—" },
-            { emoji: "⭐", label: "Points", value: "—" },
-            { emoji: "🏆", label: "Best", value: "—" },
+            {
+              emoji: "🗺️",
+              label: "Hunts",
+              value: stats.hunts > 0 ? String(stats.hunts) : "—",
+            },
+            {
+              emoji: "⭐",
+              label: "Points",
+              value: stats.points > 0 ? String(stats.points) : "—",
+            },
+            {
+              emoji: "🏆",
+              label: "Best",
+              value: stats.best > 0 ? String(stats.best) : "—",
+            },
           ].map((s, i) => (
             <Card key={i} style={styles.statCard}>
               <Text style={styles.statEmoji}>{s.emoji}</Text>
