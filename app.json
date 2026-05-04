@@ -16,7 +16,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.katesauls.scavlandia",
       "config": {
-        "googleMapsApiKey": "AIzaSyD3WYNDd0gJLfGcAsvWIQFQdHt1Tv9rGYg"
+        "googleMapsApiKey": "AIzaSyAWOLSMvDOKwiQ122nNfWszwk90SYAJVLg"
       },
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Scavlandia needs your location to show you where hunt stops are and detect when you arrive.",
@@ -35,7 +35,7 @@
       "versionCode": 6,
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyD3WYNDd0gJLfGcAsvWIQFQdHt1Tv9rGYg"
+          "apiKey": "AIzaSyAWOLSMvDOKwiQ122nNfWszwk90SYAJVLg"
         }
       },
       "permissions": [
@@ -68,7 +68,7 @@
       [
         "react-native-maps",
         {
-          "googleMapsApiKey": "AIzaSyD3WYNDd0gJLfGcAsvWIQFQdHt1Tv9rGYg"
+          "googleMapsApiKey": "AIzaSyAWOLSMvDOKwiQ122nNfWszwk90SYAJVLg"
         }
       ],
       "expo-camera",

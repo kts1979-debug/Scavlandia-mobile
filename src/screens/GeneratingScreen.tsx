@@ -164,7 +164,6 @@ export default function GeneratingScreen() {
             style={styles.watermarkLogo}
             resizeMode="contain"
           />
-          <Text style={styles.watermarkText}>Scavlandia</Text>
         </View>
       </View>
     </SafeAreaView>
@@ -218,14 +217,15 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: SPACING.xl,
     alignItems: "center",
-    opacity: 0.45,
+    opacity: 0.75,
   },
-  watermarkLogo: { width: 64, height: 64, marginBottom: 4 },
+  watermarkLogo: { width: 200, height: 60, marginBottom: 4 },
   watermarkText: {
-    fontSize: FONTS.sizes.sm,
+    fontSize: FONTS.sizes.xs,
     color: COLORS.white,
-    fontWeight: FONTS.weights.bold,
-    letterSpacing: 2,
+    fontWeight: FONTS.weights.medium,
+    letterSpacing: 1,
+    opacity: 0.6,
   },
   suggestionContent: { flex: 1, justifyContent: "center", padding: SPACING.lg },
 });

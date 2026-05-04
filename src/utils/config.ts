@@ -1,7 +1,7 @@
 // src/utils/config.ts
 // Central config file — toggle IS_DEV to switch between local and production
 
-const IS_DEV = false; // ← set to true for local testing, false for production builds
+const IS_DEV = true; // ← set to true for local testing, false for production builds
 
 export const config = {
   API_URL: IS_DEV

@@ -85,7 +85,6 @@ export default function HuntMap({
         showsMyLocationButton={true}
         showsCompass={true}
         onMapReady={() => console.log("✅ Map ready")}
-        onError={(e) => console.warn("Map error:", e.nativeEvent)}
       >
         {stops.map((stop, index) => (
           <Marker
