@@ -1,12 +1,6 @@
 // src/components/HuntMap.tsx
 import React, { useEffect, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
-import MapView, {
-  Circle,
-  Marker,
-  PROVIDER_DEFAULT,
-  PROVIDER_GOOGLE,
-} from "react-native-maps";
 import { HuntStop } from "../services/apiService";
 
 interface HuntMapProps {
@@ -23,15 +17,11 @@ export default function HuntMap({
   userLocation,
 }: HuntMapProps) {
   const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState(false);
 
-  // Delay map render on Android to allow Google Maps SDK to initialize
   useEffect(() => {
-    if (Platform.OS === "android") {
-      const timer = setTimeout(() => setMapReady(true), 300);
-      return () => clearTimeout(timer);
-    } else {
-      setMapReady(true);
-    }
+    const timer = setTimeout(() => setMapReady(true), 500);
+    return () => clearTimeout(timer);
   }, []);
 
   const getMarkerColor = (index: number): string => {
@@ -48,21 +38,25 @@ export default function HuntMap({
 
   const activeStop = stops[activeStopIndex];
 
-  if (!activeStop) {
+  // Validate all coordinates before rendering
+  const validStops = stops.filter(
+    (s) =>
+      s &&
+      typeof s.lat === "number" &&
+      typeof s.lng === "number" &&
+      !isNaN(s.lat) &&
+      !isNaN(s.lng),
+  );
+
+  if (!activeStop || !activeStop.lat || !activeStop.lng || mapError) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorEmoji}>🗺️</Text>
         <Text style={styles.errorText}>Map unavailable</Text>
+        <Text style={styles.errorSub}>Continue using the clue view</Text>
       </View>
     );
   }
-
-  const initialRegion = {
-    latitude: activeStop.lat || stops[0]?.lat || 47.6062,
-    longitude: activeStop.lng || stops[0]?.lng || -122.3321,
-    latitudeDelta: 0.02,
-    longitudeDelta: 0.02,
-  };
 
   if (!mapReady) {
     return (
@@ -73,42 +67,59 @@ export default function HuntMap({
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <MapView
-        provider={
-          Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-        }
-        style={styles.map}
-        initialRegion={initialRegion}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
-        showsCompass={true}
-        onMapReady={() => console.log("✅ Map ready")}
-      >
-        {stops.map((stop, index) => (
-          <Marker
-            key={`stop-${index}`}
-            coordinate={{ latitude: stop.lat, longitude: stop.lng }}
-            title={
-              completedStopIndices.includes(index) || index === activeStopIndex
-                ? stop.locationName
-                : `Stop ${index + 1}`
-            }
-            description={index === activeStopIndex ? stop.clue : ""}
-          >
-            <View
-              style={[
-                styles.marker,
-                { backgroundColor: getMarkerColor(index) },
-              ]}
-            >
-              <Text style={styles.markerText}>{getMarkerLabel(index)}</Text>
-            </View>
-          </Marker>
-        ))}
+  const initialRegion = {
+    latitude: activeStop.lat,
+    longitude: activeStop.lng,
+    latitudeDelta: 0.02,
+    longitudeDelta: 0.02,
+  };
 
-        {activeStop && (
+  // Dynamically import MapView to prevent crash on load
+  try {
+    const MapView = require("react-native-maps").default;
+    const {
+      Marker,
+      Circle,
+      PROVIDER_GOOGLE,
+      PROVIDER_DEFAULT,
+    } = require("react-native-maps");
+
+    return (
+      <View style={styles.container}>
+        <MapView
+          provider={
+            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+          }
+          style={styles.map}
+          initialRegion={initialRegion}
+          showsUserLocation={true}
+          showsMyLocationButton={true}
+          showsCompass={true}
+          onMapReady={() => console.log("✅ Map ready")}
+        >
+          {validStops.map((stop, index) => (
+            <Marker
+              key={`stop-${index}`}
+              coordinate={{ latitude: stop.lat, longitude: stop.lng }}
+              title={
+                completedStopIndices.includes(index) ||
+                index === activeStopIndex
+                  ? stop.locationName
+                  : `Stop ${index + 1}`
+              }
+              description={index === activeStopIndex ? stop.clue : ""}
+            >
+              <View
+                style={[
+                  styles.marker,
+                  { backgroundColor: getMarkerColor(index) },
+                ]}
+              >
+                <Text style={styles.markerText}>{getMarkerLabel(index)}</Text>
+              </View>
+            </Marker>
+          ))}
+
           <Circle
             center={{ latitude: activeStop.lat, longitude: activeStop.lng }}
             radius={50}
@@ -116,10 +127,19 @@ export default function HuntMap({
             strokeColor="rgba(243, 156, 18, 0.5)"
             strokeWidth={2}
           />
-        )}
-      </MapView>
-    </View>
-  );
+        </MapView>
+      </View>
+    );
+  } catch (err) {
+    console.error("Map render error:", err);
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorEmoji}>🗺️</Text>
+        <Text style={styles.errorText}>Map could not load</Text>
+        <Text style={styles.errorSub}>Continue using the clue view</Text>
+      </View>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
@@ -133,10 +153,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 2,
     borderColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
     elevation: 5,
   },
   markerText: { color: "#FFFFFF", fontWeight: "bold", fontSize: 12 },
@@ -155,5 +171,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FA",
   },
   errorEmoji: { fontSize: 48, marginBottom: 12 },
-  errorText: { fontSize: 18, fontWeight: "bold", color: "#2C3E50" },
+  errorText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#2C3E50",
+    marginBottom: 8,
+  },
+  errorSub: { fontSize: 14, color: "#95A5A6" },
 });
