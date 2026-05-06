@@ -39,13 +39,14 @@ import HuntMap from "../components/HuntMap";
 import { useLocation } from "../hooks/useLocation";
 
 // ── Constants ──────────────────────────────────────────────────────
-const MAX_SWAPS = 2;
 
 export default function ActiveHuntScreen() {
   // ── Params ─────────────────────────────────────────────────────────
   const params = useLocalSearchParams();
   const hunt: Hunt = JSON.parse(params.hunt as string);
   const sessionCode = (params.sessionCode as string) || "";
+  const isMicroHunt = !!(hunt as any).isMicroHunt;
+  const MAX_SWAPS = isMicroHunt ? 1 : 2;
 
   const resumeAtStop = params.resumeAtStop
     ? parseInt(params.resumeAtStop as string) - 1
