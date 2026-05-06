@@ -1,6 +1,12 @@
 // src/components/HuntMap.tsx
 import React, { useEffect, useState } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
+import MapView, {
+  Circle,
+  Marker,
+  PROVIDER_DEFAULT,
+  PROVIDER_GOOGLE,
+} from "react-native-maps";
 import { HuntStop } from "../services/apiService";
 
 interface HuntMapProps {
@@ -14,10 +20,8 @@ export default function HuntMap({
   stops,
   activeStopIndex,
   completedStopIndices,
-  userLocation,
 }: HuntMapProps) {
   const [mapReady, setMapReady] = useState(false);
-  const [mapError, setMapError] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setMapReady(true), 500);
@@ -38,7 +42,6 @@ export default function HuntMap({
 
   const activeStop = stops[activeStopIndex];
 
-  // Validate all coordinates before rendering
   const validStops = stops.filter(
     (s) =>
       s &&
@@ -48,7 +51,7 @@ export default function HuntMap({
       !isNaN(s.lng),
   );
 
-  if (!activeStop || !activeStop.lat || !activeStop.lng || mapError) {
+  if (!activeStop || !activeStop.lat || !activeStop.lng) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorEmoji}>🗺️</Text>
@@ -74,72 +77,51 @@ export default function HuntMap({
     longitudeDelta: 0.02,
   };
 
-  // Dynamically import MapView to prevent crash on load
-  try {
-    const MapView = require("react-native-maps").default;
-    const {
-      Marker,
-      Circle,
-      PROVIDER_GOOGLE,
-      PROVIDER_DEFAULT,
-    } = require("react-native-maps");
-
-    return (
-      <View style={styles.container}>
-        <MapView
-          provider={
-            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-          }
-          style={styles.map}
-          initialRegion={initialRegion}
-          showsUserLocation={true}
-          showsMyLocationButton={true}
-          showsCompass={true}
-          onMapReady={() => console.log("✅ Map ready")}
-        >
-          {validStops.map((stop, index) => (
-            <Marker
-              key={`stop-${index}`}
-              coordinate={{ latitude: stop.lat, longitude: stop.lng }}
-              title={
-                completedStopIndices.includes(index) ||
-                index === activeStopIndex
-                  ? stop.locationName
-                  : `Stop ${index + 1}`
-              }
-              description={index === activeStopIndex ? stop.clue : ""}
+  return (
+    <View style={styles.container}>
+      <MapView
+        provider={
+          Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+        }
+        style={styles.map}
+        initialRegion={initialRegion}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
+        showsCompass={true}
+        onMapReady={() => console.log("✅ Map ready")}
+      >
+        {validStops.map((stop, index) => (
+          <Marker
+            key={`stop-${index}`}
+            coordinate={{ latitude: stop.lat, longitude: stop.lng }}
+            title={
+              completedStopIndices.includes(index) || index === activeStopIndex
+                ? stop.locationName
+                : `Stop ${index + 1}`
+            }
+            description={index === activeStopIndex ? stop.clue : ""}
+          >
+            <View
+              style={[
+                styles.marker,
+                { backgroundColor: getMarkerColor(index) },
+              ]}
             >
-              <View
-                style={[
-                  styles.marker,
-                  { backgroundColor: getMarkerColor(index) },
-                ]}
-              >
-                <Text style={styles.markerText}>{getMarkerLabel(index)}</Text>
-              </View>
-            </Marker>
-          ))}
+              <Text style={styles.markerText}>{getMarkerLabel(index)}</Text>
+            </View>
+          </Marker>
+        ))}
 
-          <Circle
-            center={{ latitude: activeStop.lat, longitude: activeStop.lng }}
-            radius={50}
-            fillColor="rgba(243, 156, 18, 0.15)"
-            strokeColor="rgba(243, 156, 18, 0.5)"
-            strokeWidth={2}
-          />
-        </MapView>
-      </View>
-    );
-  } catch (err) {
-    console.error("Map render error:", err);
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorEmoji}>🗺️</Text>
-        <Text style={styles.errorText}>Map could not load</Text>
-        <Text style={styles.errorSub}>Continue using the clue view</Text>
-      </View>
-    );
-  }
+        <Circle
+          center={{ latitude: activeStop.lat, longitude: activeStop.lng }}
+          radius={50}
+          fillColor="rgba(243, 156, 18, 0.15)"
+          strokeColor="rgba(243, 156, 18, 0.5)"
+          strokeWidth={2}
+        />
+      </MapView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

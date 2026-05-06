@@ -14,7 +14,7 @@ import NearbyCitySuggestion from "../components/NearbyCitySuggestion";
 import { generateHunt, generateMuseumHunt } from "../services/apiService";
 import { COLORS, FONTS, SPACING } from "../theme";
 
-const LOGO_FULL = require("../../assets/images/scavlandia_matched_height.png");
+const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 
 const STEPS = [
   { emoji: "🗺️", text: "Mapping your city..." },
@@ -126,7 +126,6 @@ export default function GeneratingScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        {/* Dynamic emoji */}
         <Text style={styles.bigEmoji}>{activeSteps[step].emoji}</Text>
         <Text style={styles.city}>
           {isMuseumHunt ? "🏛️" : "📍"} {city}
@@ -160,10 +159,12 @@ export default function GeneratingScreen() {
         {/* Logo watermark */}
         <View style={styles.watermark}>
           <Image
-            source={LOGO_FULL}
-            style={styles.watermarkLogo}
+            source={LOGO_ICON}
+            style={styles.watermarkIcon}
             resizeMode="contain"
           />
+          <Text style={styles.watermarkTitle}>Scavlandia</Text>
+          <Text style={styles.watermarkTagline}>Explore · Discover · Hunt</Text>
         </View>
       </View>
     </SafeAreaView>
@@ -219,13 +220,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     opacity: 0.75,
   },
-  watermarkLogo: { width: 200, height: 60, marginBottom: 4 },
-  watermarkText: {
-    fontSize: FONTS.sizes.xs,
+  watermarkIcon: { width: 60, height: 60, marginBottom: 8 },
+  watermarkTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
-    fontWeight: FONTS.weights.medium,
     letterSpacing: 1,
-    opacity: 0.6,
+    marginBottom: 4,
+  },
+  watermarkTagline: {
+    fontSize: FONTS.sizes.xs,
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 2,
   },
   suggestionContent: { flex: 1, justifyContent: "center", padding: SPACING.lg },
 });

@@ -17,7 +17,7 @@ import { useAuth } from "../context/AuthContext";
 import { getActiveHunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
-const LOGO_FULL = require("../../assets/images/scavlandia_matched_height.png");
+const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -105,15 +105,13 @@ export default function HomeScreen() {
         {/* Hero Banner */}
         <Card variant="primary" style={styles.heroBanner}>
           <Image
-            source={LOGO_FULL}
-            style={styles.heroLogo}
+            source={LOGO_ICON}
+            style={styles.heroIcon}
             resizeMode="contain"
           />
-          <Text style={styles.heroSub}>
-            {
-              "Tell us about your group and we'll build\na personalized hunt in any city or museum"
-            }
-          </Text>
+          <Text style={styles.heroTitle}>Scavlandia</Text>
+          <Text style={styles.heroTagline}>Explore · Discover · Hunt</Text>
+
           <Button
             label="Start a Hunt"
             onPress={() => router.push("/hunt-type")}
@@ -122,6 +120,9 @@ export default function HomeScreen() {
             emoji="🚀"
             style={styles.heroBtn}
           />
+          <Text style={styles.heroSub}>
+            {"Personalized scavenger hunts in any city!"}
+          </Text>
         </Card>
 
         {/* Stats Row */}
@@ -292,20 +293,26 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.lg,
     paddingHorizontal: SPACING.md,
   },
-  heroLogo: { width: "90%", height: 160, marginBottom: SPACING.md },
+  heroIcon: { width: 80, height: 80, marginBottom: SPACING.sm },
   heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
-    textAlign: "center",
-    marginBottom: SPACING.sm,
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  heroTagline: {
+    fontSize: FONTS.sizes.sm,
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 2,
+    marginBottom: SPACING.md,
   },
   heroSub: {
-    fontSize: FONTS.sizes.md,
-    color: "#AED6F1",
+    fontSize: FONTS.sizes.sm,
+    color: "rgba(255,255,255,0.6)",
     textAlign: "center",
-    lineHeight: 22,
-    marginBottom: SPACING.lg,
+    lineHeight: 20,
+    marginTop: SPACING.sm,
   },
   heroBtn: { width: "100%" },
   statsRow: { flexDirection: "row", gap: SPACING.sm, marginBottom: SPACING.lg },
