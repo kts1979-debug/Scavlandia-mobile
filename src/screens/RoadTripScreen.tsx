@@ -211,7 +211,7 @@ export default function RoadTripScreen() {
           />
         </View>
 
-        {/* Number of Stops */}
+        {/* Stop count */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>🚩 Number of Stops</Text>
           <Text style={styles.sectionSubtitle}>
@@ -239,6 +239,15 @@ export default function RoadTripScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
+          {/* Tip based on time between stops */}
+          <Text style={styles.stopTip}>
+            💡 At{" "}
+            {timeBetweenStops >= 60
+              ? `${timeBetweenStops / 60}hr`
+              : `${timeBetweenStops}min`}{" "}
+            between stops: {stopCount} stops works best for a ~
+            {Math.round((stopCount * timeBetweenStops) / 60)}hr drive
+          </Text>
         </View>
 
         {/* Time Between Stops */}
@@ -536,5 +545,11 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
+  },
+  stopTip: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    marginTop: SPACING.sm,
+    fontStyle: "italic",
   },
 });
