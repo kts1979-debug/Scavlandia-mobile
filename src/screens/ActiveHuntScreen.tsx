@@ -33,6 +33,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import HuntMap from "../components/HuntMap";
@@ -64,6 +65,17 @@ export default function ActiveHuntScreen() {
 
   // ── Museum mode ────────────────────────────────────────────────────
   const isMuseumHunt = !!(hunt as any).isMuseumHunt;
+  const isRoadTripHunt = !!(hunt as any).isRoadTripHunt;
+
+  const handleGetDirections = () => {
+    const stop = activeStop;
+    const lat = stop.mapLat || stop.lat;
+    const lng = stop.mapLng || stop.lng;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert("Error", "Could not open Google Maps."),
+    );
+  };
 
   // ── State ──────────────────────────────────────────────────────────
   const [activeStopIndex] = useState(resumeAtStop);
@@ -506,6 +518,15 @@ export default function ActiveHuntScreen() {
         )}
       </View>
 
+      {/* Road trip banner */}
+      {isRoadTripHunt && (
+        <View style={styles.museumBanner}>
+          <Text style={styles.museumBannerText}>
+            🚗 {(hunt as any).startLocation} → {(hunt as any).endLocation}
+          </Text>
+        </View>
+      )}
+
       {/* Progress bar */}
       <View style={styles.progressContainer}>
         <ProgressBar
@@ -574,6 +595,13 @@ export default function ActiveHuntScreen() {
               />
             </View>
             <Text style={styles.clueText}>{activeStop.clue}</Text>
+            {/* Drive time — road trip hunts only */}
+            {isRoadTripHunt && (activeStop as any).driveTimeFromPrevious && (
+              <Text style={styles.driveTimeText}>
+                🚗 ~{(activeStop as any).driveTimeFromPrevious} from previous
+                stop
+              </Text>
+            )}
           </View>
 
           {/* Gallery location — museum hunts only */}
@@ -713,6 +741,18 @@ export default function ActiveHuntScreen() {
             </View>
           )}
 
+          {/* Directions button — road trip hunts only */}
+          {isRoadTripHunt && !atLocation && (
+            <TouchableOpacity
+              style={styles.directionsBtn}
+              onPress={handleGetDirections}
+            >
+              <Text style={styles.directionsBtnText}>
+                🗺️ Get Driving Directions
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Skip and swap buttons — shown before arrival */}
           {!atLocation && (
             <View style={styles.skipSwapRow}>
@@ -748,7 +788,9 @@ export default function ActiveHuntScreen() {
               <Text style={styles.arrivalButtonText}>
                 {isMuseumHunt
                   ? "🎨  I found the artwork!"
-                  : "📍  I'm at this location!"}
+                  : isRoadTripHunt
+                    ? "🚗  I've arrived at this stop!"
+                    : "📍  I'm at this location!"}
               </Text>
             </TouchableOpacity>
           )}
@@ -990,5 +1032,23 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     marginBottom: SPACING.sm,
     marginTop: SPACING.xs,
+  },
+  directionsBtn: {
+    backgroundColor: "#27AE60",
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    alignItems: "center",
+    marginBottom: SPACING.sm,
+  },
+  directionsBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+  },
+  driveTimeText: {
+    fontSize: FONTS.sizes.xs,
+    color: "#AED6F1",
+    marginTop: 8,
+    fontStyle: "italic",
   },
 });

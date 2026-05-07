@@ -20,9 +20,9 @@ export default function HuntTypeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-        <Text style={styles.title}>{"Welcome to\nScavlandia! 🗺️"}</Text>
+        <Text style={styles.title}>{"Choose Your\nAdventure 🗺️"}</Text>
         <Text style={styles.subtitle}>
-          Choose your adventure type to get started
+          Pick the type of hunt that fits your group
         </Text>
 
         {/* City Hunt */}
@@ -36,7 +36,7 @@ export default function HuntTypeScreen() {
             <Text style={styles.cardTitle}>City Hunt</Text>
             <Text style={styles.cardDesc}>
               Explore a city with personalized clues at real locations. Perfect
-              for any group in any city.
+              for any group in any city worldwide.
             </Text>
             <View style={styles.tagRow}>
               {["Outdoors", "GPS tracking", "Any city", "6–12 stops"].map(
@@ -51,29 +51,33 @@ export default function HuntTypeScreen() {
           <Text style={styles.cardArrow}>›</Text>
         </TouchableOpacity>
 
-        {/* Museum Hunt */}
+        {/* Road Trip Hunt */}
         <TouchableOpacity
-          style={[styles.card, styles.cardMuseum]}
-          onPress={() => router.push("/museum-profile")}
+          style={[styles.card, styles.cardRoadTrip]}
+          onPress={() => router.push("/road-trip")}
           activeOpacity={0.85}
         >
-          <Text style={styles.cardEmoji}>🏛️</Text>
+          <Text style={styles.cardEmoji}>🚗</Text>
           <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>Museum Hunt</Text>
+            <Text style={styles.cardTitle}>Road Trip Hunt</Text>
             <Text style={styles.cardDesc}>
-              Discover artworks and exhibits inside a museum with riddle-based
-              clues. Ticket purchase required.
+              {
+                "Turn any drive into an adventure. Enter your start and end points and we'll find roadside attractions, scenic overlooks, and hidden gems along the way."
+              }
             </Text>
             <View style={styles.tagRow}>
-              {["Indoors", "Art & exhibits", "Any museum", "No GPS needed"].map(
-                (tag) => (
-                  <View key={tag} style={[styles.tag, styles.tagMuseum]}>
-                    <Text style={[styles.tagText, styles.tagTextMuseum]}>
-                      {tag}
-                    </Text>
-                  </View>
-                ),
-              )}
+              {[
+                "Driving route",
+                "2–12 stops",
+                "Google Maps",
+                "Roadside gems",
+              ].map((tag) => (
+                <View key={tag} style={[styles.tag, styles.tagRoadTrip]}>
+                  <Text style={[styles.tagText, styles.tagTextRoadTrip]}>
+                    {tag}
+                  </Text>
+                </View>
+              ))}
             </View>
           </View>
           <Text style={styles.cardArrow}>›</Text>
@@ -145,10 +149,10 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     ...SHADOW.lg,
   },
-  cardMuseum: {
-    backgroundColor: "#EBF5FB",
+  cardRoadTrip: {
+    backgroundColor: "#EAFAF1",
     borderWidth: 2,
-    borderColor: COLORS.accent,
+    borderColor: "#27AE60",
   },
   cardMicro: {
     backgroundColor: "#FEF9E7",
@@ -176,7 +180,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  tagMuseum: { backgroundColor: COLORS.accentPale },
+  tagRoadTrip: {
+    backgroundColor: "#D5F5E3",
+    borderWidth: 1,
+    borderColor: "#27AE60",
+  },
   tagMicro: {
     backgroundColor: "#FEF9E7",
     borderWidth: 1,
@@ -187,7 +195,7 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     fontWeight: FONTS.weights.medium,
   },
-  tagTextMuseum: { color: COLORS.accent },
+  tagTextRoadTrip: { color: "#1E8449" },
   tagTextMicro: { color: "#B7950B" },
   cardArrow: {
     fontSize: FONTS.sizes.xxl,

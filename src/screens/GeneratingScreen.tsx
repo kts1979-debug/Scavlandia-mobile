@@ -11,7 +11,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import NearbyCitySuggestion from "../components/NearbyCitySuggestion";
-import { generateHunt, generateMuseumHunt } from "../services/apiService";
+import {
+  generateHunt,
+  generateMuseumHunt,
+  generateRoadTripHunt,
+} from "../services/apiService";
 import { COLORS, FONTS, SPACING } from "../theme";
 
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
@@ -34,6 +38,15 @@ const MUSEUM_STEPS = [
   { emoji: "✨", text: "Your hunt is almost ready..." },
 ];
 
+const ROAD_TRIP_STEPS = [
+  { emoji: "🗺️", text: "Mapping your route..." },
+  { emoji: "🛣️", text: "Exploring the highway..." },
+  { emoji: "📍", text: "Finding hidden gems..." },
+  { emoji: "✍️", text: "Writing road trip clues..." },
+  { emoji: "🚗", text: "Ordering your stops..." },
+  { emoji: "✨", text: "Almost ready to roll..." },
+];
+
 export default function GeneratingScreen() {
   const params = useLocalSearchParams();
   const [city, setCity] = useState(params.city as string);
@@ -43,7 +56,12 @@ export default function GeneratingScreen() {
   const [showSuggestion, setShowSuggestion] = useState(false);
 
   const isMuseumHunt = groupProfile.huntType === "museum";
-  const activeSteps = isMuseumHunt ? MUSEUM_STEPS : STEPS;
+  const isRoadTrip = groupProfile.huntType === "road-trip";
+  const activeSteps = isMuseumHunt
+    ? MUSEUM_STEPS
+    : isRoadTrip
+      ? ROAD_TRIP_STEPS
+      : STEPS;
 
   useEffect(() => {
     const stepInterval = setInterval(
@@ -72,6 +90,16 @@ export default function GeneratingScreen() {
           profile.museum.lng,
           profile,
         );
+      } else if (profile.huntType === "road-trip") {
+        result = await generateRoadTripHunt(
+          profile.startLocation,
+          profile.endLocation,
+          profile.stopCount,
+          profile.interests,
+          profile.tone,
+          profile.difficulty,
+          profile.timeBetweenStops,
+        );
       } else {
         result = await generateHunt(huntCity, profile);
       }
@@ -82,7 +110,6 @@ export default function GeneratingScreen() {
       });
     } catch (error: any) {
       const errorMsg = error.response?.data?.error || "";
-
       if (
         errorMsg.includes("Only found") ||
         errorMsg.includes("too few") ||
@@ -128,12 +155,14 @@ export default function GeneratingScreen() {
       <View style={styles.content}>
         <Text style={styles.bigEmoji}>{activeSteps[step].emoji}</Text>
         <Text style={styles.city}>
-          {isMuseumHunt ? "🏛️" : "📍"} {city}
+          {isMuseumHunt ? "🏛️" : isRoadTrip ? "🚗" : "📍"} {city}
         </Text>
         <Text style={styles.title}>
           {isMuseumHunt
             ? "Building your museum adventure"
-            : "Building your hunt"}
+            : isRoadTrip
+              ? "Planning your road trip"
+              : "Building your hunt"}
           {dots}
         </Text>
         <ActivityIndicator
