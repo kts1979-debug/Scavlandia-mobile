@@ -59,6 +59,8 @@
     },
     "plugins": [
       [
+  "./app.plugin.js",
+      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Scavlandia to use your location to detect your city for hunt generation.",
