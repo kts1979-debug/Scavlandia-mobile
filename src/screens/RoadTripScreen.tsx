@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,7 +22,6 @@ import MapView, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getRoadTripCandidates } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
-import { Platform } from "react-native";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍕" },
@@ -56,7 +56,6 @@ const DIFFICULTIES = [
   { label: "Hard", desc: "Cryptic riddles, lateral thinking" },
 ];
 
-// Decode Google Maps polyline encoding
 function decodePolyline(
   encoded: string,
 ): { latitude: number; longitude: number }[] {
@@ -93,7 +92,7 @@ function decodePolyline(
 }
 
 export default function RoadTripScreen() {
-  // ── Step 1 state ────────────────────────────────────────────────
+  // ── Step 1 state ──────────────────────────────────────────────
   const [step, setStep] = useState<1 | 2>(1);
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
@@ -103,9 +102,11 @@ export default function RoadTripScreen() {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
 
-  // ── Step 2 state ────────────────────────────────────────────────
+  // ── Step 2 state ──────────────────────────────────────────────
   const [candidates, setCandidates] = useState<any[]>([]);
   const [selectedStops, setSelectedStops] = useState<any[]>([]);
+
+  const [markerDelay, setMarkerDelay] = useState(false);
   const [routePolyline, setRoutePolyline] = useState<
     { latitude: number; longitude: number }[]
   >([]);
@@ -197,7 +198,9 @@ export default function RoadTripScreen() {
         totalDistanceMiles: data.totalDistanceMiles,
         totalDurationMinutes: data.totalDurationMinutes,
       });
+
       setStep(2);
+      setTimeout(() => setMarkerDelay(true), 1000);
     } catch (error: any) {
       Alert.alert(
         "Could not find route",
@@ -218,7 +221,6 @@ export default function RoadTripScreen() {
       return;
     }
 
-    // Sort selected stops by route fraction
     const sortedStops = [...selectedStops].sort(
       (a, b) => a.routeFraction - b.routeFraction,
     );
@@ -247,7 +249,6 @@ export default function RoadTripScreen() {
     });
   };
 
-  // ── Map region from route ───────────────────────────────────────
   const getMapRegion = () => {
     if (routePolyline.length === 0) return undefined;
     const lats = routePolyline.map((p) => p.latitude);
@@ -264,7 +265,7 @@ export default function RoadTripScreen() {
     };
   };
 
-  // ── STEP 1 — Route + interests form ────────────────────────────
+  // ── STEP 1 ────────────────────────────────────────────────────
   if (step === 1) {
     return (
       <SafeAreaView style={styles.container}>
@@ -286,7 +287,6 @@ export default function RoadTripScreen() {
             </Text>
           </View>
 
-          {/* Start Location */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>📍 Starting Point</Text>
             <TextInput
@@ -311,7 +311,6 @@ export default function RoadTripScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* End Location */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🏁 Destination</Text>
             <TextInput
@@ -323,7 +322,6 @@ export default function RoadTripScreen() {
             />
           </View>
 
-          {/* Interests */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🎯 Interests</Text>
             <Text style={styles.sectionSubtitle}>
@@ -356,7 +354,6 @@ export default function RoadTripScreen() {
             </View>
           </View>
 
-          {/* Tone */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🎭 Vibe</Text>
             <View style={styles.toneGrid}>
@@ -383,7 +380,6 @@ export default function RoadTripScreen() {
             </View>
           </View>
 
-          {/* Difficulty */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🧩 Clue Difficulty</Text>
             {DIFFICULTIES.map((d) => (
@@ -413,7 +409,6 @@ export default function RoadTripScreen() {
             ))}
           </View>
 
-          {/* Find Stops Button */}
           <TouchableOpacity
             style={[
               styles.generateBtn,
@@ -437,15 +432,16 @@ export default function RoadTripScreen() {
     );
   }
 
-  // ── STEP 2 — Map with candidate stops ──────────────────────────
+  // ── STEP 2 ────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.step2Header}>
         <TouchableOpacity
           onPress={() => {
             setStep(1);
             setSelectedStops([]);
+
+            setMarkerDelay(false);
           }}
         >
           <Text style={styles.backBtnText}>‹ Back</Text>
@@ -464,52 +460,58 @@ export default function RoadTripScreen() {
         </View>
       </View>
 
-      {/* Map */}
+      {/* Map — only render once polyline is ready */}
       <View style={styles.mapContainer}>
-        <MapView
-          provider={
-            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-          }
-          style={styles.map}
-          initialRegion={getMapRegion()}
-          showsUserLocation={false}
-        >
-          {/* Route polyline */}
-          {routePolyline.length > 0 && (
+        {routePolyline.length > 0 ? (
+          <MapView
+            provider={
+              Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+            }
+            style={styles.map}
+            initialRegion={getMapRegion()}
+            showsUserLocation={false}
+          >
             <Polyline
               coordinates={routePolyline}
               strokeColor={COLORS.primary}
               strokeWidth={3}
-              lineDashPattern={[0]}
             />
-          )}
 
-          {/* Candidate markers */}
-          {candidates.map((candidate) => {
-            const isSelected = selectedStops.find(
-              (s) => s.placeId === candidate.placeId,
-            );
-            return (
-              <Marker
-                key={candidate.placeId}
-                coordinate={{
-                  latitude: candidate.lat,
-                  longitude: candidate.lng,
-                }}
-                onPress={() => toggleStop(candidate)}
-              >
-                <View
-                  style={[
-                    styles.emojiMarker,
-                    isSelected && styles.emojiMarkerSelected,
-                  ]}
-                >
-                  <Text style={styles.emojiMarkerText}>{candidate.emoji}</Text>
-                </View>
-              </Marker>
-            );
-          })}
-        </MapView>
+            {/* Render markers after short delay */}
+            {markerDelay &&
+              candidates.map((candidate) => {
+                const isSelected = selectedStops.find(
+                  (s) => s.placeId === candidate.placeId,
+                );
+                return (
+                  <Marker
+                    key={candidate.placeId}
+                    coordinate={{
+                      latitude: candidate.lat,
+                      longitude: candidate.lng,
+                    }}
+                    onPress={() => toggleStop(candidate)}
+                  >
+                    <View
+                      style={[
+                        styles.emojiMarker,
+                        isSelected && styles.emojiMarkerSelected,
+                      ]}
+                    >
+                      <Text style={styles.emojiMarkerText}>
+                        {candidate.emoji}
+                      </Text>
+                    </View>
+                  </Marker>
+                );
+              })}
+          </MapView>
+        ) : (
+          <View style={styles.mapLoading}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.mapLoadingText}>Loading your route...</Text>
+          </View>
+        )}
       </View>
 
       {/* Bottom panel */}
@@ -520,7 +522,6 @@ export default function RoadTripScreen() {
             : `${selectedStops.length} stop${selectedStops.length !== 1 ? "s" : ""} selected (min 2)`}
         </Text>
 
-        {/* Selected stop pills */}
         {selectedStops.length > 0 && (
           <ScrollView
             horizontal
@@ -707,7 +708,6 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
   },
-  // Step 2
   step2Header: {
     flexDirection: "row",
     alignItems: "center",
@@ -737,6 +737,17 @@ const styles = StyleSheet.create({
   },
   mapContainer: { flex: 1 },
   map: { flex: 1 },
+  mapLoading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+  },
+  mapLoadingText: {
+    marginTop: SPACING.md,
+    fontSize: FONTS.sizes.md,
+    color: COLORS.darkGray,
+  },
   emojiMarker: {
     width: 40,
     height: 40,
