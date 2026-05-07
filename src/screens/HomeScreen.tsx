@@ -146,9 +146,9 @@ export default function HomeScreen() {
             onPress: () => router.push("/hunt-type"),
           },
           {
-            emoji: "🏛️",
-            title: "Museum Hunt",
-            desc: "Discover artworks and exhibits inside a museum with riddle-based clues.",
+            emoji: "🚗",
+            title: "Road Trip Hunt",
+            desc: "Discover roadside attractions and fun stops along your journey with riddle-based clues.",
             onPress: () => router.push("/hunt-type"),
           },
           {

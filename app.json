@@ -3,7 +3,7 @@
     "name": "Scavlandia",
     "slug": "scavlandia",
     "scheme": "scavlandia",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
@@ -32,7 +32,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.katesauls.scavlandia",
-      "versionCode": 11,
+      "versionCode": 12,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyAWOLSMvDOKwiQ122nNfWszwk90SYAJVLg"
