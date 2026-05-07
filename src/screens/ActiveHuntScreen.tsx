@@ -370,10 +370,32 @@ export default function ActiveHuntScreen() {
     );
   };
 
+  // ── Distance helper for swap routing ──────────────────────────────
+  const getDistance = (
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number,
+  ): number => {
+    const R = 6371000;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
   // ── Swap stop ──────────────────────────────────────────────────────
   const handleSwapStop = () => {
     if (swapsUsed >= MAX_SWAPS) {
-      Alert.alert("No Swaps Left", "You have used all 2 swaps for this hunt.");
+      Alert.alert(
+        "No Swaps Left",
+        `You have used all ${MAX_SWAPS} swaps for this hunt.`,
+      );
       return;
     }
 
@@ -396,17 +418,64 @@ export default function ActiveHuntScreen() {
         {
           text: "Swap It",
           onPress: () => {
-            const newStop = reserveStops[swapsUsed];
+            // ── Find the best reserve stop geographically ──────────
+            // Reference point: user location or current stop coords
+            const refLat = userLocation?.latitude ?? activeStop.lat;
+            const refLng = userLocation?.longitude ?? activeStop.lng;
+
+            // Next stop after the one being swapped
+            const nextStop = hunt.stops[activeStopIndex + 1];
+
+            // Score each reserve stop by how well it fits between
+            // current position and next stop
+            const scoredReserves = reserveStops.map((reserve: any) => {
+              const distFromRef = getDistance(
+                refLat,
+                refLng,
+                reserve.lat,
+                reserve.lng,
+              );
+
+              // If there's a next stop, penalize reserves that are
+              // farther from next stop than they should be
+              let routeScore = distFromRef;
+              if (nextStop) {
+                const distToNext = getDistance(
+                  reserve.lat,
+                  reserve.lng,
+                  nextStop.lat,
+                  nextStop.lng,
+                );
+                // We want the reserve to be between current pos and next stop
+                // so minimize: dist(current→reserve) + dist(reserve→next)
+                routeScore = distFromRef + distToNext;
+              }
+
+              return { ...reserve, _routeScore: routeScore };
+            });
+
+            // Pick the reserve with the best (lowest) route score
+            scoredReserves.sort(
+              (a: any, b: any) => a._routeScore - b._routeScore,
+            );
+            const bestReserve = scoredReserves[0];
+
+            // Remove the chosen reserve from the reserve list
+            const remainingReserves = reserveStops.filter(
+              (r: any) => r.locationName !== bestReserve.locationName,
+            );
+
             const updatedStops = [...hunt.stops];
             updatedStops[activeStopIndex] = {
-              ...newStop,
+              ...bestReserve,
               order: activeStop.order,
+              _routeScore: undefined,
             };
 
             const updatedHunt = {
               ...(hunt as any),
               stops: updatedStops,
-              reserveStops: reserveStops.slice(swapsUsed + 1),
+              reserveStops: remainingReserves,
             };
 
             const newSwapsUsed = swapsUsed + 1;
@@ -414,7 +483,7 @@ export default function ActiveHuntScreen() {
 
             Alert.alert(
               "✅ Stop Swapped!",
-              "This stop has been replaced with a new location. Your new clue is waiting!",
+              `${activeStop.locationName} has been replaced with ${bestReserve.locationName}. Your new clue is waiting!`,
               [
                 {
                   text: "OK",
