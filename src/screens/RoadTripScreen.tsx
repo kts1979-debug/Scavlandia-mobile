@@ -12,8 +12,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import MapView, {
+  Marker,
+  Polyline,
+  PROVIDER_DEFAULT,
+  PROVIDER_GOOGLE,
+} from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getRoadTripCandidates } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+import { Platform } from "react-native";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍕" },
@@ -48,31 +56,65 @@ const DIFFICULTIES = [
   { label: "Hard", desc: "Cryptic riddles, lateral thinking" },
 ];
 
-const STOP_COUNTS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+// Decode Google Maps polyline encoding
+function decodePolyline(
+  encoded: string,
+): { latitude: number; longitude: number }[] {
+  const points: { latitude: number; longitude: number }[] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
 
-const TIME_OPTIONS = [
-  { label: "30 min", value: 30 },
-  { label: "45 min", value: 45 },
-  { label: "1 hr", value: 60 },
-  { label: "1h 15m", value: 75 },
-  { label: "1h 30m", value: 90 },
-  { label: "1h 45m", value: 105 },
-  { label: "2 hrs", value: 120 },
-  { label: "2h 15m", value: 135 },
-  { label: "2h 30m", value: 150 },
-  { label: "2h 45m", value: 165 },
-  { label: "3 hrs", value: 180 },
-];
+  while (index < encoded.length) {
+    let b: number;
+    let shift = 0;
+    let result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlat = result & 1 ? ~(result >> 1) : result >> 1;
+    lat += dlat;
+
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dlng = result & 1 ? ~(result >> 1) : result >> 1;
+    lng += dlng;
+
+    points.push({ latitude: lat / 1e5, longitude: lng / 1e5 });
+  }
+  return points;
+}
 
 export default function RoadTripScreen() {
+  // ── Step 1 state ────────────────────────────────────────────────
+  const [step, setStep] = useState<1 | 2>(1);
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
-  const [stopCount, setStopCount] = useState(4);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedTone, setSelectedTone] = useState("Fun & Silly");
   const [difficulty, setDifficulty] = useState("Medium");
-  const [timeBetweenStops, setTimeBetweenStops] = useState(60);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [loadingCandidates, setLoadingCandidates] = useState(false);
+
+  // ── Step 2 state ────────────────────────────────────────────────
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [selectedStops, setSelectedStops] = useState<any[]>([]);
+  const [routePolyline, setRoutePolyline] = useState<
+    { latitude: number; longitude: number }[]
+  >([]);
+  const [routeInfo, setRouteInfo] = useState<{
+    startName: string;
+    endName: string;
+    totalDistanceMiles: number;
+    totalDurationMinutes: number;
+  } | null>(null);
 
   const toggleInterest = (label: string) => {
     setSelectedInterests((prev) =>
@@ -80,15 +122,24 @@ export default function RoadTripScreen() {
     );
   };
 
+  const toggleStop = (candidate: any) => {
+    setSelectedStops((prev) => {
+      const exists = prev.find((s) => s.placeId === candidate.placeId);
+      if (exists) return prev.filter((s) => s.placeId !== candidate.placeId);
+      if (prev.length >= 12) {
+        Alert.alert("Maximum stops", "You can select up to 12 stops.");
+        return prev;
+      }
+      return [...prev, candidate];
+    });
+  };
+
   const handleUseCurrentLocation = async () => {
     setLoadingLocation(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Permission needed",
-          "Please allow location access to use your current location.",
-        );
+        Alert.alert("Permission needed", "Please allow location access.");
         return;
       }
       const location = await Location.getCurrentPositionAsync({});
@@ -96,7 +147,6 @@ export default function RoadTripScreen() {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
-
       if (geocode.length > 0) {
         const g = geocode[0];
         const address = [g.streetNumber, g.street, g.city, g.region]
@@ -114,7 +164,7 @@ export default function RoadTripScreen() {
     }
   };
 
-  const handleGenerate = () => {
+  const handleFindStops = async () => {
     if (!startLocation.trim()) {
       Alert.alert("Missing start", "Please enter your starting location.");
       return;
@@ -126,263 +176,390 @@ export default function RoadTripScreen() {
     if (selectedInterests.length === 0) {
       Alert.alert(
         "Pick some interests",
-        "Select at least one interest to personalize your stops.",
+        "Select at least one interest to find stops.",
       );
       return;
     }
 
+    setLoadingCandidates(true);
+    try {
+      const data = await getRoadTripCandidates(
+        startLocation.trim(),
+        endLocation.trim(),
+        selectedInterests,
+      );
+
+      setCandidates(data.candidates || []);
+      setRoutePolyline(decodePolyline(data.routePolyline || ""));
+      setRouteInfo({
+        startName: data.startName,
+        endName: data.endName,
+        totalDistanceMiles: data.totalDistanceMiles,
+        totalDurationMinutes: data.totalDurationMinutes,
+      });
+      setStep(2);
+    } catch (error: any) {
+      Alert.alert(
+        "Could not find route",
+        error.response?.data?.error ||
+          "Please check your locations and try again.",
+      );
+    } finally {
+      setLoadingCandidates(false);
+    }
+  };
+
+  const handleGenerate = () => {
+    if (selectedStops.length < 2) {
+      Alert.alert(
+        "Select stops",
+        "Please select at least 2 stops for your hunt.",
+      );
+      return;
+    }
+
+    // Sort selected stops by route fraction
+    const sortedStops = [...selectedStops].sort(
+      (a, b) => a.routeFraction - b.routeFraction,
+    );
+
     router.push({
       pathname: "/generating",
       params: {
-        city: `${startLocation} to ${endLocation}`,
+        city: `${routeInfo?.startName} to ${routeInfo?.endName}`,
         groupProfile: JSON.stringify({
           huntType: "road-trip",
           startLocation: startLocation.trim(),
           endLocation: endLocation.trim(),
-          stopCount,
+          selectedStops: sortedStops,
+          stopCount: sortedStops.length,
           interests: selectedInterests,
           tone: selectedTone,
           difficulty: difficulty.toLowerCase(),
-          timeBetweenStops,
-          // Required fields for generating screen compatibility
+          timeBetweenStops: 60,
           ages: 30,
           groupSize: 2,
           mobility: "walking",
+          totalDurationMinutes: routeInfo?.totalDurationMinutes || 0,
+          totalDistanceMiles: routeInfo?.totalDistanceMiles || 0,
         }),
       },
     });
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Text style={styles.backBtnText}>‹ Back</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>🚗 Road Trip Hunt</Text>
-          <Text style={styles.subtitle}>
-            {"Enter your route and we'll find amazing stops along the way"}
-          </Text>
-        </View>
+  // ── Map region from route ───────────────────────────────────────
+  const getMapRegion = () => {
+    if (routePolyline.length === 0) return undefined;
+    const lats = routePolyline.map((p) => p.latitude);
+    const lngs = routePolyline.map((p) => p.longitude);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    return {
+      latitude: (minLat + maxLat) / 2,
+      longitude: (minLng + maxLng) / 2,
+      latitudeDelta: (maxLat - minLat) * 1.3,
+      longitudeDelta: (maxLng - minLng) * 1.3,
+    };
+  };
 
-        {/* Start Location */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📍 Starting Point</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Seattle, WA or 123 Main St"
-            placeholderTextColor={COLORS.midGray}
-            value={startLocation}
-            onChangeText={setStartLocation}
-          />
+  // ── STEP 1 — Route + interests form ────────────────────────────
+  if (step === 1) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backBtn}
+            >
+              <Text style={styles.backBtnText}>‹ Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>🚗 Road Trip Hunt</Text>
+            <Text style={styles.subtitle}>
+              Enter your route and interests to find stops along the way
+            </Text>
+          </View>
+
+          {/* Start Location */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📍 Starting Point</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Seattle, WA"
+              placeholderTextColor={COLORS.midGray}
+              value={startLocation}
+              onChangeText={setStartLocation}
+            />
+            <TouchableOpacity
+              style={styles.locationBtn}
+              onPress={handleUseCurrentLocation}
+              disabled={loadingLocation}
+            >
+              {loadingLocation ? (
+                <ActivityIndicator size="small" color={COLORS.white} />
+              ) : (
+                <Text style={styles.locationBtnText}>
+                  📱 Use My Current Location
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* End Location */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🏁 Destination</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Portland, OR"
+              placeholderTextColor={COLORS.midGray}
+              value={endLocation}
+              onChangeText={setEndLocation}
+            />
+          </View>
+
+          {/* Interests */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🎯 Interests</Text>
+            <Text style={styles.sectionSubtitle}>
+              What kind of stops do you want to find?
+            </Text>
+            <View style={styles.interestGrid}>
+              {INTERESTS.map((interest) => {
+                const selected = selectedInterests.includes(interest.label);
+                return (
+                  <TouchableOpacity
+                    key={interest.label}
+                    style={[
+                      styles.interestChip,
+                      selected && styles.interestChipActive,
+                    ]}
+                    onPress={() => toggleInterest(interest.label)}
+                  >
+                    <Text style={styles.interestEmoji}>{interest.emoji}</Text>
+                    <Text
+                      style={[
+                        styles.interestLabel,
+                        selected && styles.interestLabelActive,
+                      ]}
+                    >
+                      {interest.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Tone */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🎭 Vibe</Text>
+            <View style={styles.toneGrid}>
+              {TONES.map((tone) => (
+                <TouchableOpacity
+                  key={tone.label}
+                  style={[
+                    styles.toneChip,
+                    selectedTone === tone.label && styles.toneChipActive,
+                  ]}
+                  onPress={() => setSelectedTone(tone.label)}
+                >
+                  <Text style={styles.toneEmoji}>{tone.emoji}</Text>
+                  <Text
+                    style={[
+                      styles.toneLabel,
+                      selectedTone === tone.label && styles.toneLabelActive,
+                    ]}
+                  >
+                    {tone.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Difficulty */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🧩 Clue Difficulty</Text>
+            {DIFFICULTIES.map((d) => (
+              <TouchableOpacity
+                key={d.label}
+                style={[
+                  styles.difficultyCard,
+                  difficulty === d.label && styles.difficultyCardActive,
+                ]}
+                onPress={() => setDifficulty(d.label)}
+              >
+                <View style={styles.difficultyLeft}>
+                  <Text
+                    style={[
+                      styles.difficultyLabel,
+                      difficulty === d.label && styles.difficultyLabelActive,
+                    ]}
+                  >
+                    {d.label}
+                  </Text>
+                  <Text style={styles.difficultyDesc}>{d.desc}</Text>
+                </View>
+                {difficulty === d.label && (
+                  <Text style={styles.difficultyCheck}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Find Stops Button */}
           <TouchableOpacity
-            style={styles.locationBtn}
-            onPress={handleUseCurrentLocation}
-            disabled={loadingLocation}
+            style={[
+              styles.generateBtn,
+              loadingCandidates && styles.generateBtnDisabled,
+            ]}
+            onPress={handleFindStops}
+            disabled={loadingCandidates}
           >
-            {loadingLocation ? (
+            {loadingCandidates ? (
               <ActivityIndicator size="small" color={COLORS.white} />
             ) : (
-              <Text style={styles.locationBtnText}>
-                📱 Use My Current Location
+              <Text style={styles.generateBtnText}>
+                🗺️ Find Stops Along My Route
               </Text>
             )}
           </TouchableOpacity>
-        </View>
 
-        {/* End Location */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🏁 Destination</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Portland, OR or a specific address"
-            placeholderTextColor={COLORS.midGray}
-            value={endLocation}
-            onChangeText={setEndLocation}
-          />
-        </View>
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
-        {/* Stop count */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🚩 Number of Stops</Text>
-          <Text style={styles.sectionSubtitle}>
-            How many stops along the way?
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.pillRow}
-          >
-            {STOP_COUNTS.map((count) => (
-              <TouchableOpacity
-                key={count}
-                style={[styles.pill, stopCount === count && styles.pillActive]}
-                onPress={() => setStopCount(count)}
-              >
-                <Text
-                  style={[
-                    styles.pillText,
-                    stopCount === count && styles.pillTextActive,
-                  ]}
-                >
-                  {count}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          {/* Tip based on time between stops */}
-          <Text style={styles.stopTip}>
-            💡 At{" "}
-            {timeBetweenStops >= 60
-              ? `${timeBetweenStops / 60}hr`
-              : `${timeBetweenStops}min`}{" "}
-            between stops: {stopCount} stops works best for a ~
-            {Math.round((stopCount * timeBetweenStops) / 60)}hr drive
-          </Text>
-        </View>
-
-        {/* Time Between Stops */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⏱️ Time Between Stops</Text>
-          <Text style={styles.sectionSubtitle}>
-            Approximate drive time between each stop
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.pillRow}
-          >
-            {TIME_OPTIONS.map((opt) => (
-              <TouchableOpacity
-                key={opt.value}
-                style={[
-                  styles.pill,
-                  timeBetweenStops === opt.value && styles.pillActive,
-                ]}
-                onPress={() => setTimeBetweenStops(opt.value)}
-              >
-                <Text
-                  style={[
-                    styles.pillText,
-                    timeBetweenStops === opt.value && styles.pillTextActive,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Interests */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎯 Interests</Text>
-          <Text style={styles.sectionSubtitle}>
-            What kind of stops do you want?
-          </Text>
-          <View style={styles.interestGrid}>
-            {INTERESTS.map((interest) => {
-              const selected = selectedInterests.includes(interest.label);
-              return (
-                <TouchableOpacity
-                  key={interest.label}
-                  style={[
-                    styles.interestChip,
-                    selected && styles.interestChipActive,
-                  ]}
-                  onPress={() => toggleInterest(interest.label)}
-                >
-                  <Text style={styles.interestEmoji}>{interest.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.interestLabel,
-                      selected && styles.interestLabelActive,
-                    ]}
-                  >
-                    {interest.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Tone */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🎭 Vibe</Text>
-          <Text style={styles.sectionSubtitle}>
-            {"What's the mood of your trip?"}
-          </Text>
-          <View style={styles.toneGrid}>
-            {TONES.map((tone) => (
-              <TouchableOpacity
-                key={tone.label}
-                style={[
-                  styles.toneChip,
-                  selectedTone === tone.label && styles.toneChipActive,
-                ]}
-                onPress={() => setSelectedTone(tone.label)}
-              >
-                <Text style={styles.toneEmoji}>{tone.emoji}</Text>
-                <Text
-                  style={[
-                    styles.toneLabel,
-                    selectedTone === tone.label && styles.toneLabelActive,
-                  ]}
-                >
-                  {tone.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Difficulty */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>🧩 Clue Difficulty</Text>
-          {DIFFICULTIES.map((d) => (
-            <TouchableOpacity
-              key={d.label}
-              style={[
-                styles.difficultyCard,
-                difficulty === d.label && styles.difficultyCardActive,
-              ]}
-              onPress={() => setDifficulty(d.label)}
-            >
-              <View style={styles.difficultyLeft}>
-                <Text
-                  style={[
-                    styles.difficultyLabel,
-                    difficulty === d.label && styles.difficultyLabelActive,
-                  ]}
-                >
-                  {d.label}
-                </Text>
-                <Text style={styles.difficultyDesc}>{d.desc}</Text>
-              </View>
-              {difficulty === d.label && (
-                <Text style={styles.difficultyCheck}>✓</Text>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Generate Button */}
-        <TouchableOpacity style={styles.generateBtn} onPress={handleGenerate}>
-          <Text style={styles.generateBtnText}>🚗 Build My Road Trip Hunt</Text>
+  // ── STEP 2 — Map with candidate stops ──────────────────────────
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.step2Header}>
+        <TouchableOpacity
+          onPress={() => {
+            setStep(1);
+            setSelectedStops([]);
+          }}
+        >
+          <Text style={styles.backBtnText}>‹ Back</Text>
         </TouchableOpacity>
+        <View style={styles.step2HeaderCenter}>
+          <Text style={styles.step2Title}>Pick Your Stops</Text>
+          <Text style={styles.step2Subtitle}>
+            {routeInfo?.totalDistanceMiles}mi ·{" "}
+            {Math.round((routeInfo?.totalDurationMinutes || 0) / 60)}hr drive
+          </Text>
+        </View>
+        <View style={styles.step2Badge}>
+          <Text style={styles.step2BadgeText}>
+            {selectedStops.length} selected
+          </Text>
+        </View>
+      </View>
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+      {/* Map */}
+      <View style={styles.mapContainer}>
+        <MapView
+          provider={
+            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+          }
+          style={styles.map}
+          initialRegion={getMapRegion()}
+          showsUserLocation={false}
+        >
+          {/* Route polyline */}
+          {routePolyline.length > 0 && (
+            <Polyline
+              coordinates={routePolyline}
+              strokeColor={COLORS.primary}
+              strokeWidth={3}
+              lineDashPattern={[0]}
+            />
+          )}
+
+          {/* Candidate markers */}
+          {candidates.map((candidate) => {
+            const isSelected = selectedStops.find(
+              (s) => s.placeId === candidate.placeId,
+            );
+            return (
+              <Marker
+                key={candidate.placeId}
+                coordinate={{
+                  latitude: candidate.lat,
+                  longitude: candidate.lng,
+                }}
+                onPress={() => toggleStop(candidate)}
+              >
+                <View
+                  style={[
+                    styles.emojiMarker,
+                    isSelected && styles.emojiMarkerSelected,
+                  ]}
+                >
+                  <Text style={styles.emojiMarkerText}>{candidate.emoji}</Text>
+                </View>
+              </Marker>
+            );
+          })}
+        </MapView>
+      </View>
+
+      {/* Bottom panel */}
+      <View style={styles.bottomPanel}>
+        <Text style={styles.bottomPanelTitle}>
+          {selectedStops.length === 0
+            ? "Tap stops on the map to select them"
+            : `${selectedStops.length} stop${selectedStops.length !== 1 ? "s" : ""} selected (min 2)`}
+        </Text>
+
+        {/* Selected stop pills */}
+        {selectedStops.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.selectedPills}
+          >
+            {[...selectedStops]
+              .sort((a, b) => a.routeFraction - b.routeFraction)
+              .map((stop) => (
+                <TouchableOpacity
+                  key={stop.placeId}
+                  style={styles.stopPill}
+                  onPress={() => toggleStop(stop)}
+                >
+                  <Text style={styles.stopPillEmoji}>{stop.emoji}</Text>
+                  <Text style={styles.stopPillText} numberOfLines={1}>
+                    {stop.category}
+                  </Text>
+                  <Text style={styles.stopPillRemove}>✕</Text>
+                </TouchableOpacity>
+              ))}
+          </ScrollView>
+        )}
+
+        <TouchableOpacity
+          style={[
+            styles.generateBtn,
+            selectedStops.length < 2 && styles.generateBtnDisabled,
+          ]}
+          onPress={handleGenerate}
+          disabled={selectedStops.length < 2}
+        >
+          <Text style={styles.generateBtnText}>
+            {selectedStops.length < 2
+              ? `Select ${2 - selectedStops.length} more stop${2 - selectedStops.length !== 1 ? "s" : ""}`
+              : `🚗 Build Hunt with ${selectedStops.length} Stops`}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -441,23 +618,6 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     fontWeight: FONTS.weights.bold,
   },
-  pillRow: { flexDirection: "row" },
-  pill: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.round,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    marginRight: SPACING.sm,
-    borderWidth: 1.5,
-    borderColor: COLORS.lightGray,
-  },
-  pillActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  pillText: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.darkGray,
-    fontWeight: FONTS.weights.medium,
-  },
-  pillTextActive: { color: COLORS.white },
   interestGrid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm },
   interestChip: {
     backgroundColor: COLORS.white,
@@ -541,15 +701,94 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: SPACING.md,
   },
+  generateBtnDisabled: { backgroundColor: COLORS.midGray },
   generateBtnText: {
     color: COLORS.white,
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
   },
-  stopTip: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.darkGray,
-    marginTop: SPACING.sm,
-    fontStyle: "italic",
+  // Step 2
+  step2Header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: SPACING.md,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
   },
+  step2HeaderCenter: { flex: 1, alignItems: "center" },
+  step2Title: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+  },
+  step2Subtitle: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
+  step2Badge: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+  },
+  step2BadgeText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.xs,
+    fontWeight: FONTS.weights.bold,
+  },
+  mapContainer: { flex: 1 },
+  map: { flex: 1 },
+  emojiMarker: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: COLORS.lightGray,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  emojiMarkerSelected: {
+    borderColor: "#27AE60",
+    borderWidth: 3,
+    backgroundColor: "#EAFAF1",
+  },
+  emojiMarkerText: { fontSize: 20 },
+  bottomPanel: {
+    backgroundColor: COLORS.white,
+    padding: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightGray,
+  },
+  bottomPanelTitle: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    textAlign: "center",
+    marginBottom: SPACING.sm,
+  },
+  selectedPills: { flexDirection: "row", marginBottom: SPACING.sm },
+  stopPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EAFAF1",
+    borderRadius: RADIUS.round,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 6,
+    marginRight: SPACING.sm,
+    borderWidth: 1,
+    borderColor: "#27AE60",
+    gap: 4,
+  },
+  stopPillEmoji: { fontSize: 14 },
+  stopPillText: {
+    fontSize: FONTS.sizes.xs,
+    color: "#1E8449",
+    fontWeight: FONTS.weights.medium,
+    maxWidth: 80,
+  },
+  stopPillRemove: { fontSize: FONTS.sizes.xs, color: COLORS.midGray },
 });

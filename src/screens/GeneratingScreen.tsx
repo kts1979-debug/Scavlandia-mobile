@@ -12,7 +12,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import NearbyCitySuggestion from "../components/NearbyCitySuggestion";
 import {
-  generateHunt,
   generateMuseumHunt,
   generateRoadTripHunt,
 } from "../services/apiService";
@@ -99,9 +98,10 @@ export default function GeneratingScreen() {
           profile.tone,
           profile.difficulty,
           profile.timeBetweenStops,
+          profile.selectedStops, // ← pass pre-selected stops
+          profile.totalDurationMinutes,
+          profile.totalDistanceMiles,
         );
-      } else {
-        result = await generateHunt(huntCity, profile);
       }
 
       router.replace({

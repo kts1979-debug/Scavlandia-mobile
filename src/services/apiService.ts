@@ -80,6 +80,9 @@ export const generateRoadTripHunt = async (
   tone: string,
   difficulty: string,
   timeBetweenStops: number,
+  selectedStops: any[],
+  totalDurationMinutes: number,
+  totalDistanceMiles: number,
 ) => {
   const response = await api.post("/api/hunts/generate-road-trip", {
     startLocation,
@@ -89,6 +92,9 @@ export const generateRoadTripHunt = async (
     tone,
     difficulty,
     timeBetweenStops,
+    selectedStops,
+    totalDurationMinutes,
+    totalDistanceMiles,
   });
   return response.data;
 };
@@ -211,6 +217,22 @@ export interface GroupProfile {
   tone: string;
   mobility: string;
 }
+
+// ── Fetch road trip candidates ────────────────────────────────────
+export const getRoadTripCandidates = async (
+  startLocation: string,
+  endLocation: string,
+  interests: string[],
+) => {
+  const response = await api.get("/api/hunts/road-trip-candidates", {
+    params: {
+      startLocation,
+      endLocation,
+      interests: JSON.stringify(interests),
+    },
+  });
+  return response.data;
+};
 
 export interface HuntStop {
   order: number;
