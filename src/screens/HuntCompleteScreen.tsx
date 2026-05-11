@@ -63,16 +63,27 @@ export default function HuntCompleteScreen() {
 
   const handleReturnToSkippedStop = () => {
     const firstSkippedOrder = skippedStops[0];
-    const remainingSkipped = skippedStops.slice(1);
+
+    // Find the stop INDEX for this order number
+    const skippedStopIndex = hunt.stops.findIndex(
+      (s: any) => s.order === firstSkippedOrder,
+    );
+
+    // Parse completedIndices from params if available
+    const completedIndices: number[] = params.completedIndices
+      ? JSON.parse(params.completedIndices as string)
+      : [];
+
     router.replace({
       pathname: "/active-hunt",
       params: {
         hunt: params.hunt,
         sessionCode,
         stopPhotos,
-        resumeAtStop: String(firstSkippedOrder),
+        resumeAtStop: String(skippedStopIndex + 1), // +1 because ActiveHunt subtracts 1
         totalPoints: String(totalPoints),
-        skippedStops: JSON.stringify(remainingSkipped),
+        skippedStops: JSON.stringify(skippedStops), // ← keep ALL skips, not remainingSkipped
+        completedIndices: JSON.stringify(completedIndices), // ← pass completed state
       },
     });
   };

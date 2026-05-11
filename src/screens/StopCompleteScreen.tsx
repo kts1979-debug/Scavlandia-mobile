@@ -27,18 +27,43 @@ export default function StopCompleteScreen() {
   const hunt = params.hunt as string;
   const sessionCode = (params.sessionCode as string) || "";
   const stopPhotos = (params.stopPhotos as string) || "{}";
-  const isLastStop = stopOrder >= totalStops;
-
-  // ── Animations ─────────────────────────────────────────────────
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const bounceAnim = useRef(new Animated.Value(0)).current;
-
   const wasSkipped = params.wasSkipped === "true";
   const swapsUsed = (params.swapsUsed as string) || "0";
   const skippedStops: number[] = params.skippedStops
     ? JSON.parse(params.skippedStops as string)
     : [];
+  const completedIndices: number[] = params.completedIndices
+    ? JSON.parse(params.completedIndices as string)
+    : [];
+
+  // ── Hunt completion logic ──────────────────────────────────────
+  const huntData = JSON.parse(hunt);
+  const allStopIndices = huntData.stops.map((_: any, i: number) => i);
+  const isHuntComplete = allStopIndices.every(
+    (i: number) =>
+      completedIndices.includes(i) ||
+      skippedStops.includes(huntData.stops[i].order),
+  );
+  const isLastStop = stopOrder >= totalStops || isHuntComplete;
+
+  const remainingSkipped = skippedStops.filter(
+    (order: number) =>
+      !completedIndices.some((i: number) => huntData.stops[i]?.order === order),
+  );
+  const hasMoreSkipped = remainingSkipped.length > 0 && !isHuntComplete;
+
+  console.log("🔍 StopComplete mounted with:");
+  console.log("  stopOrder:", stopOrder);
+  console.log("  totalStops:", totalStops);
+  console.log("  completedIndices:", completedIndices);
+  console.log("  skippedStops:", skippedStops);
+  console.log("  isHuntComplete:", isHuntComplete);
+  console.log("  allStopIndices:", allStopIndices);
+
+  // ── Animations ─────────────────────────────────────────────────
+  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Sequence: pop in badge → fade in content → bounce points
@@ -80,6 +105,7 @@ export default function StopCompleteScreen() {
         totalPoints: String(totalPoints),
         skippedStops: JSON.stringify(skippedStops),
         swapsUsed,
+        completedIndices: JSON.stringify(completedIndices),
       },
     });
   };
@@ -90,10 +116,10 @@ export default function StopCompleteScreen() {
       params: {
         hunt,
         totalPoints: String(totalPoints),
-        completedStops: String(stopOrder),
+        completedStops: String(completedIndices.length),
         sessionCode,
         stopPhotos,
-        quitEarly: "true",
+        quitEarly: isHuntComplete ? "false" : "true",
         skippedStops: JSON.stringify(skippedStops),
         swapsUsed,
       },
@@ -109,7 +135,7 @@ export default function StopCompleteScreen() {
         >
           <View style={styles.badge}>
             <Text style={styles.badgeEmoji}>
-              {wasSkipped ? "⏭" : isLastStop ? "🏆" : "✅"}
+              {wasSkipped ? "⏭" : isHuntComplete ? "🏆" : "✅"}
             </Text>
           </View>
           <View style={styles.confettiRow}>
@@ -126,7 +152,7 @@ export default function StopCompleteScreen() {
           <Text style={styles.congrats}>
             {wasSkipped
               ? "Stop Skipped"
-              : isLastStop
+              : isHuntComplete
                 ? "Hunt Complete!"
                 : "Stop Complete!"}
           </Text>
@@ -134,9 +160,16 @@ export default function StopCompleteScreen() {
             {stopName}
           </Text>
           {wasSkipped ? (
-            <Text style={styles.skippedNote}>
-              You can complete this stop at the end of the hunt
-            </Text>
+            hasMoreSkipped ? (
+              <Text style={styles.skippedNote}>
+                You still have {remainingSkipped.length} skipped stop
+                {remainingSkipped.length !== 1 ? "s" : ""} to complete
+              </Text>
+            ) : (
+              <Text style={styles.skippedNote}>
+                You can complete this stop at the end of the hunt
+              </Text>
+            )
           ) : (
             <Text style={styles.progress}>
               Stop {stopOrder} of {totalStops} completed
@@ -193,17 +226,24 @@ export default function StopCompleteScreen() {
                   style={styles.continueBtn}
                   onPress={() => {
                     const firstSkippedOrder = skippedStops[0];
-                    const remainingSkipped = skippedStops.slice(1);
+                    // Don't remove from skippedStops yet — ActiveHuntScreen needs it
+                    // to correctly calculate isLastStop. It will be removed when completed.
+
+                    const skippedStopIndex = huntData.stops.findIndex(
+                      (s: any) => s.order === firstSkippedOrder,
+                    );
+
                     router.replace({
                       pathname: "/active-hunt",
                       params: {
                         hunt,
                         sessionCode,
                         stopPhotos,
-                        resumeAtStop: String(firstSkippedOrder),
+                        resumeAtStop: String(skippedStopIndex + 1),
                         totalPoints: String(totalPoints),
-                        skippedStops: JSON.stringify(remainingSkipped),
+                        skippedStops: JSON.stringify(skippedStops), // ← pass ALL skipped, not remainingSkipped
                         swapsUsed,
+                        completedIndices: JSON.stringify(completedIndices),
                       },
                     });
                   }}

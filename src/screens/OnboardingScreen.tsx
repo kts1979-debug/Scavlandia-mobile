@@ -1,9 +1,6 @@
 // src/screens/OnboardingScreen.tsx
-// First time user onboarding tour shown after email sign-up.
-// Text-only slides covering navigation and hunt types.
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   Dimensions,
@@ -28,7 +25,7 @@ const SLIDES = [
     emoji: "🗺️",
     title: "Welcome to Scavlandia!",
     subtitle: "Your personalized scavenger hunt adventure",
-    body: "Scavlandia builds custom scavenger hunts just for your group — in any city, any museum, or right around the corner. Every hunt is unique, every clue is written just for you.",
+    body: "Scavlandia builds custom scavenger hunts just for your group — in any city, on any road trip, or right around the corner. Every hunt is unique, every clue is written just for you.",
     color: COLORS.primary,
   },
   {
@@ -36,7 +33,7 @@ const SLIDES = [
     emoji: "🏠",
     title: "Home Screen",
     subtitle: "Your adventure hub",
-    body: 'The Home tab is where you start every adventure. Tap "Start a Hunt" to choose your hunt type and build your personalized experience. You\'ll also find links to your past hunts (including your photo albums) and profile.',
+    body: 'The Home tab is where you start every adventure. Tap "Start a Hunt" to choose your hunt type and build your personalized experience. You\'ll also find links to your past hunts and photo albums.',
     color: "#1A6B8A",
   },
   {
@@ -49,18 +46,18 @@ const SLIDES = [
   },
   {
     id: "4",
-    emoji: "🏛️",
-    title: "Museum Hunt",
-    subtitle: "Discover art and exhibits",
-    body: "Museum Hunts take place inside a museum of your choice. We use riddle-based clues to lead you to specific artworks and exhibits. Perfect for art lovers, families, or anyone who wants a unique museum experience.",
-    color: "#6C3483",
+    emoji: "🚗",
+    title: "Road Trip Hunt",
+    subtitle: "Turn your drive into an adventure",
+    body: "Enter your start and end points, then browse potential stops on a live map. Tap the ones that look interesting and we'll write custom road trip clues for each one. Roadside attractions, scenic overlooks, local diners — your road trip just got legendary.",
+    color: "#1E5799",
   },
   {
     id: "5",
     emoji: "⚡",
     title: "Micro Hunt",
     subtitle: "A quick adventure nearby",
-    body: "Micro Hunts are short 1-2 stop adventures within half a mile of your location. Perfect for a quick break, lunch hour, or when you only have 15-30 minutes to spare.",
+    body: "Micro Hunts are short 1–2 stop adventures within half a mile of your location. Perfect for a quick break, lunch hour, or when you only have 15–30 minutes to spare.",
     color: "#B7950B",
   },
   {
@@ -73,15 +70,27 @@ const SLIDES = [
   },
   {
     id: "7",
+    emoji: "📸",
+    title: "Photos & Privacy",
+    subtitle: "Your photos, your memories",
+    body: "Photos you take during hunts are stored securely and used only to create your hunt album. They are never shared publicly or used for any other purpose. Photo albums are available for 90 days after your hunt, then automatically deleted.",
+    color: "#1A5276",
+  },
+  {
+    id: "8",
     emoji: "✨",
     title: "You're Ready!",
     subtitle: "Let the adventure begin",
-    body: "That's everything you need to know! Start your first hunt and discover what makes your city amazing. Remember — every hunt is unique, so no two adventures are ever the same.",
+    body: "That's everything you need to know! Start your first hunt and discover what makes every place amazing. Remember — every hunt is unique, so no two adventures are ever the same.",
     color: COLORS.accent,
   },
 ];
 
 export default function OnboardingScreen() {
+  const params = useLocalSearchParams();
+  // fromHome=true means opened from home screen link, not first launch
+  const fromHome = params.fromHome === "true";
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -99,12 +108,20 @@ export default function OnboardingScreen() {
 
   const handleFinish = async () => {
     await AsyncStorage.setItem(ONBOARDING_KEY, "true");
-    router.replace("/(tabs)");
+    if (fromHome) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
+    }
   };
 
   const handleSkip = async () => {
     await AsyncStorage.setItem(ONBOARDING_KEY, "true");
-    router.replace("/(tabs)");
+    if (fromHome) {
+      router.back();
+    } else {
+      router.replace("/(tabs)");
+    }
   };
 
   const isLast = currentIndex === SLIDES.length - 1;
@@ -115,7 +132,7 @@ export default function OnboardingScreen() {
       {/* Skip button */}
       {!isLast && (
         <TouchableOpacity style={styles.skipBtn} onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{fromHome ? "✕ Close" : "Skip"}</Text>
         </TouchableOpacity>
       )}
 
@@ -143,7 +160,6 @@ export default function OnboardingScreen() {
 
       {/* Bottom controls */}
       <View style={styles.bottom}>
-        {/* Dot indicators */}
         <View style={styles.dotsRow}>
           {SLIDES.map((_, i) => (
             <TouchableOpacity
@@ -157,17 +173,19 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        {/* Navigation button */}
         <TouchableOpacity
           style={styles.nextBtn}
           onPress={isLast ? handleFinish : handleNext}
         >
           <Text style={styles.nextBtnText}>
-            {isLast ? "Let's Go! 🚀" : "Next →"}
+            {isLast
+              ? fromHome
+                ? "Back to Home 🏠"
+                : "Let's Go! 🚀"
+              : "Next →"}
           </Text>
         </TouchableOpacity>
 
-        {/* Slide counter */}
         <Text style={styles.counter}>
           {currentIndex + 1} of {SLIDES.length}
         </Text>

@@ -61,7 +61,54 @@ export default function ActiveHuntScreen() {
     ? JSON.parse(params.skippedStops as string)
     : [];
 
-  const initialCompleted = Array.from({ length: resumeAtStop }, (_, i) => i);
+  // Use explicitly passed completedIndices if available
+  // Fall back to calculation only for fresh hunts
+  const restoredCompleted: number[] = params.completedIndices
+    ? JSON.parse(params.completedIndices as string)
+    : Array.from({ length: resumeAtStop }, (_, i) => i).filter(
+        (i) => !restoredSkipped.includes(hunt.stops[i]?.order),
+      );
+
+  // ── State ──────────────────────────────────────────────────────────
+  const [activeStopIndex] = useState(resumeAtStop);
+  const [completedIndices, setCompletedIndices] =
+    useState<number[]>(restoredCompleted);
+  const [totalPoints, setTotalPoints] = useState(
+    params.totalPoints ? parseInt(params.totalPoints as string) : 0,
+  );
+  const [atLocation, setAtLocation] = useState(false);
+  const [showMap, setShowMap] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [hintDeductions, setHintDeductions] = useState(0);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [answerRevealed, setAnswerRevealed] = useState(false);
+  const [answerDeductions, setAnswerDeductions] = useState(0);
+  const [stopPhotos, setStopPhotos] =
+    useState<Record<string, string>>(restoredPhotos);
+  const [localPhotos, setLocalPhotos] =
+    useState<Record<string, string>>(restoredPhotos);
+  const [skippedStops, setSkippedStops] = useState<number[]>(restoredSkipped);
+  const [swapsUsed, setSwapsUsed] = useState(
+    params.swapsUsed ? parseInt(params.swapsUsed as string) : 0,
+  );
+  const [triviaCompleted, setTriviaCompleted] = useState(false);
+  const [triviaBonus, setTriviaBonus] = useState(0);
+
+  // ── Debug log on mount only ────────────────────────────────────────
+  useEffect(() => {
+    console.log("🔍 ActiveHunt mounted with:");
+    console.log("  resumeAtStop param:", params.resumeAtStop);
+    console.log("  resumeAtStop calculated:", resumeAtStop);
+    console.log("  completedIndices param:", params.completedIndices);
+    console.log("  restoredCompleted:", restoredCompleted);
+    console.log("  skippedStops param:", params.skippedStops);
+    console.log("  restoredSkipped:", restoredSkipped);
+    console.log("  totalStops:", hunt.stops.length);
+    console.log(
+      "  stop orders:",
+      hunt.stops.map((s: any) => s.order),
+    );
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Museum mode ────────────────────────────────────────────────────
   const isMuseumHunt = !!(hunt as any).isMuseumHunt;
@@ -76,30 +123,6 @@ export default function ActiveHuntScreen() {
       Alert.alert("Error", "Could not open Google Maps."),
     );
   };
-
-  // ── State ──────────────────────────────────────────────────────────
-  const [activeStopIndex] = useState(resumeAtStop);
-  const [completedIndices, setCompletedIndices] =
-    useState<number[]>(initialCompleted);
-  const [totalPoints, setTotalPoints] = useState(
-    params.totalPoints ? parseInt(params.totalPoints as string) : 0,
-  );
-  const [atLocation, setAtLocation] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [hintDeductions, setHintDeductions] = useState(0);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [answerRevealed, setAnswerRevealed] = useState(false);
-  const [answerDeductions, setAnswerDeductions] = useState(0);
-  const [stopPhotos, setStopPhotos] = useState<Record<string, string>>({});
-  const [localPhotos, setLocalPhotos] =
-    useState<Record<string, string>>(restoredPhotos);
-  const [skippedStops, setSkippedStops] = useState<number[]>(restoredSkipped);
-  const [swapsUsed, setSwapsUsed] = useState(
-    params.swapsUsed ? parseInt(params.swapsUsed as string) : 0,
-  );
-  const [triviaCompleted, setTriviaCompleted] = useState(false);
-  const [triviaBonus, setTriviaBonus] = useState(0);
 
   // ── Difficulty & timer ─────────────────────────────────────────────
   const difficulty = hunt.groupProfile?.difficulty || "medium";
@@ -124,6 +147,7 @@ export default function ActiveHuntScreen() {
                   sessionCode,
                   stopPhotos: JSON.stringify(localPhotos),
                   skippedStops: JSON.stringify(skippedStops),
+                  completedIndices: JSON.stringify(completedIndices),
                 },
               }),
           },
@@ -268,6 +292,11 @@ export default function ActiveHuntScreen() {
         totalPoints + activeStop.pointValue - answerDeductions + triviaBonus;
       const newCompletedList = [...completedIndices, activeStopIndex];
 
+      // If this stop was previously skipped, remove it from skipped list
+      const newSkippedList = skippedStops.filter(
+        (order: number) => order !== activeStop.order,
+      );
+      setSkippedStops(newSkippedList);
       setCompletedIndices(newCompletedList);
       setTotalPoints(newTotalPoints);
 
@@ -282,29 +311,60 @@ export default function ActiveHuntScreen() {
         );
       }
 
-      const isLastStop = activeStopIndex >= hunt.stops.length - 1;
+      // Hunt is complete when all stops are either completed or skipped
+      const allStopIndices = hunt.stops.map((_: any, i: number) => i);
+      const isLastStop = allStopIndices.every(
+        (i: number) =>
+          newCompletedList.includes(i) ||
+          newSkippedList.includes(hunt.stops[i].order),
+      );
+
+      console.log("🔍 isLastStop check:");
+      console.log("  allStopIndices:", allStopIndices);
+      console.log("  newCompletedList:", newCompletedList);
+      console.log("  newSkippedList:", newSkippedList);
+      console.log("  isLastStop result:", isLastStop);
 
       if (isLastStop) {
         timer.stop();
-        updateAllTimeStats(newTotalPoints, hunt.city, hunt.huntTitle).catch(
-          (err) => console.warn("All-time stats update failed:", err.message),
-        );
-        saveHuntPhotos(hunt.huntId, updatedPhotos).catch((err) =>
-          console.warn("Save photos failed:", err.message),
-        );
-        clearActiveHuntState(hunt.huntId).catch((err) =>
+        // Fire clear but don't block navigation on it
+        clearActiveHuntState(hunt.huntId).catch((err: any) =>
           console.warn("Clear state failed:", err.message),
         );
-
-        // Save visited locations for novel hunt insurance
+        updateAllTimeStats(newTotalPoints, hunt.city, hunt.huntTitle).catch(
+          (err: any) =>
+            console.warn("All-time stats update failed:", err.message),
+        );
+        saveHuntPhotos(hunt.huntId, {
+          ...localPhotos,
+          ...updatedLocalPhotos,
+        }).catch((err: any) =>
+          console.warn("Save photos failed:", err.message),
+        );
         const visitedPlaceIds = hunt.stops
           .map((s: any) => s.placeId)
           .filter(Boolean);
         if (visitedPlaceIds.length > 0) {
-          completeHunt(hunt.huntId, visitedPlaceIds).catch((err) =>
+          completeHunt(hunt.huntId, visitedPlaceIds).catch((err: any) =>
             console.warn("Save visited locations failed:", err.message),
           );
         }
+        router.replace({
+          pathname: "/hunt-complete",
+          params: {
+            hunt: JSON.stringify(hunt),
+            totalPoints: String(newTotalPoints - hintDeductions),
+            completedStops: String(newCompletedList.length),
+            sessionCode,
+            stopPhotos: JSON.stringify({
+              ...localPhotos,
+              ...updatedLocalPhotos,
+            }),
+            skippedStops: JSON.stringify(newSkippedList),
+            completedIndices: JSON.stringify(newCompletedList),
+          },
+        });
+        return;
       }
 
       router.replace({
@@ -319,9 +379,10 @@ export default function ActiveHuntScreen() {
           totalPoints: String(newTotalPoints - hintDeductions),
           hunt: JSON.stringify(hunt),
           sessionCode,
-          stopPhotos: JSON.stringify(updatedLocalPhotos),
-          skippedStops: JSON.stringify(skippedStops),
+          stopPhotos: JSON.stringify({ ...localPhotos, ...updatedLocalPhotos }),
           swapsUsed: String(swapsUsed),
+          completedIndices: JSON.stringify(newCompletedList),
+          skippedStops: JSON.stringify(newSkippedList),
         },
       });
     } catch (error: any) {
@@ -338,16 +399,71 @@ export default function ActiveHuntScreen() {
   // ── Skip stop ──────────────────────────────────────────────────────
   const handleSkipStop = () => {
     Alert.alert(
-      "⏭ Skip This Stop?",
-      `You won't earn points for ${activeStop.locationName} if you skip it.\n\nYou can come back to it at the end of the hunt.`,
+      "Skip Stop",
+      `You won't earn points for ${activeStop.locationName} if you skip it.\n\nYou can come back to it later.`,
       [
-        { text: "Keep Trying", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Skip Stop",
-          style: "destructive",
-          onPress: () => {
+          text: "Skip",
+          onPress: async () => {
             const updatedSkipped = [...skippedStops, activeStop.order];
             setSkippedStops(updatedSkipped);
+
+            // Check if all stops are now completed or skipped
+            const allStopIndices = hunt.stops.map((_: any, i: number) => i);
+            const huntComplete = allStopIndices.every(
+              (i: number) =>
+                completedIndices.includes(i) ||
+                updatedSkipped.includes(hunt.stops[i].order),
+            );
+
+            if (huntComplete) {
+              timer.stop();
+              try {
+                clearActiveHuntState(hunt.huntId);
+              } catch (err: any) {
+                console.warn("Clear state failed:", err.message);
+              }
+              updateAllTimeStats(totalPoints, hunt.city, hunt.huntTitle).catch(
+                (err) =>
+                  console.warn("All-time stats update failed:", err.message),
+              );
+              saveHuntPhotos(hunt.huntId, stopPhotos).catch((err) =>
+                console.warn("Save photos failed:", err.message),
+              );
+              const visitedPlaceIds = hunt.stops
+                .map((s: any) => s.placeId)
+                .filter(Boolean);
+              if (visitedPlaceIds.length > 0) {
+                completeHunt(hunt.huntId, visitedPlaceIds).catch((err) =>
+                  console.warn("Save visited locations failed:", err.message),
+                );
+              }
+              router.replace({
+                pathname: "/hunt-complete",
+                params: {
+                  hunt: JSON.stringify(hunt),
+                  totalPoints: String(totalPoints),
+                  completedStops: String(completedIndices.length),
+                  sessionCode,
+                  stopPhotos: JSON.stringify(localPhotos),
+                  skippedStops: JSON.stringify(updatedSkipped),
+                  completedIndices: JSON.stringify(completedIndices),
+                },
+              });
+              return;
+            }
+
+            // Not done — advance to next unskipped stop
+            let nextIndex = activeStopIndex + 1;
+            while (
+              nextIndex < hunt.stops.length &&
+              (completedIndices.includes(nextIndex) ||
+                updatedSkipped.includes(hunt.stops[nextIndex].order))
+            ) {
+              nextIndex++;
+            }
+
             router.replace({
               pathname: "/stop-complete",
               params: {
@@ -359,9 +475,9 @@ export default function ActiveHuntScreen() {
                 hunt: JSON.stringify(hunt),
                 sessionCode,
                 stopPhotos: JSON.stringify(localPhotos),
-                skippedStops: JSON.stringify(updatedSkipped),
                 swapsUsed: String(swapsUsed),
-                wasSkipped: "true",
+                completedIndices: JSON.stringify(completedIndices),
+                skippedStops: JSON.stringify(updatedSkipped),
               },
             });
           },
@@ -418,16 +534,10 @@ export default function ActiveHuntScreen() {
         {
           text: "Swap It",
           onPress: () => {
-            // ── Find the best reserve stop geographically ──────────
-            // Reference point: user location or current stop coords
             const refLat = userLocation?.latitude ?? activeStop.lat;
             const refLng = userLocation?.longitude ?? activeStop.lng;
-
-            // Next stop after the one being swapped
             const nextStop = hunt.stops[activeStopIndex + 1];
 
-            // Score each reserve stop by how well it fits between
-            // current position and next stop
             const scoredReserves = reserveStops.map((reserve: any) => {
               const distFromRef = getDistance(
                 refLat,
@@ -435,9 +545,6 @@ export default function ActiveHuntScreen() {
                 reserve.lat,
                 reserve.lng,
               );
-
-              // If there's a next stop, penalize reserves that are
-              // farther from next stop than they should be
               let routeScore = distFromRef;
               if (nextStop) {
                 const distToNext = getDistance(
@@ -446,21 +553,16 @@ export default function ActiveHuntScreen() {
                   nextStop.lat,
                   nextStop.lng,
                 );
-                // We want the reserve to be between current pos and next stop
-                // so minimize: dist(current→reserve) + dist(reserve→next)
                 routeScore = distFromRef + distToNext;
               }
-
               return { ...reserve, _routeScore: routeScore };
             });
 
-            // Pick the reserve with the best (lowest) route score
             scoredReserves.sort(
               (a: any, b: any) => a._routeScore - b._routeScore,
             );
             const bestReserve = scoredReserves[0];
 
-            // Remove the chosen reserve from the reserve list
             const remainingReserves = reserveStops.filter(
               (r: any) => r.locationName !== bestReserve.locationName,
             );
@@ -483,7 +585,7 @@ export default function ActiveHuntScreen() {
 
             Alert.alert(
               "✅ Stop Swapped!",
-              `${activeStop.locationName} has been replaced with ${bestReserve.locationName}. Your new clue is waiting!`,
+              `Your stop has been replaced with a nearby alternative. Your new clue is waiting!`,
               [
                 {
                   text: "OK",
@@ -498,6 +600,7 @@ export default function ActiveHuntScreen() {
                         totalPoints: String(totalPoints),
                         skippedStops: JSON.stringify(skippedStops),
                         swapsUsed: String(newSwapsUsed),
+                        completedIndices: JSON.stringify(completedIndices),
                       },
                     }),
                 },
@@ -664,7 +767,6 @@ export default function ActiveHuntScreen() {
               />
             </View>
             <Text style={styles.clueText}>{activeStop.clue}</Text>
-            {/* Drive time — road trip hunts only */}
             {isRoadTripHunt && (activeStop as any).driveTimeFromPrevious && (
               <Text style={styles.driveTimeText}>
                 🚗 ~{(activeStop as any).driveTimeFromPrevious} from previous
@@ -772,7 +874,6 @@ export default function ActiveHuntScreen() {
               <Text style={styles.funFactLabel}>💡 Fun Fact</Text>
               <Text style={styles.funFactText}>{activeStop.funFact}</Text>
 
-              {/* Trivia challenge — shown before photo if trivia exists */}
               {activeStop.trivia && !triviaCompleted && (
                 <TriviaChallenge
                   question={activeStop.trivia.question}
@@ -791,7 +892,6 @@ export default function ActiveHuntScreen() {
                 />
               )}
 
-              {/* Photo button — only shown after trivia or if no trivia */}
               {(!activeStop.trivia || triviaCompleted) && (
                 <TouchableOpacity
                   style={styles.photoButton}
@@ -822,7 +922,7 @@ export default function ActiveHuntScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Skip and swap buttons — shown before arrival */}
+          {/* Skip and swap buttons */}
           {!atLocation && (
             <View style={styles.skipSwapRow}>
               <TouchableOpacity style={styles.skipBtn} onPress={handleSkipStop}>

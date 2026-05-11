@@ -1,6 +1,6 @@
 // src/screens/HomeScreen.tsx
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Image,
   Platform,
@@ -23,15 +23,27 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const [activeHunt, setActiveHunt] = useState<any>(null);
 
-  useEffect(() => {
-    if (user) {
-      getActiveHunt()
-        .then((data) => setActiveHunt(data.activeHunt))
-        .catch(() => {});
-    } else {
-      setActiveHunt(null);
-    }
-  }, [user]);
+  // ── Refresh active hunt on every screen focus ──────────────
+  // This ensures the banner disappears after hunt completion
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        getActiveHunt()
+          .then((data) => {
+            const hunt = data.activeHunt;
+            // Only show banner if hunt is genuinely in progress
+            if (hunt && hunt.status === "in_progress" && hunt.activeState) {
+              setActiveHunt(hunt);
+            } else {
+              setActiveHunt(null);
+            }
+          })
+          .catch(() => setActiveHunt(null));
+      } else {
+        setActiveHunt(null);
+      }
+    }, [user]),
+  );
 
   const stats = [
     { emoji: "🗺️", label: "Cities", value: "500+" },
@@ -45,7 +57,6 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         {/* Header */}
         <View style={styles.header}>
           <View>
@@ -70,7 +81,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Resume Hunt Banner */}
+        {/* Resume Hunt Banner — only shows for in-progress hunts */}
         {activeHunt && (
           <TouchableOpacity
             style={styles.resumeBanner}
@@ -111,7 +122,6 @@ export default function HomeScreen() {
           />
           <Text style={styles.heroTitle}>Scavlandia</Text>
           <Text style={styles.heroTagline}>Explore · Discover · Hunt</Text>
-
           <Button
             label="Start a Hunt"
             onPress={() => router.push("/hunt-type")}
@@ -174,46 +184,25 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
 
-        {/* How it works */}
-        <Text style={styles.sectionTitle}>How it works</Text>
-        {[
-          {
-            step: "1",
-            emoji: "👥",
-            title: "Tell us about your group",
-            desc: "Age, size, interests and vibe",
-          },
-          {
-            step: "2",
-            emoji: "📍",
-            title: "Pick your city or museum",
-            desc: "Works anywhere in the world",
-          },
-          {
-            step: "3",
-            emoji: "⚙️",
-            title: "We build your hunt",
-            desc: "Real locations, custom clues, just for you",
-          },
-          {
-            step: "4",
-            emoji: "🏆",
-            title: "Play and earn points",
-            desc: "Complete stops, take photos, win",
-          },
-        ].map((item) => (
-          <Card key={item.step} style={styles.stepCard}>
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepNum}>{item.step}</Text>
-            </View>
-            <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>
-                {item.emoji} {item.title}
-              </Text>
-              <Text style={styles.stepDesc}>{item.desc}</Text>
-            </View>
-          </Card>
-        ))}
+        {/* How it works — replaced with onboarding link */}
+        <TouchableOpacity
+          style={styles.onboardingLink}
+          onPress={() =>
+            router.push({
+              pathname: "/onboarding",
+              params: { fromHome: "true" },
+            })
+          }
+        >
+          <Text style={styles.onboardingLinkEmoji}>📖</Text>
+          <View style={styles.onboardingLinkContent}>
+            <Text style={styles.onboardingLinkTitle}>New to Scavlandia?</Text>
+            <Text style={styles.onboardingLinkDesc}>
+              See how it works — takes 30 seconds
+            </Text>
+          </View>
+          <Text style={styles.onboardingLinkArrow}>›</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -236,13 +225,13 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
     color: COLORS.primary,
   },
-  headerLogo: { height: 36, width: 180 },
   greeting: {
     fontSize: FONTS.sizes.md,
     color: COLORS.accent,
     fontWeight: FONTS.weights.medium,
     marginTop: 2,
   },
+  tagline: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, marginTop: 2 },
   avatarBtn: {
     width: 44,
     height: 44,
@@ -352,33 +341,25 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   huntTypeArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
-  stepCard: {
+  onboardingLink: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: SPACING.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginTop: SPACING.sm,
     gap: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
   },
-  stepBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.accent,
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
-  },
-  stepNum: {
-    color: COLORS.white,
-    fontWeight: FONTS.weights.heavy,
-    fontSize: FONTS.sizes.md,
-  },
-  stepContent: { flex: 1 },
-  stepTitle: {
+  onboardingLinkEmoji: { fontSize: 28, flexShrink: 0 },
+  onboardingLinkContent: { flex: 1 },
+  onboardingLinkTitle: {
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
-    color: COLORS.black,
+    color: COLORS.primary,
     marginBottom: 2,
   },
-  stepDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
-  tagline: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, marginTop: 2 },
+  onboardingLinkDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
+  onboardingLinkArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
 });
