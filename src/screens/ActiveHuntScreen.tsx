@@ -214,11 +214,105 @@ export default function ActiveHuntScreen() {
 
   // ── Photo ──────────────────────────────────────────────────────────
   const handleTakePhoto = async () => {
-    Alert.alert("📸 Add Photo", "How would you like to add your photo?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "📷 Take Photo", onPress: () => launchCamera() },
-      { text: "🖼️ Choose from Library", onPress: () => launchLibrary() },
-    ]);
+    Alert.alert(
+      "📸 Add Photo",
+      "Take or choose a photo to complete this stop.\n\n📋 Photos are stored securely, used only for your hunt album, and automatically deleted after 90 days. Photo upload is optional.",
+      [
+        { text: "⏭ Skip Photo", onPress: () => handleSkipPhoto() },
+        { text: "📷 Take Photo", onPress: () => launchCamera() },
+        { text: "🖼️ Library", onPress: () => launchLibrary() },
+      ],
+    );
+  };
+
+  const handleSkipPhoto = async () => {
+    // Complete the stop without a photo
+    setSubmitting(true);
+    try {
+      await submitStop(
+        hunt.huntId,
+        activeStop.order,
+        "", // no photo URL
+        activeStop.pointValue,
+      );
+
+      const newTotalPoints =
+        totalPoints + activeStop.pointValue - answerDeductions + triviaBonus;
+      const newCompletedList = [...completedIndices, activeStopIndex];
+
+      const newSkippedList = skippedStops.filter(
+        (order: number) => order !== activeStop.order,
+      );
+      setSkippedStops(newSkippedList);
+      setCompletedIndices(newCompletedList);
+      setTotalPoints(newTotalPoints);
+
+      const allStopIndices = hunt.stops.map((_: any, i: number) => i);
+      const isLastStop = allStopIndices.every(
+        (i: number) =>
+          newCompletedList.includes(i) ||
+          newSkippedList.includes(hunt.stops[i].order),
+      );
+
+      if (isLastStop) {
+        timer.stop();
+        clearActiveHuntState(hunt.huntId).catch((err: any) =>
+          console.warn("Clear state failed:", err.message),
+        );
+        updateAllTimeStats(newTotalPoints, hunt.city, hunt.huntTitle).catch(
+          (err: any) =>
+            console.warn("All-time stats update failed:", err.message),
+        );
+        saveHuntPhotos(hunt.huntId, localPhotos).catch((err: any) =>
+          console.warn("Save photos failed:", err.message),
+        );
+        const visitedPlaceIds = hunt.stops
+          .map((s: any) => s.placeId)
+          .filter(Boolean);
+        if (visitedPlaceIds.length > 0) {
+          completeHunt(hunt.huntId, visitedPlaceIds).catch((err: any) =>
+            console.warn("Save visited locations failed:", err.message),
+          );
+        }
+        router.replace({
+          pathname: "/hunt-complete",
+          params: {
+            hunt: JSON.stringify(hunt),
+            totalPoints: String(newTotalPoints - hintDeductions),
+            completedStops: String(newCompletedList.length),
+            sessionCode,
+            stopPhotos: JSON.stringify(localPhotos),
+            skippedStops: JSON.stringify(newSkippedList),
+            completedIndices: JSON.stringify(newCompletedList),
+          },
+        });
+        return;
+      }
+
+      router.replace({
+        pathname: "/stop-complete",
+        params: {
+          stopName: activeStop.locationName,
+          stopOrder: String(activeStop.order),
+          totalStops: String(hunt.stops.length),
+          pointsEarned: String(
+            activeStop.pointValue - answerDeductions + triviaBonus,
+          ),
+          totalPoints: String(newTotalPoints - hintDeductions),
+          hunt: JSON.stringify(hunt),
+          sessionCode,
+          stopPhotos: JSON.stringify(localPhotos),
+          swapsUsed: String(swapsUsed),
+          completedIndices: JSON.stringify(newCompletedList),
+          skippedStops: JSON.stringify(newSkippedList),
+        },
+      });
+    } catch (error: any) {
+      console.error("Skip photo error:", error.message);
+      Alert.alert("Error", "Could not complete this stop. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const launchCamera = async () => {
@@ -909,7 +1003,7 @@ export default function ActiveHuntScreen() {
                       ? "⬆️  Uploading photo..."
                       : isMuseumHunt
                         ? "📸  Photograph the Artwork"
-                        : "📸  Add Photo to Complete"}
+                        : "📸  Add Photo (optional)"}
                   </Text>
                 </TouchableOpacity>
               )}
