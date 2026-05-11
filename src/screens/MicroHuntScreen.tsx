@@ -477,8 +477,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: SPACING.sm,
+    flexWrap: "wrap",
+    gap: SPACING.xs,
   },
-  optionalRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+  optionalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+    flexShrink: 1,
+  },
   optionalLabel: {
     fontSize: FONTS.sizes.xs,
     color: COLORS.midGray,
