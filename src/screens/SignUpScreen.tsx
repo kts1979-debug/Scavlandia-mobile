@@ -6,6 +6,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -64,6 +65,7 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const handleSignUp = async () => {
     if (!displayName.trim())
@@ -79,6 +81,12 @@ export default function SignUpScreen() {
       );
     if (password !== confirmPassword)
       return Alert.alert("Mismatch", "Passwords do not match");
+
+    if (!agreedToTerms)
+      return Alert.alert(
+        "Agreement Required",
+        "Please agree to the Terms of Service and Privacy Policy to continue.",
+      );
 
     setLoading(true);
     try {
@@ -189,9 +197,44 @@ export default function SignUpScreen() {
               style={styles.signUpBtn}
             />
 
-            <Text style={styles.terms}>
-              By signing up you agree to our Terms of Service and Privacy Policy
-            </Text>
+            <TouchableOpacity
+              style={styles.termsRow}
+              onPress={() => setAgreedToTerms(!agreedToTerms)}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[
+                  styles.checkbox,
+                  agreedToTerms && styles.checkboxChecked,
+                ]}
+              >
+                {agreedToTerms && <Text style={styles.checkboxTick}>✓</Text>}
+              </View>
+              <Text style={styles.termsText}>
+                I agree to the{" "}
+                <Text
+                  style={styles.termsLink}
+                  onPress={() =>
+                    Linking.openURL(
+                      "https://kts1979-debug.github.io/Scavlandia-mobile/terms-of-service",
+                    )
+                  }
+                >
+                  Terms of Service
+                </Text>{" "}
+                and{" "}
+                <Text
+                  style={styles.termsLink}
+                  onPress={() =>
+                    Linking.openURL(
+                      "https://kts1979-debug.github.io/Scavlandia-mobile/privacy-policy",
+                    )
+                  }
+                >
+                  Privacy Policy
+                </Text>
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Footer */}
@@ -260,13 +303,7 @@ const styles = StyleSheet.create({
   strengthBar: { height: 4, flex: 1, borderRadius: RADIUS.round },
   strengthText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, width: 80 },
   signUpBtn: { marginTop: SPACING.md },
-  terms: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.midGray,
-    textAlign: "center",
-    marginTop: SPACING.sm,
-    lineHeight: 18,
-  },
+
   footer: {
     flexDirection: "row",
     justifyContent: "center",
@@ -277,5 +314,43 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
+  },
+  termsRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+    paddingHorizontal: 2,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: COLORS.midGray,
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  checkboxChecked: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+  },
+  checkboxTick: {
+    color: COLORS.white,
+    fontSize: 13,
+    fontWeight: FONTS.weights.heavy,
+  },
+  termsText: {
+    flex: 1,
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    lineHeight: 18,
+  },
+  termsLink: {
+    color: COLORS.primary,
+    fontWeight: FONTS.weights.bold,
+    textDecorationLine: "underline",
   },
 });
