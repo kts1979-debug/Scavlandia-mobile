@@ -180,6 +180,12 @@ export default function ActiveHuntScreen() {
   ]);
 
   // Save state whenever progress changes
+  // Save state on first mount (so hunt is resumable even before any stops complete)
+  useEffect(() => {
+    saveState();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Save state whenever progress changes
   useEffect(() => {
     if (completedIndices.length > 0 || skippedStops.length > 0) {
       saveState();
