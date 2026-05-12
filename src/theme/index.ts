@@ -124,46 +124,72 @@ export const DIFFICULTY = {
     description: "Trickier clues, 3 hints",
   },
   hard: {
-    label: "Amazing Race",
+    label: "Hard",
     emoji: "🔴",
     color: "#E74C3C",
     multiplier: 2.0,
     hintCount: 2,
-    timerMinutes: 120, // 2 hour timer for Amazing Race only
+    timerMinutes: 120, // 2 hour timer for Hard only
     description: "Cryptic clues, 2 hints, 2hr timer",
   },
 };
 
-// ── HUNT THEMES ───────────────────────────────────────────────────
-export const THEMES = {
-  adventure: {
-    label: "Adventure",
-    emoji: "🗺️",
+// ── HUNT VIBES (unified vibe + theme) ─────────────────────────────
+export const VIBES = {
+  educational: {
+    label: "Educational",
+    emoji: "📚",
+    color: "#1A5276",
+    description: "Learn while you explore",
+    clueTheme: "educational and informative",
+    huntVibe: "curious and discovery-focused",
+  },
+  comical: {
+    label: "Comical",
+    emoji: "😂",
+    color: "#F39C12",
+    description: "Laughs at every stop",
+    clueTheme: "silly, punny and lighthearted",
+    huntVibe: "playful and hilarious",
+  },
+  competitive: {
+    label: "Competitive",
+    emoji: "🏆",
     color: "#E8622A",
-    description: "Explore the city like an explorer",
+    description: "Race to win every stop",
+    clueTheme: "challenging and competitive",
+    huntVibe: "high energy and competitive",
   },
   mystery: {
-    label: "Mystery",
-    emoji: "🔍",
+    label: "Mystery & Ghosts",
+    emoji: "👻",
     color: "#8E44AD",
-    description: "Solve clues like a detective",
+    description: "Spooky, dark and mysterious",
+    clueTheme: "mysterious, ghostly and true crime",
+    huntVibe: "eerie and mysterious",
   },
-  foodie: {
-    label: "Foodie",
-    emoji: "🍕",
-    color: "#E67E22",
-    description: "Discover the best eats",
+  romantic: {
+    label: "Romantic",
+    emoji: "💑",
+    color: "#C0392B",
+    description: "Romantic and date night clues",
+    clueTheme: "romantic and intimate",
+    huntVibe: "romantic and charming",
   },
-  history: {
-    label: "History",
-    emoji: "🏛️",
-    color: "#1A5276",
-    description: "Uncover the city's past",
-  },
-  kids: {
+  family: {
     label: "Family Fun",
     emoji: "🎈",
     color: "#27AE60",
     description: "Simple and fun for all ages",
+    clueTheme: "family friendly and fun",
+    huntVibe: "wholesome and accessible for all ages",
+  },
+  escape_room: {
+    label: "Escape Room",
+    emoji: "🔐",
+    color: "#2E86C1",
+    description: "Solve a mystery across every stop",
+    clueTheme: "challenging and following a storyline across stops",
+    huntVibe: "solving a mystery or on a mission feel",
   },
 };

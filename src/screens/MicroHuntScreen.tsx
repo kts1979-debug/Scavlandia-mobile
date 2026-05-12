@@ -13,36 +13,30 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/ui/Card";
 import { generateMicroHunt } from "../services/apiService";
-import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, THEMES } from "../theme";
+import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, VIBES } from "../theme";
 import { canGenerateHunt } from "../services/purchaseService";
 
 type Phase = "intro" | "locating" | "generating" | "error";
 
 const INTERESTS = [
-  { label: "Food & Drink", emoji: "🍕" },
-  { label: "Beer & Bars", emoji: "🍺" },
+  { label: "Food & Drink", emoji: "🍽️" },
+  { label: "Foodie", emoji: "🍕" },
+  { label: "Bar Crawl", emoji: "🍺" },
   { label: "History", emoji: "🏛️" },
   { label: "Art", emoji: "🎨" },
-  { label: "Sports", emoji: "⚽" },
   { label: "Nature", emoji: "🌿" },
+  { label: "Science", emoji: "🔬" },
   { label: "Music", emoji: "🎵" },
   { label: "Architecture", emoji: "🏗️" },
   { label: "Games", emoji: "🎮" },
-  { label: "Shopping", emoji: "🛍️" },
+  { label: "Sports", emoji: "⚽" },
+  { label: "Hidden Gems", emoji: "💎" },
+  { label: "Street Art", emoji: "🖌️" },
+  { label: "Photography", emoji: "📷" },
   { label: "True Crime", emoji: "🔪" },
   { label: "Ghosts", emoji: "👻" },
-  { label: "Street Art", emoji: "🖌️" },
-  { label: "Hidden Gems", emoji: "💎" },
-  { label: "Photography", emoji: "📷" },
   { label: "Film & TV", emoji: "🎬" },
-];
-
-const TONES = [
-  { label: "Educational", emoji: "📚" },
-  { label: "Silly & Fun", emoji: "😂" },
-  { label: "Competitive", emoji: "🏆" },
-  { label: "Relaxed", emoji: "😌" },
-  { label: "Exercise-Focused", emoji: "🏃" },
+  { label: "Shopping", emoji: "🛍️" },
 ];
 
 const RANDOM_INTERESTS = [
@@ -59,13 +53,7 @@ const RANDOM_INTERESTS = [
   "Photography",
 ];
 
-const RANDOM_TONES = [
-  "Educational",
-  "Silly & Fun",
-  "Competitive",
-  "Relaxed",
-  "Exercise-Focused",
-];
+const RANDOM_VIBES = Object.keys(VIBES);
 
 export default function MicroHuntScreen() {
   const [phase, setPhase] = useState<Phase>("intro");
@@ -74,8 +62,7 @@ export default function MicroHuntScreen() {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "easy",
   );
-  const [theme, setTheme] = useState("adventure");
-  const [tone, setTone] = useState("");
+  const [vibe, setVibe] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
 
   const toggleInterest = (label: string) => {
@@ -88,7 +75,7 @@ export default function MicroHuntScreen() {
     const shuffled = [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5);
     const count = Math.floor(Math.random() * 3) + 3;
     setInterests(shuffled.slice(0, count));
-    setTone(RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)]);
+    setVibe(RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)]);
   };
 
   const handleStart = async () => {
@@ -113,8 +100,10 @@ export default function MicroHuntScreen() {
           ? interests
           : [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5).slice(0, 4);
 
-      const finalTone =
-        tone || RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
+      const finalVibe =
+        vibe || RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
+
+      const selectedVibe = VIBES[finalVibe as keyof typeof VIBES];
 
       const canGenerate = await canGenerateHunt("micro");
       if (!canGenerate) {
@@ -135,8 +124,8 @@ export default function MicroHuntScreen() {
         location.coords.longitude,
         stopCount,
         difficulty,
-        theme,
-        finalTone,
+        finalVibe,
+        selectedVibe?.clueTheme || "fun and engaging",
         finalInterests,
       );
 
@@ -288,10 +277,7 @@ export default function MicroHuntScreen() {
           {interests.length > 0 && (
             <TouchableOpacity
               style={styles.clearBtn}
-              onPress={() => {
-                setInterests([]);
-                setTone("");
-              }}
+              onPress={() => setInterests([])}
             >
               <Text style={styles.clearBtnText}>✕ Clear selections</Text>
             </TouchableOpacity>
@@ -320,31 +306,49 @@ export default function MicroHuntScreen() {
           </View>
         </Card>
 
-        {/* Tone / Vibe */}
+        {/* Vibe — unified vibe & theme */}
         <Card style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <SectionHeader emoji="🎭" title="What vibe?" />
+            <SectionHeader emoji="🎭" title="Choose your vibe" />
             <Text style={styles.optionalLabel}>Optional</Text>
           </View>
-          <Text style={styles.hint}>Leave blank for a surprise</Text>
-          {TONES.map(({ label, emoji }) => {
-            const isSelected = tone === label;
+          <Text style={styles.hint}>
+            Sets the tone and theme of your entire hunt
+          </Text>
+          {Object.entries(VIBES).map(([key, v]) => {
+            const selected = vibe === key;
             return (
               <TouchableOpacity
-                key={label}
-                style={[styles.optionRow, isSelected && styles.optionSelected]}
-                onPress={() => setTone(isSelected ? "" : label)}
+                key={key}
+                style={[
+                  styles.vibeRow,
+                  selected && {
+                    backgroundColor: v.color,
+                    borderColor: v.color,
+                  },
+                ]}
+                onPress={() => setVibe(selected ? "" : key)}
               >
-                <Text style={styles.optionEmoji}>{emoji}</Text>
-                <Text
-                  style={[
-                    styles.optionText,
-                    isSelected && styles.optionTextSelected,
-                  ]}
-                >
-                  {label}
-                </Text>
-                {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                <Text style={styles.optionEmoji}>{v.emoji}</Text>
+                <View style={styles.vibeContent}>
+                  <Text
+                    style={[
+                      styles.vibeLabel,
+                      selected && styles.optionTextSelected,
+                    ]}
+                  >
+                    {v.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.vibeDesc,
+                      selected && styles.vibeDescSelected,
+                    ]}
+                  >
+                    {v.description}
+                  </Text>
+                </View>
+                {selected && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
             );
           })}
@@ -388,40 +392,6 @@ export default function MicroHuntScreen() {
                     ]}
                   >
                     {d.description}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </Card>
-
-        {/* Theme */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🎨" title="Hunt Theme" />
-          <Text style={styles.hint}>Sets the personality of your clues</Text>
-          <View style={styles.chipGrid}>
-            {Object.entries(THEMES).map(([key, t]) => {
-              const selected = theme === key;
-              return (
-                <TouchableOpacity
-                  key={key}
-                  style={[
-                    styles.chip,
-                    selected && {
-                      backgroundColor: t.color,
-                      borderColor: t.color,
-                    },
-                  ]}
-                  onPress={() => setTheme(key)}
-                >
-                  <Text style={styles.chipEmoji}>{t.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selected && styles.chipTextSelected,
-                    ]}
-                  >
-                    {t.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -527,7 +497,7 @@ const styles = StyleSheet.create({
   chipEmoji: { fontSize: 14 },
   chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
   chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  optionRow: {
+  vibeRow: {
     flexDirection: "row",
     alignItems: "center",
     padding: 14,
@@ -537,14 +507,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 10,
   },
-  optionSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+  vibeContent: { flex: 1 },
+  vibeLabel: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
   },
+  vibeDesc: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
+  vibeDescSelected: { color: "rgba(255,255,255,0.8)" },
   optionEmoji: { fontSize: 18 },
-  optionText: { flex: 1, fontSize: FONTS.sizes.md, color: COLORS.black },
   optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  checkmark: { fontSize: 18, color: COLORS.accent },
+  checkmark: { fontSize: 18, color: COLORS.white },
   difficultyRow: { flexDirection: "row", gap: 8 },
   diffBtn: {
     flex: 1,

@@ -17,22 +17,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MuseumPicker from "../components/MuseumPicker";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING } from "../theme";
+import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, VIBES } from "../theme";
 import { canGenerateHunt } from "../services/purchaseService";
 
-const TONES = [
-  { label: "Educational", emoji: "📚" },
-  { label: "Silly & Fun", emoji: "😂" },
-  { label: "Competitive", emoji: "🏆" },
-  { label: "Relaxed", emoji: "😌" },
-];
-
-const RANDOM_TONES = ["Educational", "Silly & Fun", "Competitive", "Relaxed"];
+const RANDOM_VIBES = Object.keys(VIBES);
 
 export default function MuseumProfileScreen() {
   const [ages, setAges] = useState("30");
-  const [groupSize, setGroupSize] = useState("4");
-  const [tone, setTone] = useState("");
+  const [vibe, setVibe] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium",
   );
@@ -57,17 +49,22 @@ export default function MuseumProfileScreen() {
       return Alert.alert("Missing info", "Please select a museum first");
     }
 
-    const finalTone =
-      tone || RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
+    const finalVibe =
+      vibe || RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
+
+    const selectedVibeData = VIBES[finalVibe as keyof typeof VIBES];
 
     const groupProfile = {
       ages: parseInt(ages) || 30,
-      groupSize: parseInt(groupSize) || 4,
       interests: ["Art", "History", "Architecture"],
-      tone: finalTone,
+      vibe: finalVibe,
+      vibeLabel: selectedVibeData?.label || finalVibe,
+      clueTheme: selectedVibeData?.clueTheme || "educational and informative",
+      huntVibe: selectedVibeData?.huntVibe || "curious and discovery-focused",
+      tone: selectedVibeData?.clueTheme || "educational and informative", // backend compatibility
+      theme: "mystery", // museum hunts always use mystery theme for clue style
       mobility: "Walking only",
       difficulty,
-      theme: "mystery",
       stopCount,
       huntType: "museum",
       museum: {
@@ -78,7 +75,6 @@ export default function MuseumProfileScreen() {
       },
     };
 
-    // Check if user can generate a museum hunt
     const canGenerate = await canGenerateHunt("museum");
 
     if (!canGenerate) {
@@ -96,7 +92,6 @@ export default function MuseumProfileScreen() {
       return;
     }
 
-    // Has entitlement — go straight to generating
     router.push({
       pathname: "/generating",
       params: {
@@ -122,11 +117,9 @@ export default function MuseumProfileScreen() {
           </TouchableOpacity>
           <Text style={styles.pageTitle}>🏛️ Museum Hunt</Text>
           <Text style={styles.pageSubtitle}>
-            <Text>
-              {
-                "Find a museum and we'll build an art-based scavenger hunt inside it"
-              }
-            </Text>
+            {
+              "Find a museum and we'll build an art-based scavenger hunt inside it"
+            }
           </Text>
         </View>
 
@@ -145,7 +138,7 @@ export default function MuseumProfileScreen() {
           )}
         </Card>
 
-        {/* Group details */}
+        {/* Group details — average age only */}
         <Card style={styles.section}>
           <SectionHeader emoji="👥" title="About your group" />
           <View style={styles.row}>
@@ -158,18 +151,6 @@ export default function MuseumProfileScreen() {
                 keyboardType="numeric"
                 maxLength={2}
                 placeholder="30"
-                placeholderTextColor={COLORS.midGray}
-              />
-            </View>
-            <View style={styles.halfField}>
-              <Text style={styles.fieldLabel}>Group size</Text>
-              <TextInput
-                style={styles.input}
-                value={groupSize}
-                onChangeText={setGroupSize}
-                keyboardType="numeric"
-                maxLength={2}
-                placeholder="4"
                 placeholderTextColor={COLORS.midGray}
               />
             </View>
@@ -219,31 +200,47 @@ export default function MuseumProfileScreen() {
           </View>
         </Card>
 
-        {/* Vibe */}
+        {/* Vibe — unified vibe & theme */}
         <Card style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <SectionHeader emoji="🎭" title="What vibe?" />
+            <SectionHeader emoji="🎭" title="Choose your vibe" />
             <Text style={styles.optionalLabel}>Optional</Text>
           </View>
-          <Text style={styles.hint}>Leave blank for a surprise</Text>
-          {TONES.map(({ label, emoji }) => {
-            const isSelected = tone === label;
+          <Text style={styles.hint}>Sets the tone of your hunt</Text>
+          {Object.entries(VIBES).map(([key, v]) => {
+            const selected = vibe === key;
             return (
               <TouchableOpacity
-                key={label}
-                style={[styles.optionRow, isSelected && styles.optionSelected]}
-                onPress={() => setTone(isSelected ? "" : label)}
+                key={key}
+                style={[
+                  styles.optionRow,
+                  selected && {
+                    backgroundColor: v.color,
+                    borderColor: v.color,
+                  },
+                ]}
+                onPress={() => setVibe(selected ? "" : key)}
               >
-                <Text style={styles.optionEmoji}>{emoji}</Text>
-                <Text
-                  style={[
-                    styles.optionText,
-                    isSelected && styles.optionTextSelected,
-                  ]}
-                >
-                  {label}
-                </Text>
-                {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                <Text style={styles.optionEmoji}>{v.emoji}</Text>
+                <View style={styles.vibeContent}>
+                  <Text
+                    style={[
+                      styles.vibeLabel,
+                      selected && styles.optionTextSelected,
+                    ]}
+                  >
+                    {v.label}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.vibeDesc,
+                      selected && styles.vibeDescSelected,
+                    ]}
+                  >
+                    {v.description}
+                  </Text>
+                </View>
+                {selected && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
             );
           })}
@@ -470,14 +467,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 10,
   },
-  optionSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
   optionEmoji: { fontSize: 18 },
-  optionText: { flex: 1, fontSize: FONTS.sizes.md, color: COLORS.black },
   optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  checkmark: { fontSize: 18, color: COLORS.accent },
+  vibeContent: { flex: 1 },
+  vibeLabel: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
+  },
+  vibeDesc: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
+  vibeDescSelected: { color: "rgba(255,255,255,0.8)" },
+  checkmark: { fontSize: 18, color: COLORS.white },
   difficultyRow: { flexDirection: "row", gap: 8 },
   diffBtn: {
     flex: 1,

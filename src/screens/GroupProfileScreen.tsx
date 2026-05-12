@@ -14,34 +14,28 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CityPicker from "../components/CityPicker";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, THEMES } from "../theme";
+import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, VIBES } from "../theme";
 import { canGenerateHunt } from "../services/purchaseService";
 
 const INTERESTS = [
-  { label: "Food & Drink", emoji: "🍕" },
-  { label: "Beer & Bars", emoji: "🍺" },
+  { label: "Food & Drink", emoji: "🍽️" },
+  { label: "Foodie", emoji: "🍕" },
+  { label: "Bar Crawl", emoji: "🍺" },
   { label: "History", emoji: "🏛️" },
   { label: "Art", emoji: "🎨" },
-  { label: "Sports", emoji: "⚽" },
   { label: "Nature", emoji: "🌿" },
+  { label: "Science", emoji: "🔬" },
   { label: "Music", emoji: "🎵" },
   { label: "Architecture", emoji: "🏗️" },
   { label: "Games", emoji: "🎮" },
-  { label: "Shopping", emoji: "🛍️" },
+  { label: "Sports", emoji: "⚽" },
+  { label: "Hidden Gems", emoji: "💎" },
+  { label: "Street Art", emoji: "🖌️" },
+  { label: "Photography", emoji: "📷" },
   { label: "True Crime", emoji: "🔪" },
   { label: "Ghosts", emoji: "👻" },
-  { label: "Street Art", emoji: "🖌️" },
-  { label: "Hidden Gems", emoji: "💎" },
-  { label: "Photography", emoji: "📷" },
   { label: "Film & TV", emoji: "🎬" },
-];
-
-const TONES = [
-  { label: "Educational", emoji: "📚" },
-  { label: "Silly & Fun", emoji: "😂" },
-  { label: "Competitive", emoji: "🏆" },
-  { label: "Relaxed", emoji: "😌" },
-  { label: "Exercise-Focused", emoji: "🏃" },
+  { label: "Shopping", emoji: "🛍️" },
 ];
 
 const MOBILITY = [
@@ -65,25 +59,17 @@ const RANDOM_INTERESTS = [
   "Photography",
 ];
 
-const RANDOM_TONES = [
-  "Educational",
-  "Silly & Fun",
-  "Competitive",
-  "Relaxed",
-  "Exercise-Focused",
-];
+const RANDOM_VIBES = Object.keys(VIBES);
 
 export default function GroupProfileScreen() {
   const [city, setCity] = useState("");
   const [ages, setAges] = useState("30");
-  const [groupSize, setGroupSize] = useState("4");
   const [interests, setInterests] = useState<string[]>([]);
-  const [tone, setTone] = useState("");
+  const [vibe, setVibe] = useState("");
   const [mobility, setMobility] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium",
   );
-  const [theme, setTheme] = useState("adventure");
   const [stopCount, setStopCount] = useState(9);
 
   const toggleInterest = (label: string) => {
@@ -96,7 +82,7 @@ export default function GroupProfileScreen() {
     const shuffled = [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5);
     const count = Math.floor(Math.random() * 3) + 3;
     setInterests(shuffled.slice(0, count));
-    setTone(RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)]);
+    setVibe(RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)]);
   };
 
   const handleGenerate = async () => {
@@ -110,25 +96,28 @@ export default function GroupProfileScreen() {
         ? interests
         : [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5).slice(0, 4);
 
-    const finalTone =
-      tone || RANDOM_TONES[Math.floor(Math.random() * RANDOM_TONES.length)];
+    const finalVibe =
+      vibe || RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
+
+    const selectedVibe = VIBES[finalVibe as keyof typeof VIBES];
 
     const groupProfile = {
       ages: parseInt(ages) || 30,
-      groupSize: parseInt(groupSize) || 4,
       interests: finalInterests,
-      tone: finalTone,
+      vibe: finalVibe,
+      vibeLabel: selectedVibe?.label || finalVibe,
+      clueTheme: selectedVibe?.clueTheme || "fun and engaging",
+      huntVibe: selectedVibe?.huntVibe || "fun and engaging",
+      theme: finalVibe, // keep for backend compatibility
+      tone: selectedVibe?.clueTheme || "fun and engaging", // keep for backend compatibility
       mobility,
       difficulty,
-      theme,
       stopCount,
     };
 
-    // Check if user can generate a city hunt
     const canGenerate = await canGenerateHunt("city");
 
     if (!canGenerate) {
-      // Show paywall
       router.push({
         pathname: "/paywall",
         params: {
@@ -143,7 +132,6 @@ export default function GroupProfileScreen() {
       return;
     }
 
-    // Has entitlement — go straight to generating
     router.push({
       pathname: "/generating",
       params: {
@@ -183,7 +171,7 @@ export default function GroupProfileScreen() {
           <CityPicker value={city} onChange={setCity} />
         </Card>
 
-        {/* Group details */}
+        {/* Group details — average age only */}
         <Card style={styles.section}>
           <SectionHeader emoji="👥" title="About your group" />
           <View style={styles.row}>
@@ -196,18 +184,6 @@ export default function GroupProfileScreen() {
                 keyboardType="numeric"
                 maxLength={2}
                 placeholder="30"
-                placeholderTextColor={COLORS.midGray}
-              />
-            </View>
-            <View style={styles.halfField}>
-              <Text style={styles.fieldLabel}>Group size</Text>
-              <TextInput
-                style={styles.input}
-                value={groupSize}
-                onChangeText={setGroupSize}
-                keyboardType="numeric"
-                maxLength={2}
-                placeholder="4"
                 placeholderTextColor={COLORS.midGray}
               />
             </View>
@@ -279,10 +255,7 @@ export default function GroupProfileScreen() {
           {interests.length > 0 && (
             <TouchableOpacity
               style={styles.clearBtn}
-              onPress={() => {
-                setInterests([]);
-                setTone("");
-              }}
+              onPress={() => setInterests([])}
             >
               <Text style={styles.clearBtnText}>✕ Clear selections</Text>
             </TouchableOpacity>
@@ -311,34 +284,55 @@ export default function GroupProfileScreen() {
           </View>
         </Card>
 
-        {/* Tone */}
+        {/* Vibe — unified vibe & theme */}
         <Card style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <SectionHeader emoji="🎭" title="What vibe?" />
+            <SectionHeader emoji="🎭" title="Choose your vibe" />
             <Text style={styles.optionalLabel}>Optional</Text>
           </View>
-          <Text style={styles.hint}>Leave blank for a surprise</Text>
-          {TONES.map(({ label, emoji }) => {
-            const isSelected = tone === label;
-            return (
-              <TouchableOpacity
-                key={label}
-                style={[styles.optionRow, isSelected && styles.optionSelected]}
-                onPress={() => setTone(isSelected ? "" : label)}
-              >
-                <Text style={styles.optionEmoji}>{emoji}</Text>
-                <Text
+          <Text style={styles.hint}>
+            Sets the tone and theme of your entire hunt
+          </Text>
+          <View style={styles.chipGrid}>
+            {Object.entries(VIBES).map(([key, v]) => {
+              const selected = vibe === key;
+              return (
+                <TouchableOpacity
+                  key={key}
                   style={[
-                    styles.optionText,
-                    isSelected && styles.optionTextSelected,
+                    styles.vibeChip,
+                    selected && {
+                      backgroundColor: v.color,
+                      borderColor: v.color,
+                    },
                   ]}
+                  onPress={() => setVibe(selected ? "" : key)}
                 >
-                  {label}
-                </Text>
-                {isSelected && <Text style={styles.checkmark}>✓</Text>}
-              </TouchableOpacity>
-            );
-          })}
+                  <Text style={styles.chipEmoji}>{v.emoji}</Text>
+                  <View style={styles.vibeChipContent}>
+                    <Text
+                      style={[
+                        styles.vibeChipLabel,
+                        selected && styles.chipTextSelected,
+                      ]}
+                    >
+                      {v.label}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.vibeChipDesc,
+                        selected && styles.vibeChipDescSelected,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {v.description}
+                    </Text>
+                  </View>
+                  {selected && <Text style={styles.checkmark}>✓</Text>}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </Card>
 
         {/* Mobility */}
@@ -405,40 +399,6 @@ export default function GroupProfileScreen() {
                     ]}
                   >
                     {d.description}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </Card>
-
-        {/* Theme */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🎨" title="Hunt Theme" />
-          <Text style={styles.hint}>Sets the personality of your clues</Text>
-          <View style={styles.chipGrid}>
-            {Object.entries(THEMES).map(([key, t]) => {
-              const selected = theme === key;
-              return (
-                <TouchableOpacity
-                  key={key}
-                  style={[
-                    styles.chip,
-                    selected && {
-                      backgroundColor: t.color,
-                      borderColor: t.color,
-                    },
-                  ]}
-                  onPress={() => setTheme(key)}
-                >
-                  <Text style={styles.chipEmoji}>{t.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selected && styles.chipTextSelected,
-                    ]}
-                  >
-                    {t.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -523,6 +483,30 @@ const styles = StyleSheet.create({
   chipEmoji: { fontSize: 14 },
   chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
   chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
+  vibeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    padding: 12,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.offWhite,
+    gap: 10,
+    marginBottom: 8,
+  },
+  vibeChipContent: { flex: 1 },
+  vibeChipLabel: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
+  },
+  vibeChipDesc: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    marginTop: 2,
+  },
+  vibeChipDescSelected: { color: "rgba(255,255,255,0.8)" },
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -540,7 +524,7 @@ const styles = StyleSheet.create({
   optionEmoji: { fontSize: 18 },
   optionText: { flex: 1, fontSize: FONTS.sizes.md, color: COLORS.black },
   optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  checkmark: { fontSize: 18, color: COLORS.accent },
+  checkmark: { fontSize: 18, color: COLORS.white },
   generateBtn: { marginTop: SPACING.md, marginBottom: 40 },
   difficultyRow: { flexDirection: "row", gap: 8 },
   diffBtn: {

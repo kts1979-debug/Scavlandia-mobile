@@ -21,33 +21,27 @@ import MapView, {
 } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getRoadTripCandidates } from "../services/apiService";
-import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+import { COLORS, FONTS, RADIUS, SPACING, VIBES } from "../theme";
 
 const INTERESTS = [
-  { label: "Food & Drink", emoji: "🍕" },
-  { label: "Beer & Bars", emoji: "🍺" },
+  { label: "Food & Drink", emoji: "🍽️" },
+  { label: "Foodie", emoji: "🍕" },
+  { label: "Bar Crawl", emoji: "🍺" },
   { label: "History", emoji: "🏛️" },
   { label: "Art", emoji: "🎨" },
-  { label: "Sports", emoji: "⚽" },
   { label: "Nature", emoji: "🌿" },
+  { label: "Science", emoji: "🔬" },
   { label: "Music", emoji: "🎵" },
   { label: "Architecture", emoji: "🏗️" },
   { label: "Games", emoji: "🎮" },
-  { label: "Shopping", emoji: "🛍️" },
+  { label: "Sports", emoji: "⚽" },
+  { label: "Hidden Gems", emoji: "💎" },
+  { label: "Street Art", emoji: "🖌️" },
+  { label: "Photography", emoji: "📷" },
   { label: "True Crime", emoji: "🔪" },
   { label: "Ghosts", emoji: "👻" },
-  { label: "Street Art", emoji: "🖌️" },
-  { label: "Hidden Gems", emoji: "💎" },
-  { label: "Photography", emoji: "📷" },
   { label: "Film & TV", emoji: "🎬" },
-];
-
-const TONES = [
-  { label: "Fun & Silly", emoji: "😄" },
-  { label: "Educational", emoji: "🎓" },
-  { label: "Competitive", emoji: "🏆" },
-  { label: "Relaxed", emoji: "😌" },
-  { label: "Adventurous", emoji: "🧗" },
+  { label: "Shopping", emoji: "🛍️" },
 ];
 
 const DIFFICULTIES = [
@@ -55,6 +49,8 @@ const DIFFICULTIES = [
   { label: "Medium", desc: "Some wordplay and misdirection" },
   { label: "Hard", desc: "Cryptic riddles, lateral thinking" },
 ];
+
+const RANDOM_VIBES = Object.keys(VIBES);
 
 function decodePolyline(
   encoded: string,
@@ -97,7 +93,7 @@ export default function RoadTripScreen() {
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [selectedTone, setSelectedTone] = useState("Fun & Silly");
+  const [selectedVibe, setSelectedVibe] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
@@ -105,7 +101,6 @@ export default function RoadTripScreen() {
   // ── Step 2 state ──────────────────────────────────────────────
   const [candidates, setCandidates] = useState<any[]>([]);
   const [selectedStops, setSelectedStops] = useState<any[]>([]);
-
   const [markerDelay, setMarkerDelay] = useState(false);
   const [routePolyline, setRoutePolyline] = useState<
     { latitude: number; longitude: number }[]
@@ -225,6 +220,11 @@ export default function RoadTripScreen() {
       (a, b) => a.routeFraction - b.routeFraction,
     );
 
+    const finalVibe =
+      selectedVibe ||
+      RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
+    const vibeData = VIBES[finalVibe as keyof typeof VIBES];
+
     router.push({
       pathname: "/generating",
       params: {
@@ -236,11 +236,14 @@ export default function RoadTripScreen() {
           selectedStops: sortedStops,
           stopCount: sortedStops.length,
           interests: selectedInterests,
-          tone: selectedTone,
+          vibe: finalVibe,
+          vibeLabel: vibeData?.label || finalVibe,
+          clueTheme: vibeData?.clueTheme || "fun and engaging",
+          huntVibe: vibeData?.huntVibe || "fun and engaging",
+          tone: vibeData?.clueTheme || "fun and engaging", // backend compatibility
           difficulty: difficulty.toLowerCase(),
           timeBetweenStops: 60,
           ages: 30,
-          groupSize: 2,
           mobility: "walking",
           totalDurationMinutes: routeInfo?.totalDurationMinutes || 0,
           totalDistanceMiles: routeInfo?.totalDistanceMiles || 0,
@@ -287,6 +290,7 @@ export default function RoadTripScreen() {
             </Text>
           </View>
 
+          {/* Starting point */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>📍 Starting Point</Text>
             <TextInput
@@ -311,6 +315,7 @@ export default function RoadTripScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Destination */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🏁 Destination</Text>
             <TextInput
@@ -322,6 +327,7 @@ export default function RoadTripScreen() {
             />
           </View>
 
+          {/* Interests */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🎯 Interests</Text>
             <Text style={styles.sectionSubtitle}>
@@ -354,32 +360,43 @@ export default function RoadTripScreen() {
             </View>
           </View>
 
+          {/* Vibe — unified */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🎭 Vibe</Text>
-            <View style={styles.toneGrid}>
-              {TONES.map((tone) => (
-                <TouchableOpacity
-                  key={tone.label}
-                  style={[
-                    styles.toneChip,
-                    selectedTone === tone.label && styles.toneChipActive,
-                  ]}
-                  onPress={() => setSelectedTone(tone.label)}
-                >
-                  <Text style={styles.toneEmoji}>{tone.emoji}</Text>
-                  <Text
+            <Text style={styles.sectionSubtitle}>
+              Sets the tone and theme of your clues (optional)
+            </Text>
+            <View style={styles.vibeGrid}>
+              {Object.entries(VIBES).map(([key, v]) => {
+                const selected = selectedVibe === key;
+                return (
+                  <TouchableOpacity
+                    key={key}
                     style={[
-                      styles.toneLabel,
-                      selectedTone === tone.label && styles.toneLabelActive,
+                      styles.vibeChip,
+                      selected && {
+                        backgroundColor: v.color,
+                        borderColor: v.color,
+                      },
                     ]}
+                    onPress={() => setSelectedVibe(selected ? "" : key)}
                   >
-                    {tone.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text style={styles.vibeEmoji}>{v.emoji}</Text>
+                    <Text
+                      style={[
+                        styles.vibeLabel,
+                        selected && styles.vibeLabelActive,
+                      ]}
+                    >
+                      {v.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
+          {/* Difficulty */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🧩 Clue Difficulty</Text>
             {DIFFICULTIES.map((d) => (
@@ -440,7 +457,6 @@ export default function RoadTripScreen() {
           onPress={() => {
             setStep(1);
             setSelectedStops([]);
-
             setMarkerDelay(false);
           }}
         >
@@ -460,7 +476,7 @@ export default function RoadTripScreen() {
         </View>
       </View>
 
-      {/* Map — only render once polyline is ready */}
+      {/* Map */}
       <View style={styles.mapContainer}>
         {routePolyline.length > 0 ? (
           <MapView
@@ -476,8 +492,6 @@ export default function RoadTripScreen() {
               strokeColor={COLORS.primary}
               strokeWidth={3}
             />
-
-            {/* Render markers after short delay */}
             {markerDelay &&
               candidates.map((candidate) => {
                 const isSelected = selectedStops.find(
@@ -642,8 +656,8 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.medium,
   },
   interestLabelActive: { color: COLORS.white },
-  toneGrid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm },
-  toneChip: {
+  vibeGrid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm },
+  vibeChip: {
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
@@ -655,17 +669,13 @@ const styles = StyleSheet.create({
     gap: 6,
     minWidth: "45%",
   },
-  toneChipActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-  },
-  toneEmoji: { fontSize: 20 },
-  toneLabel: {
+  vibeEmoji: { fontSize: 20 },
+  vibeLabel: {
     fontSize: FONTS.sizes.sm,
     color: COLORS.darkGray,
     fontWeight: FONTS.weights.medium,
   },
-  toneLabelActive: { color: COLORS.white },
+  vibeLabelActive: { color: COLORS.white },
   difficultyCard: {
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.md,
