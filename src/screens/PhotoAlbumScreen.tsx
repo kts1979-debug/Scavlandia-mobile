@@ -62,6 +62,38 @@ export default function PhotoAlbumScreen() {
   const stopsWithPhotos = hunt.stops.filter((stop) => !!getPhoto(stop.order));
   const totalPhotos = stopsWithPhotos.length;
 
+  // ── Expiration date ─────────────────────────────────────────────
+  // Photos are deleted 90 days after hunt creation
+  const expirationDate = (() => {
+    const createdAt = (hunt as any).createdAt;
+    if (!createdAt) return null;
+    const created = new Date(
+      createdAt._seconds ? createdAt._seconds * 1000 : createdAt,
+    );
+    const expiry = new Date(created.getTime() + 90 * 24 * 60 * 60 * 1000);
+    return expiry;
+  })();
+
+  const expirationText = (() => {
+    if (!expirationDate) return null;
+    const now = new Date();
+    const daysLeft = Math.ceil(
+      (expirationDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    if (daysLeft <= 0) return "⚠️ Photos have expired";
+    if (daysLeft <= 7)
+      return `⚠️ Photos expire in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}`;
+    return `📅 Photos available until ${expirationDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
+  })();
+
+  const expirationUrgent = (() => {
+    if (!expirationDate) return false;
+    const daysLeft = Math.ceil(
+      (expirationDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+    );
+    return daysLeft <= 7;
+  })();
+
   // ── Capture view as image ──────────────────────────────────────
   const captureView = async (
     ref: React.RefObject<ViewShot | null>,
@@ -499,6 +531,28 @@ export default function PhotoAlbumScreen() {
         ))}
       </View>
 
+      {/* Expiration banner */}
+      {expirationText && (
+        <View
+          style={[
+            styles.expirationBanner,
+            expirationUrgent && styles.expirationBannerUrgent,
+          ]}
+        >
+          <Text
+            style={[
+              styles.expirationText,
+              expirationUrgent && styles.expirationTextUrgent,
+            ]}
+          >
+            {expirationText}
+          </Text>
+          <Text style={styles.expirationSub}>
+            Save your photos before they are permanently deleted
+          </Text>
+        </View>
+      )}
+
       {/* Tab content */}
       <View style={styles.content}>
         {activeTab === "map" && <MapTab />}
@@ -835,5 +889,30 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     maxHeight: "80%",
+  },
+  expirationBanner: {
+    backgroundColor: "#EBF5FB",
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: "#AED6F1",
+    alignItems: "center",
+  },
+  expirationBannerUrgent: {
+    backgroundColor: "#FDEDEC",
+    borderBottomColor: "#E74C3C",
+  },
+  expirationText: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+  },
+  expirationTextUrgent: {
+    color: COLORS.danger,
+  },
+  expirationSub: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    marginTop: 2,
   },
 });
