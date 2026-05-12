@@ -152,14 +152,6 @@ export const VIBES = {
     clueTheme: "silly, punny and lighthearted",
     huntVibe: "playful and hilarious",
   },
-  competitive: {
-    label: "Competitive",
-    emoji: "🏆",
-    color: "#E8622A",
-    description: "Race to win every stop",
-    clueTheme: "challenging and competitive",
-    huntVibe: "high energy and competitive",
-  },
   mystery: {
     label: "Mystery & Ghosts",
     emoji: "👻",
