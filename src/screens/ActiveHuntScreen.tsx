@@ -229,12 +229,8 @@ export default function ActiveHuntScreen() {
     // Complete the stop without a photo
     setSubmitting(true);
     try {
-      await submitStop(
-        hunt.huntId,
-        activeStop.order,
-        "", // no photo URL
-        activeStop.pointValue,
-      );
+      // No photo — just mark complete locally without backend photo submission
+      // submitStop requires a photo URL so we skip it here
 
       const newTotalPoints =
         totalPoints + activeStop.pointValue - answerDeductions + triviaBonus;
