@@ -187,6 +187,16 @@ export const saveHuntPhotos = async (
   return response.data;
 };
 
+export const generateShareCode = async (huntId: string): Promise<string> => {
+  const response = await api.post(`/api/hunts/${huntId}/generate-share-code`);
+  return response.data.shareCode;
+};
+
+export const joinHunt = async (code: string) => {
+  const response = await api.post(`/api/hunts/join/${code}`);
+  return response.data; // { success, huntId, hunt }
+};
+
 export const saveActiveHuntState = async (
   huntId: string,
   activeStopIndex: number,

@@ -1,3 +1,4 @@
+// src/screens/ActiveHuntScreen.tsx
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -16,6 +17,7 @@ import {
   saveHuntPhotos,
   submitStop,
   completeHunt,
+  generateShareCode,
 } from "../services/apiService";
 import {
   updateAllTimeStats,
@@ -25,8 +27,11 @@ import { uploadHuntPhoto } from "../services/storageService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 import {
+  ActivityIndicator,
   Alert,
+  Clipboard,
   Image,
+  Modal,
   ScrollView,
   Share,
   StyleSheet,
@@ -61,8 +66,6 @@ export default function ActiveHuntScreen() {
     ? JSON.parse(params.skippedStops as string)
     : [];
 
-  // Use explicitly passed completedIndices if available
-  // Fall back to calculation only for fresh hunts
   const restoredCompleted: number[] = params.completedIndices
     ? JSON.parse(params.completedIndices as string)
     : Array.from({ length: resumeAtStop }, (_, i) => i).filter(
@@ -93,6 +96,9 @@ export default function ActiveHuntScreen() {
   );
   const [triviaCompleted, setTriviaCompleted] = useState(false);
   const [triviaBonus, setTriviaBonus] = useState(0);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
 
   // ── Debug log on mount only ────────────────────────────────────────
   useEffect(() => {
@@ -110,7 +116,7 @@ export default function ActiveHuntScreen() {
     );
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Museum mode ────────────────────────────────────────────────────
+  // ── Museum / Road Trip mode ────────────────────────────────────────
   const isMuseumHunt = !!(hunt as any).isMuseumHunt;
   const isRoadTripHunt = !!(hunt as any).isRoadTripHunt;
 
@@ -179,20 +185,16 @@ export default function ActiveHuntScreen() {
     swapsUsed,
   ]);
 
-  // Save state whenever progress changes
-  // Save state on first mount (so hunt is resumable even before any stops complete)
   useEffect(() => {
     saveState();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Save state whenever progress changes
   useEffect(() => {
     if (completedIndices.length > 0 || skippedStops.length > 0) {
       saveState();
     }
   }, [completedIndices.length, skippedStops.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Reset trivia state when stop changes
   useEffect(() => {
     setTriviaCompleted(false);
     setTriviaBonus(0);
@@ -212,6 +214,39 @@ export default function ActiveHuntScreen() {
     handleArrival,
   );
 
+  // ── Share hunt (social) ────────────────────────────────────────────
+  const handleShare = async () => {
+    try {
+      const cityName = hunt.city?.split(",")[0] || hunt.city;
+      await Share.share({
+        message:
+          `🗺️ I'm on a Scavlandia scavenger hunt in ${cityName}!\n\n` +
+          `✅ Completed ${completedIndices.length} of ${hunt.stops.length} stops\n` +
+          `⭐ Earned ${totalPoints} points so far\n\n` +
+          `Join me on my next adventure — try Scavlandia! 🚀`,
+        title: `Scavlandia Hunt in ${cityName}`,
+      });
+    } catch (error) {
+      console.log("Share cancelled:", error);
+    }
+  };
+
+  // ── Share hunt code (solo share) ───────────────────────────────────
+  const handleShareHunt = async () => {
+    setShareModalVisible(true);
+    if (shareCode) return; // already generated
+    setGeneratingCode(true);
+    try {
+      const code = await generateShareCode(hunt.huntId);
+      setShareCode(code);
+    } catch {
+      Alert.alert("Error", "Could not generate share code. Try again.");
+      setShareModalVisible(false);
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
   // ── Photo ──────────────────────────────────────────────────────────
   const handleTakePhoto = async () => {
     Alert.alert(
@@ -226,16 +261,11 @@ export default function ActiveHuntScreen() {
   };
 
   const handleSkipPhoto = async () => {
-    // Complete the stop without a photo
     setSubmitting(true);
     try {
-      // No photo — just mark complete locally without backend photo submission
-      // submitStop requires a photo URL so we skip it here
-
       const newTotalPoints =
         totalPoints + activeStop.pointValue - answerDeductions + triviaBonus;
       const newCompletedList = [...completedIndices, activeStopIndex];
-
       const newSkippedList = skippedStops.filter(
         (order: number) => order !== activeStop.order,
       );
@@ -355,8 +385,6 @@ export default function ActiveHuntScreen() {
   const handleSubmitStop = async (photoUri: string) => {
     setSubmitting(true);
     try {
-      console.log("Uploading photo...");
-
       const updatedLocalPhotos = {
         ...localPhotos,
         [String(activeStop.order)]: photoUri,
@@ -368,7 +396,6 @@ export default function ActiveHuntScreen() {
         hunt.huntId,
         activeStop.order,
       );
-      console.log("Photo uploaded, submitting stop...");
 
       const updatedPhotos = {
         ...stopPhotos,
@@ -383,12 +410,9 @@ export default function ActiveHuntScreen() {
         activeStop.pointValue,
       );
 
-      // Include trivia bonus in points calculation
       const newTotalPoints =
         totalPoints + activeStop.pointValue - answerDeductions + triviaBonus;
       const newCompletedList = [...completedIndices, activeStopIndex];
-
-      // If this stop was previously skipped, remove it from skipped list
       const newSkippedList = skippedStops.filter(
         (order: number) => order !== activeStop.order,
       );
@@ -407,7 +431,6 @@ export default function ActiveHuntScreen() {
         );
       }
 
-      // Hunt is complete when all stops are either completed or skipped
       const allStopIndices = hunt.stops.map((_: any, i: number) => i);
       const isLastStop = allStopIndices.every(
         (i: number) =>
@@ -415,15 +438,8 @@ export default function ActiveHuntScreen() {
           newSkippedList.includes(hunt.stops[i].order),
       );
 
-      console.log("🔍 isLastStop check:");
-      console.log("  allStopIndices:", allStopIndices);
-      console.log("  newCompletedList:", newCompletedList);
-      console.log("  newSkippedList:", newSkippedList);
-      console.log("  isLastStop result:", isLastStop);
-
       if (isLastStop) {
         timer.stop();
-        // Fire clear but don't block navigation on it
         clearActiveHuntState(hunt.huntId).catch((err: any) =>
           console.warn("Clear state failed:", err.message),
         );
@@ -505,7 +521,6 @@ export default function ActiveHuntScreen() {
             const updatedSkipped = [...skippedStops, activeStop.order];
             setSkippedStops(updatedSkipped);
 
-            // Check if all stops are now completed or skipped
             const allStopIndices = hunt.stops.map((_: any, i: number) => i);
             const huntComplete = allStopIndices.every(
               (i: number) =>
@@ -550,16 +565,6 @@ export default function ActiveHuntScreen() {
               return;
             }
 
-            // Not done — advance to next unskipped stop
-            let nextIndex = activeStopIndex + 1;
-            while (
-              nextIndex < hunt.stops.length &&
-              (completedIndices.includes(nextIndex) ||
-                updatedSkipped.includes(hunt.stops[nextIndex].order))
-            ) {
-              nextIndex++;
-            }
-
             router.replace({
               pathname: "/stop-complete",
               params: {
@@ -582,7 +587,7 @@ export default function ActiveHuntScreen() {
     );
   };
 
-  // ── Distance helper for swap routing ──────────────────────────────
+  // ── Distance helper ────────────────────────────────────────────────
   const getDistance = (
     lat1: number,
     lng1: number,
@@ -658,7 +663,6 @@ export default function ActiveHuntScreen() {
               (a: any, b: any) => a._routeScore - b._routeScore,
             );
             const bestReserve = scoredReserves[0];
-
             const remainingReserves = reserveStops.filter(
               (r: any) => r.locationName !== bestReserve.locationName,
             );
@@ -716,23 +720,6 @@ export default function ActiveHuntScreen() {
     ]);
   };
 
-  // ── Share ──────────────────────────────────────────────────────────
-  const handleShare = async () => {
-    try {
-      const cityName = hunt.city?.split(",")[0] || hunt.city;
-      await Share.share({
-        message:
-          `🗺️ I'm on a Scavlandia scavenger hunt in ${cityName}!\n\n` +
-          `✅ Completed ${completedIndices.length} of ${hunt.stops.length} stops\n` +
-          `⭐ Earned ${totalPoints} points so far\n\n` +
-          `Join me on my next adventure — try Scavlandia! 🚀`,
-        title: `Scavlandia Hunt in ${cityName}`,
-      });
-    } catch (error) {
-      console.log("Share cancelled:", error);
-    }
-  };
-
   // ── Render ─────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.container}>
@@ -762,7 +749,6 @@ export default function ActiveHuntScreen() {
           </View>
         </View>
 
-        {/* Timer — only shown for Amazing Race */}
         {difficulty === "hard" && (
           <View style={styles.timerSection}>
             <HuntTimer
@@ -776,7 +762,6 @@ export default function ActiveHuntScreen() {
           </View>
         )}
 
-        {/* Museum banner */}
         {isMuseumHunt && (
           <View style={styles.museumBanner}>
             <Text style={styles.museumBannerText}>
@@ -786,7 +771,6 @@ export default function ActiveHuntScreen() {
         )}
       </View>
 
-      {/* Road trip banner */}
       {isRoadTripHunt && (
         <View style={styles.museumBanner}>
           <Text style={styles.museumBannerText}>
@@ -795,7 +779,6 @@ export default function ActiveHuntScreen() {
         </View>
       )}
 
-      {/* Progress bar */}
       <View style={styles.progressContainer}>
         <ProgressBar
           current={Math.min(completedIndices.length + 1, hunt.stops.length)}
@@ -804,7 +787,6 @@ export default function ActiveHuntScreen() {
         />
       </View>
 
-      {/* Live leaderboard panel */}
       {sessionCode && showLeaderboard && (
         <View style={styles.leaderboardPanel}>
           <LiveLeaderboard sessionCode={sessionCode} />
@@ -837,7 +819,6 @@ export default function ActiveHuntScreen() {
         )}
       </View>
 
-      {/* Map view */}
       {showMap && !isMuseumHunt && (
         <View style={styles.mapContainer}>
           <HuntMap
@@ -849,7 +830,6 @@ export default function ActiveHuntScreen() {
         </View>
       )}
 
-      {/* Clue view */}
       {!showMap && (
         <ScrollView style={styles.clueContainer}>
           {/* Clue card */}
@@ -953,7 +933,7 @@ export default function ActiveHuntScreen() {
             />
           )}
 
-          {/* Distance — hidden for museum hunts */}
+          {/* Distance */}
           {distanceToStop !== null && !atLocation && !isMuseumHunt && (
             <View style={styles.distanceCard}>
               <Text style={styles.distanceText}>📡 {distanceToStop}m away</Text>
@@ -1018,7 +998,7 @@ export default function ActiveHuntScreen() {
             </View>
           )}
 
-          {/* Directions button — road trip hunts only */}
+          {/* Directions — road trip only */}
           {isRoadTripHunt && !atLocation && (
             <TouchableOpacity
               style={styles.directionsBtn}
@@ -1030,7 +1010,7 @@ export default function ActiveHuntScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Skip and swap buttons */}
+          {/* Skip / Swap / Add Stop row */}
           {!atLocation && (
             <View style={styles.skipSwapRow}>
               <TouchableOpacity style={styles.skipBtn} onPress={handleSkipStop}>
@@ -1089,7 +1069,15 @@ export default function ActiveHuntScreen() {
             </View>
           )}
 
-          {/* Manual arrival button */}
+          {/* Share Hunt button */}
+          <TouchableOpacity
+            style={styles.shareHuntBtn}
+            onPress={handleShareHunt}
+          >
+            <Text style={styles.shareHuntBtnText}>🔗 Share This Hunt</Text>
+          </TouchableOpacity>
+
+          {/* Manual arrival */}
           {!atLocation && (
             <TouchableOpacity
               style={styles.arrivalButton}
@@ -1106,6 +1094,59 @@ export default function ActiveHuntScreen() {
           )}
         </ScrollView>
       )}
+
+      {/* Share Hunt Modal */}
+      <Modal
+        visible={shareModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShareModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.shareModal}>
+            <Text style={styles.shareModalTitle}>🔗 Share This Hunt</Text>
+            <Text style={styles.shareModalSubtitle}>
+              {
+                "Give this code to a friend. They'll get their own copy of your hunt to complete on their device."
+              }
+            </Text>
+
+            {generatingCode ? (
+              <ActivityIndicator
+                size="large"
+                color={COLORS.accent}
+                style={{ marginVertical: 24 }}
+              />
+            ) : (
+              <>
+                <View style={styles.shareCodeBox}>
+                  <Text style={styles.shareCodeText}>{shareCode}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.copyBtn}
+                  onPress={() => {
+                    Clipboard.setString(shareCode || "");
+                    Alert.alert("Copied!", "Share code copied to clipboard.");
+                  }}
+                >
+                  <Text style={styles.copyBtnText}>📋 Copy Code</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            <Text style={styles.shareModalNote}>
+              Each code can only be used once by one person.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.shareModalClose}
+              onPress={() => setShareModalVisible(false)}
+            >
+              <Text style={styles.shareModalCloseText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1282,6 +1323,20 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.medium,
   },
   swapBtnTextDisabled: { color: COLORS.midGray },
+  shareHuntBtn: {
+    alignSelf: "center",
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+    borderRadius: RADIUS.round,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    marginBottom: SPACING.sm,
+  },
+  shareHuntBtnText: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.primary,
+    fontWeight: FONTS.weights.bold,
+  },
   arrivalButton: {
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
@@ -1375,5 +1430,74 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
     textTransform: "uppercase",
     letterSpacing: 0.5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  shareModal: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: SPACING.xl,
+    paddingBottom: 40,
+    alignItems: "center",
+  },
+  shareModalTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: SPACING.sm,
+  },
+  shareModalSubtitle: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: SPACING.lg,
+  },
+  shareCodeBox: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
+    width: "100%",
+    alignItems: "center",
+  },
+  shareCodeText: {
+    fontSize: 42,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+    letterSpacing: 8,
+  },
+  copyBtn: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
+  },
+  copyBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+  },
+  shareModalNote: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.midGray,
+    textAlign: "center",
+    fontStyle: "italic",
+    marginBottom: SPACING.lg,
+  },
+  shareModalClose: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+  },
+  shareModalCloseText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.primary,
+    fontWeight: FONTS.weights.bold,
   },
 });

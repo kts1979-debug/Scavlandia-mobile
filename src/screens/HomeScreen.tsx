@@ -184,6 +184,25 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
 
+        {/* Join a Hunt */}
+        <TouchableOpacity
+          onPress={() => router.push("/join-hunt")}
+          activeOpacity={0.85}
+        >
+          <Card style={styles.joinHuntCard}>
+            <Text style={styles.huntTypeEmoji}>🤝</Text>
+            <View style={styles.huntTypeContent}>
+              <Text style={styles.huntTypeTitle}>Join a Hunt</Text>
+              <Text style={styles.huntTypeDesc}>
+                {
+                  "Have a friend's share code? Enter it here to get your own copy of their hunt."
+                }
+              </Text>
+            </View>
+            <Text style={styles.huntTypeArrow}>›</Text>
+          </Card>
+        </TouchableOpacity>
+
         {/* How it works — replaced with onboarding link */}
         <TouchableOpacity
           style={styles.onboardingLink}
@@ -362,4 +381,13 @@ const styles = StyleSheet.create({
   },
   onboardingLinkDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
   onboardingLinkArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
+  joinHuntCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: SPACING.sm,
+    gap: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderColor: COLORS.accent,
+    borderWidth: 1.5,
+  },
 });
