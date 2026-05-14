@@ -13,7 +13,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/ui/Card";
 import { generateMicroHunt } from "../services/apiService";
-import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, VIBES } from "../theme";
+import {
+  COLORS,
+  DIFFICULTY,
+  FONTS,
+  RADIUS,
+  SPACING,
+  SPECIALTY_HUNTS,
+} from "../theme";
 import { canGenerateHunt } from "../services/purchaseService";
 
 type Phase = "intro" | "locating" | "generating" | "error";
@@ -53,8 +60,6 @@ const RANDOM_INTERESTS = [
   "Photography",
 ];
 
-const RANDOM_VIBES = Object.keys(VIBES);
-
 export default function MicroHuntScreen() {
   const [phase, setPhase] = useState<Phase>("intro");
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +67,7 @@ export default function MicroHuntScreen() {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "easy",
   );
-  const [vibe, setVibe] = useState("");
+  const [specialtyHunt, setSpecialtyHunt] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
 
   const toggleInterest = (label: string) => {
@@ -75,7 +80,8 @@ export default function MicroHuntScreen() {
     const shuffled = [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5);
     const count = Math.floor(Math.random() * 3) + 3;
     setInterests(shuffled.slice(0, count));
-    setVibe(RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)]);
+    const keys = Object.keys(SPECIALTY_HUNTS);
+    setSpecialtyHunt(keys[Math.floor(Math.random() * keys.length)]);
   };
 
   const handleStart = async () => {
@@ -100,10 +106,9 @@ export default function MicroHuntScreen() {
           ? interests
           : [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5).slice(0, 4);
 
-      const finalVibe =
-        vibe || RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
-
-      const selectedVibe = VIBES[finalVibe as keyof typeof VIBES];
+      const selectedSpecialty = specialtyHunt
+        ? SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]
+        : null;
 
       const canGenerate = await canGenerateHunt("micro");
       if (!canGenerate) {
@@ -124,8 +129,8 @@ export default function MicroHuntScreen() {
         location.coords.longitude,
         stopCount,
         difficulty,
-        finalVibe,
-        selectedVibe?.clueTheme || "fun and engaging",
+        selectedSpecialty?.huntVibe || "fun and educational",
+        selectedSpecialty?.clueTheme || "fun and educational",
         finalInterests,
       );
 
@@ -306,30 +311,38 @@ export default function MicroHuntScreen() {
           </View>
         </Card>
 
-        {/* Vibe — unified vibe & theme */}
+        {/* Specialty Hunt */}
         <Card style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <SectionHeader emoji="🎭" title="Choose your vibe" />
+            <SectionHeader emoji="⭐" title="Specialty Hunt" />
             <Text style={styles.optionalLabel}>Optional</Text>
           </View>
           <Text style={styles.hint}>
-            Sets the tone and theme of your entire hunt
+            Turn your hunt into a themed experience
           </Text>
-          {Object.entries(VIBES).map(([key, v]) => {
-            const selected = vibe === key;
+          {specialtyHunt !== "" && (
+            <TouchableOpacity
+              style={styles.clearBtn}
+              onPress={() => setSpecialtyHunt("")}
+            >
+              <Text style={styles.clearBtnText}>✕ Clear specialty</Text>
+            </TouchableOpacity>
+          )}
+          {Object.entries(SPECIALTY_HUNTS).map(([key, s]) => {
+            const selected = specialtyHunt === key;
             return (
               <TouchableOpacity
                 key={key}
                 style={[
                   styles.vibeRow,
                   selected && {
-                    backgroundColor: v.color,
-                    borderColor: v.color,
+                    backgroundColor: s.color,
+                    borderColor: s.color,
                   },
                 ]}
-                onPress={() => setVibe(selected ? "" : key)}
+                onPress={() => setSpecialtyHunt(selected ? "" : key)}
               >
-                <Text style={styles.optionEmoji}>{v.emoji}</Text>
+                <Text style={styles.optionEmoji}>{s.emoji}</Text>
                 <View style={styles.vibeContent}>
                   <Text
                     style={[
@@ -337,7 +350,7 @@ export default function MicroHuntScreen() {
                       selected && styles.optionTextSelected,
                     ]}
                   >
-                    {v.label}
+                    {s.label}
                   </Text>
                   <Text
                     style={[
@@ -345,7 +358,7 @@ export default function MicroHuntScreen() {
                       selected && styles.vibeDescSelected,
                     ]}
                   >
-                    {v.description}
+                    {s.description}
                   </Text>
                 </View>
                 {selected && <Text style={styles.checkmark}>✓</Text>}

@@ -14,7 +14,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CityPicker from "../components/CityPicker";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, VIBES } from "../theme";
+import {
+  COLORS,
+  DIFFICULTY,
+  FONTS,
+  RADIUS,
+  SPACING,
+  SPECIALTY_HUNTS,
+} from "../theme";
 import { canGenerateHunt } from "../services/purchaseService";
 
 const INTERESTS = [
@@ -59,13 +66,11 @@ const RANDOM_INTERESTS = [
   "Photography",
 ];
 
-const RANDOM_VIBES = Object.keys(VIBES);
-
 export default function GroupProfileScreen() {
   const [city, setCity] = useState("");
   const [ages, setAges] = useState("30");
   const [interests, setInterests] = useState<string[]>([]);
-  const [vibe, setVibe] = useState("");
+  const [specialtyHunt, setSpecialtyHunt] = useState("");
   const [mobility, setMobility] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium",
@@ -82,7 +87,8 @@ export default function GroupProfileScreen() {
     const shuffled = [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5);
     const count = Math.floor(Math.random() * 3) + 3;
     setInterests(shuffled.slice(0, count));
-    setVibe(RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)]);
+    const keys = Object.keys(SPECIALTY_HUNTS);
+    setSpecialtyHunt(keys[Math.floor(Math.random() * keys.length)]);
   };
 
   const handleGenerate = async () => {
@@ -96,20 +102,19 @@ export default function GroupProfileScreen() {
         ? interests
         : [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5).slice(0, 4);
 
-    const finalVibe =
-      vibe || RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
-
-    const selectedVibe = VIBES[finalVibe as keyof typeof VIBES];
+    const selectedSpecialty = specialtyHunt
+      ? SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]
+      : null;
 
     const groupProfile = {
       ages: parseInt(ages) || 30,
       interests: finalInterests,
-      vibe: finalVibe,
-      vibeLabel: selectedVibe?.label || finalVibe,
-      clueTheme: selectedVibe?.clueTheme || "fun and engaging",
-      huntVibe: selectedVibe?.huntVibe || "fun and engaging",
-      theme: finalVibe, // keep for backend compatibility
-      tone: selectedVibe?.clueTheme || "fun and engaging", // keep for backend compatibility
+      specialtyHunt: specialtyHunt || null,
+      specialtyLabel: selectedSpecialty?.label || null,
+      specialtySpotFocus: selectedSpecialty?.spotFocus || null,
+      clueTheme: selectedSpecialty?.clueTheme || "fun and educational",
+      huntVibe: selectedSpecialty?.huntVibe || "fun and educational",
+      tone: selectedSpecialty?.clueTheme || "fun and educational",
       mobility,
       difficulty,
       stopCount,
@@ -171,7 +176,7 @@ export default function GroupProfileScreen() {
           <CityPicker value={city} onChange={setCity} />
         </Card>
 
-        {/* Group details — average age only */}
+        {/* Group details */}
         <Card style={styles.section}>
           <SectionHeader emoji="👥" title="About your group" />
           <View style={styles.row}>
@@ -284,48 +289,57 @@ export default function GroupProfileScreen() {
           </View>
         </Card>
 
-        {/* Vibe — unified vibe & theme */}
+        {/* Specialty Hunt */}
         <Card style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <SectionHeader emoji="🎭" title="Choose your vibe" />
+            <SectionHeader emoji="⭐" title="Specialty Hunt" />
             <Text style={styles.optionalLabel}>Optional</Text>
           </View>
           <Text style={styles.hint}>
-            Sets the tone and theme of your entire hunt
+            Turn your hunt into a themed experience — shapes both spot selection
+            and clue style
           </Text>
-          <View style={styles.chipGrid}>
-            {Object.entries(VIBES).map(([key, v]) => {
-              const selected = vibe === key;
+          {specialtyHunt !== "" && (
+            <TouchableOpacity
+              style={styles.clearBtn}
+              onPress={() => setSpecialtyHunt("")}
+            >
+              <Text style={styles.clearBtnText}>✕ Clear specialty</Text>
+            </TouchableOpacity>
+          )}
+          <View style={styles.specialtyGrid}>
+            {Object.entries(SPECIALTY_HUNTS).map(([key, s]) => {
+              const selected = specialtyHunt === key;
               return (
                 <TouchableOpacity
                   key={key}
                   style={[
-                    styles.vibeChip,
+                    styles.specialtyCard,
                     selected && {
-                      backgroundColor: v.color,
-                      borderColor: v.color,
+                      backgroundColor: s.color,
+                      borderColor: s.color,
                     },
                   ]}
-                  onPress={() => setVibe(selected ? "" : key)}
+                  onPress={() => setSpecialtyHunt(selected ? "" : key)}
                 >
-                  <Text style={styles.chipEmoji}>{v.emoji}</Text>
-                  <View style={styles.vibeChipContent}>
+                  <Text style={styles.specialtyEmoji}>{s.emoji}</Text>
+                  <View style={styles.specialtyContent}>
                     <Text
                       style={[
-                        styles.vibeChipLabel,
-                        selected && styles.chipTextSelected,
+                        styles.specialtyLabel,
+                        selected && styles.specialtyLabelSelected,
                       ]}
                     >
-                      {v.label}
+                      {s.label}
                     </Text>
                     <Text
                       style={[
-                        styles.vibeChipDesc,
-                        selected && styles.vibeChipDescSelected,
+                        styles.specialtyDesc,
+                        selected && styles.specialtyDescSelected,
                       ]}
                       numberOfLines={1}
                     >
-                      {v.description}
+                      {s.description}
                     </Text>
                   </View>
                   {selected && <Text style={styles.checkmark}>✓</Text>}
@@ -483,30 +497,31 @@ const styles = StyleSheet.create({
   chipEmoji: { fontSize: 14 },
   chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
   chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  vibeChip: {
+  specialtyGrid: { gap: 8 },
+  specialtyCard: {
     flexDirection: "row",
     alignItems: "center",
-    width: "100%",
     padding: 12,
     borderRadius: RADIUS.md,
     borderWidth: 1.5,
     borderColor: COLORS.midGray,
     backgroundColor: COLORS.offWhite,
     gap: 10,
-    marginBottom: 8,
   },
-  vibeChipContent: { flex: 1 },
-  vibeChipLabel: {
+  specialtyEmoji: { fontSize: 24 },
+  specialtyContent: { flex: 1 },
+  specialtyLabel: {
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
     color: COLORS.black,
   },
-  vibeChipDesc: {
+  specialtyLabelSelected: { color: COLORS.white },
+  specialtyDesc: {
     fontSize: FONTS.sizes.xs,
     color: COLORS.darkGray,
     marginTop: 2,
   },
-  vibeChipDescSelected: { color: "rgba(255,255,255,0.8)" },
+  specialtyDescSelected: { color: "rgba(255,255,255,0.85)" },
   optionRow: {
     flexDirection: "row",
     alignItems: "center",

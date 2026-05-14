@@ -274,6 +274,7 @@ export interface HuntStop {
   galleryOrRoom?: string;
   photoUrl?: string;
   placeId?: string;
+  interestCategory?: string;
   driveTimeFromPrevious?: string;
   trivia?: {
     question: string;

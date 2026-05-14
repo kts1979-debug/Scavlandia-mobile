@@ -21,7 +21,7 @@ import MapView, {
 } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getRoadTripCandidates } from "../services/apiService";
-import { COLORS, FONTS, RADIUS, SPACING, VIBES } from "../theme";
+import { COLORS, FONTS, RADIUS, SPACING, SPECIALTY_HUNTS } from "../theme";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍽️" },
@@ -49,8 +49,6 @@ const DIFFICULTIES = [
   { label: "Medium", desc: "Some wordplay and misdirection" },
   { label: "Hard", desc: "Cryptic riddles, lateral thinking" },
 ];
-
-const RANDOM_VIBES = Object.keys(VIBES);
 
 function decodePolyline(
   encoded: string,
@@ -93,7 +91,7 @@ export default function RoadTripScreen() {
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [selectedVibe, setSelectedVibe] = useState("");
+  const [specialtyHunt, setSpecialtyHunt] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
@@ -222,10 +220,9 @@ export default function RoadTripScreen() {
       (a, b) => a.routeFraction - b.routeFraction,
     );
 
-    const finalVibe =
-      selectedVibe ||
-      RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
-    const vibeData = VIBES[finalVibe as keyof typeof VIBES];
+    const selectedSpecialty = specialtyHunt
+      ? SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]
+      : null;
 
     // Unselected candidates for Add Stop feature
     const unselectedCandidates = candidates.filter(
@@ -244,10 +241,12 @@ export default function RoadTripScreen() {
           stopCount: sortedStops.length,
           interests: selectedInterests,
           vibe: finalVibe,
-          vibeLabel: vibeData?.label || finalVibe,
-          clueTheme: vibeData?.clueTheme || "fun and engaging",
-          huntVibe: vibeData?.huntVibe || "fun and engaging",
-          tone: vibeData?.clueTheme || "fun and engaging",
+          specialtyHunt: specialtyHunt || null,
+          specialtyLabel: selectedSpecialty?.label || null,
+          specialtySpotFocus: selectedSpecialty?.spotFocus || null,
+          clueTheme: selectedSpecialty?.clueTheme || "fun and educational",
+          huntVibe: selectedSpecialty?.huntVibe || "fun and educational",
+          tone: selectedSpecialty?.clueTheme || "fun and educational",
           difficulty: difficulty.toLowerCase(),
           timeBetweenStops: 60,
           ages: 30,
@@ -369,35 +368,43 @@ export default function RoadTripScreen() {
             </View>
           </View>
 
-          {/* Vibe — unified */}
+          {/* Specialty Hunt */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🎭 Vibe</Text>
+            <Text style={styles.sectionTitle}>⭐ Specialty Hunt</Text>
             <Text style={styles.sectionSubtitle}>
-              Sets the tone and theme of your clues (optional)
+              Shapes both stop selection and clue style (optional)
             </Text>
+            {specialtyHunt !== "" && (
+              <TouchableOpacity
+                style={styles.clearSpecialtyBtn}
+                onPress={() => setSpecialtyHunt("")}
+              >
+                <Text style={styles.clearSpecialtyText}>✕ Clear</Text>
+              </TouchableOpacity>
+            )}
             <View style={styles.vibeGrid}>
-              {Object.entries(VIBES).map(([key, v]) => {
-                const selected = selectedVibe === key;
+              {Object.entries(SPECIALTY_HUNTS).map(([key, s]) => {
+                const selected = specialtyHunt === key;
                 return (
                   <TouchableOpacity
                     key={key}
                     style={[
                       styles.vibeChip,
                       selected && {
-                        backgroundColor: v.color,
-                        borderColor: v.color,
+                        backgroundColor: s.color,
+                        borderColor: s.color,
                       },
                     ]}
-                    onPress={() => setSelectedVibe(selected ? "" : key)}
+                    onPress={() => setSpecialtyHunt(selected ? "" : key)}
                   >
-                    <Text style={styles.vibeEmoji}>{v.emoji}</Text>
+                    <Text style={styles.vibeEmoji}>{s.emoji}</Text>
                     <Text
                       style={[
                         styles.vibeLabel,
                         selected && styles.vibeLabelActive,
                       ]}
                     >
-                      {v.label}
+                      {s.label}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -821,4 +828,13 @@ const styles = StyleSheet.create({
     maxWidth: 80,
   },
   stopPillRemove: { fontSize: FONTS.sizes.xs, color: COLORS.midGray },
+  clearSpecialtyBtn: {
+    alignSelf: "flex-start",
+    marginBottom: SPACING.sm,
+  },
+  clearSpecialtyText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.danger,
+    fontWeight: FONTS.weights.medium,
+  },
 });

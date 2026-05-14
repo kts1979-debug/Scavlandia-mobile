@@ -17,14 +17,19 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import MuseumPicker from "../components/MuseumPicker";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import { COLORS, DIFFICULTY, FONTS, RADIUS, SPACING, VIBES } from "../theme";
+import {
+  COLORS,
+  DIFFICULTY,
+  FONTS,
+  RADIUS,
+  SPACING,
+  SPECIALTY_HUNTS,
+} from "../theme";
 import { canGenerateHunt } from "../services/purchaseService";
-
-const RANDOM_VIBES = Object.keys(VIBES);
 
 export default function MuseumProfileScreen() {
   const [ages, setAges] = useState("30");
-  const [vibe, setVibe] = useState("");
+  const [specialtyHunt, setSpecialtyHunt] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium",
   );
@@ -49,19 +54,18 @@ export default function MuseumProfileScreen() {
       return Alert.alert("Missing info", "Please select a museum first");
     }
 
-    const finalVibe =
-      vibe || RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
-
-    const selectedVibeData = VIBES[finalVibe as keyof typeof VIBES];
-
+    const selectedSpecialty = specialtyHunt
+      ? SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]
+      : null;
     const groupProfile = {
       ages: parseInt(ages) || 30,
       interests: ["Art", "History", "Architecture"],
-      vibe: finalVibe,
-      vibeLabel: selectedVibeData?.label || finalVibe,
-      clueTheme: selectedVibeData?.clueTheme || "educational and informative",
-      huntVibe: selectedVibeData?.huntVibe || "curious and discovery-focused",
-      tone: selectedVibeData?.clueTheme || "educational and informative", // backend compatibility
+      specialtyHunt: specialtyHunt || null,
+      specialtyLabel: selectedSpecialty?.label || null,
+      specialtySpotFocus: selectedSpecialty?.spotFocus || null,
+      clueTheme: selectedSpecialty?.clueTheme || "educational and informative",
+      huntVibe: selectedSpecialty?.huntVibe || "curious and discovery-focused",
+      tone: selectedSpecialty?.clueTheme || "educational and informative",
       theme: "mystery", // museum hunts always use mystery theme for clue style
       mobility: "Walking only",
       difficulty,
@@ -200,28 +204,36 @@ export default function MuseumProfileScreen() {
           </View>
         </Card>
 
-        {/* Vibe — unified vibe & theme */}
+        {/* Specialty Hunt */}
         <Card style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <SectionHeader emoji="🎭" title="Choose your vibe" />
+            <SectionHeader emoji="⭐" title="Specialty Hunt" />
             <Text style={styles.optionalLabel}>Optional</Text>
           </View>
-          <Text style={styles.hint}>Sets the tone of your hunt</Text>
-          {Object.entries(VIBES).map(([key, v]) => {
-            const selected = vibe === key;
+          <Text style={styles.hint}>Shapes clue style and fun facts</Text>
+          {specialtyHunt !== "" && (
+            <TouchableOpacity
+              style={styles.clearBtn}
+              onPress={() => setSpecialtyHunt("")}
+            >
+              <Text style={styles.clearBtnText}>✕ Clear specialty</Text>
+            </TouchableOpacity>
+          )}
+          {Object.entries(SPECIALTY_HUNTS).map(([key, s]) => {
+            const selected = specialtyHunt === key;
             return (
               <TouchableOpacity
                 key={key}
                 style={[
                   styles.optionRow,
                   selected && {
-                    backgroundColor: v.color,
-                    borderColor: v.color,
+                    backgroundColor: s.color,
+                    borderColor: s.color,
                   },
                 ]}
-                onPress={() => setVibe(selected ? "" : key)}
+                onPress={() => setSpecialtyHunt(selected ? "" : key)}
               >
-                <Text style={styles.optionEmoji}>{v.emoji}</Text>
+                <Text style={styles.optionEmoji}>{s.emoji}</Text>
                 <View style={styles.vibeContent}>
                   <Text
                     style={[
@@ -229,7 +241,7 @@ export default function MuseumProfileScreen() {
                       selected && styles.optionTextSelected,
                     ]}
                   >
-                    {v.label}
+                    {s.label}
                   </Text>
                   <Text
                     style={[
@@ -237,7 +249,7 @@ export default function MuseumProfileScreen() {
                       selected && styles.vibeDescSelected,
                     ]}
                   >
-                    {v.description}
+                    {s.description}
                   </Text>
                 </View>
                 {selected && <Text style={styles.checkmark}>✓</Text>}

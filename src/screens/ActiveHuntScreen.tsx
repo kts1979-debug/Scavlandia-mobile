@@ -854,6 +854,13 @@ export default function ActiveHuntScreen() {
         <ScrollView style={styles.clueContainer}>
           {/* Clue card */}
           <View style={styles.clueCard}>
+            {(activeStop as any).interestCategory && (
+              <View style={styles.interestBadge}>
+                <Text style={styles.interestBadgeText}>
+                  {(activeStop as any).interestCategory}
+                </Text>
+              </View>
+            )}
             <View style={styles.clueLabelRow}>
               <Text style={styles.clueLabel}>🔍 Your Clue</Text>
               <AudioButton
@@ -967,7 +974,12 @@ export default function ActiveHuntScreen() {
                 />
               </View>
               <Text style={styles.taskText}>{activeStop.task}</Text>
-              <Text style={styles.funFactLabel}>💡 Fun Fact</Text>
+              <Text style={styles.funFactLabel}>
+                💡{" "}
+                {(activeStop as any).interestCategory
+                  ? `${(activeStop as any).interestCategory} Fact`
+                  : "Fun Fact"}
+              </Text>
               <Text style={styles.funFactText}>{activeStop.funFact}</Text>
 
               {activeStop.trivia && !triviaCompleted && (
@@ -1348,5 +1360,20 @@ const styles = StyleSheet.create({
     color: "#AED6F1",
     marginTop: 8,
     fontStyle: "italic",
+  },
+  interestBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    marginBottom: SPACING.xs,
+  },
+  interestBadgeText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.xs,
+    fontWeight: FONTS.weights.bold,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
 });
