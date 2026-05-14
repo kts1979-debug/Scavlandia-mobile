@@ -240,7 +240,7 @@ export default function RoadTripScreen() {
           selectedStops: sortedStops,
           stopCount: sortedStops.length,
           interests: selectedInterests,
-          vibe: finalVibe,
+          vibe: specialtyHunt || null,
           specialtyHunt: specialtyHunt || null,
           specialtyLabel: selectedSpecialty?.label || null,
           specialtySpotFocus: selectedSpecialty?.spotFocus || null,

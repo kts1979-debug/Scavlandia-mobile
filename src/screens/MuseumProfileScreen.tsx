@@ -533,4 +533,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   generateBtn: { marginTop: SPACING.sm, marginBottom: 40 },
+  clearBtn: { alignSelf: "flex-start", marginBottom: SPACING.sm },
+  clearBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.danger,
+    fontWeight: FONTS.weights.medium,
+  },
 });
