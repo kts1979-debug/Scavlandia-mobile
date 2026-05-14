@@ -83,6 +83,10 @@ export const generateRoadTripHunt = async (
   selectedStops: any[],
   totalDurationMinutes: number,
   totalDistanceMiles: number,
+  unselectedCandidates: any[] = [],
+  routePolyline: string = "",
+  clueTheme: string = "",
+  huntVibe: string = "",
 ) => {
   const response = await api.post("/api/hunts/generate-road-trip", {
     startLocation,
@@ -95,9 +99,27 @@ export const generateRoadTripHunt = async (
     selectedStops,
     totalDurationMinutes,
     totalDistanceMiles,
+    unselectedCandidates,
+    routePolyline,
+    clueTheme,
+    huntVibe,
+    groupProfile: {
+      unselectedCandidates,
+      routePolyline,
+      clueTheme,
+      huntVibe,
+      tone,
+      difficulty,
+      interests,
+    },
   });
   return response.data;
 };
+
+export async function addStopToHunt(huntId: string, candidate: any) {
+  const response = await api.post(`/hunts/${huntId}/add-stop`, { candidate });
+  return response.data;
+}
 
 export async function addStopToHunt(huntId: string, candidate: any) {
   const response = await api.post(`/hunts/${huntId}/add-stop`, { candidate });

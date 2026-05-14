@@ -96,12 +96,16 @@ export default function GeneratingScreen() {
           profile.endLocation,
           profile.stopCount,
           profile.interests,
-          profile.tone,
+          profile.tone || profile.clueTheme || "fun and engaging",
           profile.difficulty,
           profile.timeBetweenStops,
           profile.selectedStops,
           profile.totalDurationMinutes,
           profile.totalDistanceMiles,
+          profile.unselectedCandidates || [],
+          profile.routePolyline || "",
+          profile.clueTheme || profile.tone || "fun and engaging",
+          profile.huntVibe || "fun and engaging",
         );
       } else {
         // City hunt — the default
