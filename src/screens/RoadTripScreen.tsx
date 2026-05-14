@@ -105,6 +105,7 @@ export default function RoadTripScreen() {
   const [routePolyline, setRoutePolyline] = useState<
     { latitude: number; longitude: number }[]
   >([]);
+  const [routePolylineRaw, setRoutePolylineRaw] = useState("");
   const [routeInfo, setRouteInfo] = useState<{
     startName: string;
     endName: string;
@@ -187,6 +188,7 @@ export default function RoadTripScreen() {
 
       setCandidates(data.candidates || []);
       setRoutePolyline(decodePolyline(data.routePolyline || ""));
+      setRoutePolylineRaw(data.routePolyline || "");
       setRouteInfo({
         startName: data.startName,
         endName: data.endName,
@@ -225,6 +227,11 @@ export default function RoadTripScreen() {
       RANDOM_VIBES[Math.floor(Math.random() * RANDOM_VIBES.length)];
     const vibeData = VIBES[finalVibe as keyof typeof VIBES];
 
+    // Unselected candidates for Add Stop feature
+    const unselectedCandidates = candidates.filter(
+      (c) => !selectedStops.find((s) => s.placeId === c.placeId),
+    );
+
     router.push({
       pathname: "/generating",
       params: {
@@ -240,13 +247,15 @@ export default function RoadTripScreen() {
           vibeLabel: vibeData?.label || finalVibe,
           clueTheme: vibeData?.clueTheme || "fun and engaging",
           huntVibe: vibeData?.huntVibe || "fun and engaging",
-          tone: vibeData?.clueTheme || "fun and engaging", // backend compatibility
+          tone: vibeData?.clueTheme || "fun and engaging",
           difficulty: difficulty.toLowerCase(),
           timeBetweenStops: 60,
           ages: 30,
           mobility: "walking",
           totalDurationMinutes: routeInfo?.totalDurationMinutes || 0,
           totalDistanceMiles: routeInfo?.totalDistanceMiles || 0,
+          unselectedCandidates, // ← pass remaining candidates
+          routePolyline: routePolylineRaw, // ← need to store this
         }),
       },
     });

@@ -1024,23 +1024,56 @@ export default function ActiveHuntScreen() {
               <TouchableOpacity style={styles.skipBtn} onPress={handleSkipStop}>
                 <Text style={styles.skipBtnText}>⏭ Skip</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.swapBtn,
-                  swapsUsed >= MAX_SWAPS && styles.swapBtnDisabled,
-                ]}
-                onPress={handleSwapStop}
-                disabled={swapsUsed >= MAX_SWAPS}
-              >
-                <Text
+              {isRoadTripHunt ? (
+                <TouchableOpacity
                   style={[
-                    styles.swapBtnText,
-                    swapsUsed >= MAX_SWAPS && styles.swapBtnTextDisabled,
+                    styles.swapBtn,
+                    (hunt as any).addsUsed >= 6 && styles.swapBtnDisabled,
                   ]}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/add-stop",
+                      params: {
+                        hunt: JSON.stringify(hunt),
+                        completedIndices: JSON.stringify(completedIndices),
+                        totalPoints: String(totalPoints),
+                        sessionCode,
+                        stopPhotos: JSON.stringify(localPhotos),
+                        skippedStops: JSON.stringify(skippedStops),
+                        swapsUsed: String(swapsUsed),
+                      },
+                    })
+                  }
+                  disabled={(hunt as any).addsUsed >= 6}
                 >
-                  🔄 Swap ({MAX_SWAPS - swapsUsed} left)
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.swapBtnText,
+                      (hunt as any).addsUsed >= 6 && styles.swapBtnTextDisabled,
+                    ]}
+                  >
+                    ➕ Add Stop ({6 - ((hunt as any).addsUsed || 0)} left)
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[
+                    styles.swapBtn,
+                    swapsUsed >= MAX_SWAPS && styles.swapBtnDisabled,
+                  ]}
+                  onPress={handleSwapStop}
+                  disabled={swapsUsed >= MAX_SWAPS}
+                >
+                  <Text
+                    style={[
+                      styles.swapBtnText,
+                      swapsUsed >= MAX_SWAPS && styles.swapBtnTextDisabled,
+                    ]}
+                  >
+                    🔄 Swap ({MAX_SWAPS - swapsUsed} left)
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 

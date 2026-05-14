@@ -99,6 +99,11 @@ export const generateRoadTripHunt = async (
   return response.data;
 };
 
+export async function addStopToHunt(huntId: string, candidate: any) {
+  const response = await api.post(`/hunts/${huntId}/add-stop`, { candidate });
+  return response.data;
+}
+
 // ── Nearby suggestions ───────────────────────────────────────────
 export const getNearbyCities = async (
   lat: number,
