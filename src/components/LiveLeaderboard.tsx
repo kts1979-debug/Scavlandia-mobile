@@ -8,6 +8,7 @@ import {
   query,
   QuerySnapshot,
 } from "firebase/firestore";
+import { getApps } from "firebase/app";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useAuth } from "../context/AuthContext";
@@ -28,7 +29,7 @@ export default function LiveLeaderboard({ sessionCode }: LiveLeaderboardProps) {
   useEffect(() => {
     if (!sessionCode) return;
 
-    const db = getFirestore();
+    const db = getFirestore(getApps()[0], "daytripper");
     const participantsRef = collection(
       db,
       "sessions",
