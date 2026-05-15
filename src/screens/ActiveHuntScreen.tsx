@@ -1077,7 +1077,7 @@ export default function ActiveHuntScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  container: { flex: 1, backgroundColor: "#E8F8F7" },
   header: { backgroundColor: COLORS.primary },
   headerTop: {
     flexDirection: "row",
@@ -1117,7 +1117,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   museumBannerText: {
-    color: "#AED6F1",
+    color: "#b3d9f5",
     fontSize: FONTS.sizes.sm,
     fontStyle: "italic",
     textAlign: "center",
@@ -1135,13 +1135,13 @@ const styles = StyleSheet.create({
     borderBottomColor: "#D5D8DC",
   },
   toggle: { flex: 1, padding: 12, alignItems: "center" },
-  toggleActive: { borderBottomWidth: 3, borderBottomColor: "#1A5276" },
-  toggleText: { fontSize: 15, color: "#95A5A6" },
-  toggleTextActive: { color: "#1A5276", fontWeight: "bold" },
+  toggleActive: { borderBottomWidth: 3, borderBottomColor: "#3c89d6" },
+  toggleText: { fontSize: 15, color: "#BDC3C7" },
+  toggleTextActive: { color: "#3c89d6", fontWeight: "bold" },
   mapContainer: { flex: 1 },
   clueContainer: { flex: 1, padding: 16 },
   clueCard: {
-    backgroundColor: "#1A5276",
+    backgroundColor: "#3c89d6",
     borderRadius: 12,
     padding: 20,
     marginBottom: 12,
@@ -1152,10 +1152,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  clueLabel: { fontSize: 13, color: "#AED6F1", fontWeight: "600" },
+  clueLabel: { fontSize: 13, color: "#b3d9f5", fontWeight: "600" },
   clueText: { fontSize: 17, color: "#FFFFFF", lineHeight: 26 },
   galleryCard: {
-    backgroundColor: "#EBF5FB",
+    backgroundColor: "#e8f4fd",
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     marginBottom: 12,
@@ -1187,7 +1187,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 12,
   },
-  taskLabel: { fontSize: 13, color: "#2E86C1", fontWeight: "600" },
+  taskLabel: { fontSize: 13, color: "#3c89d6", fontWeight: "600" },
   taskText: {
     fontSize: 16,
     color: "#2C3E50",
@@ -1252,12 +1252,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#2E86C1",
+    borderColor: "#3c89d6",
     padding: 14,
     alignItems: "center",
     marginBottom: 20,
   },
-  arrivalButtonText: { color: "#2E86C1", fontSize: 15, fontWeight: "600" },
+  arrivalButtonText: { color: "#3c89d6", fontSize: 15, fontWeight: "600" },
   answerSection: { marginBottom: SPACING.sm },
   showAnswerBtn: {
     borderWidth: 1.5,
@@ -1323,7 +1323,7 @@ const styles = StyleSheet.create({
   },
   driveTimeText: {
     fontSize: FONTS.sizes.xs,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     marginTop: 8,
     fontStyle: "italic",
   },

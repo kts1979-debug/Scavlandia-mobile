@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     color: COLORS.gold,
     marginBottom: 4,
   },
-  winnerCity: { fontSize: FONTS.sizes.sm, color: "#AED6F1" },
+  winnerCity: { fontSize: FONTS.sizes.sm, color: "#b3d9f5" },
   myResult: { marginBottom: SPACING.md },
   myResultTitle: {
     fontSize: FONTS.sizes.sm,

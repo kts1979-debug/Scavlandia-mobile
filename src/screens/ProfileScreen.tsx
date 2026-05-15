@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   email: {
     fontSize: FONTS.sizes.sm,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     marginBottom: SPACING.md,
   },
   memberBadge: {},

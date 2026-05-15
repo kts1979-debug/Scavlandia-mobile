@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   huntName: {
     fontSize: FONTS.sizes.md,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     textAlign: "center",
     marginBottom: 4,
   },
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: FONTS.sizes.xs, color: "rgba(255,255,255,0.7)" },
   message: {
     fontSize: FONTS.sizes.md,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     textAlign: "center",
     marginBottom: SPACING.lg,
     lineHeight: 22,

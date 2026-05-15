@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   headerLabel: {
     fontSize: FONTS.sizes.sm,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     fontWeight: FONTS.weights.medium,
   },
   scroll: { padding: SPACING.md, paddingBottom: 60 },
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     lineHeight: 30,
   },
-  huntCity: { fontSize: FONTS.sizes.md, color: "#AED6F1", marginBottom: 4 },
+  huntCity: { fontSize: FONTS.sizes.md, color: "#b3d9f5", marginBottom: 4 },
   huntDate: {
     fontSize: FONTS.sizes.sm,
     color: "rgba(255,255,255,0.5)",
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
   },
   galleryRow: {
-    backgroundColor: "#EBF5FB",
+    backgroundColor: "#e8f4fd",
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     marginBottom: SPACING.sm,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   },
   clueLabel: {
     fontSize: FONTS.sizes.xs,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     fontWeight: FONTS.weights.bold,
     marginBottom: 4,
   },

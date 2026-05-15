@@ -495,7 +495,7 @@ export default function RoadTripScreen() {
           <Text
             style={{
               fontSize: FONTS.sizes.md,
-              color: "#AED6F1",
+              color: "#b3d9f5",
               textAlign: "center",
               marginBottom: SPACING.xl,
               lineHeight: 24,
@@ -796,7 +796,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#E8F8F7",
   },
   mapLoadingText: {
     marginTop: SPACING.md,

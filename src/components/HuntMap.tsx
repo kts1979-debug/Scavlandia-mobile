@@ -31,7 +31,7 @@ export default function HuntMap({
   const getMarkerColor = (index: number): string => {
     if (completedStopIndices.includes(index)) return "#27AE60";
     if (index === activeStopIndex) return "#F39C12";
-    return "#95A5A6";
+    return "#BDC3C7";
   };
 
   const getMarkerLabel = (index: number): string => {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#E8F8F7",
   },
   loadingEmoji: { fontSize: 48, marginBottom: 12 },
   loadingText: { fontSize: 16, color: "#5D6D7E" },
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#E8F8F7",
   },
   errorEmoji: { fontSize: 48, marginBottom: 12 },
   errorText: {
@@ -159,5 +159,5 @@ const styles = StyleSheet.create({
     color: "#2C3E50",
     marginBottom: 8,
   },
-  errorSub: { fontSize: 14, color: "#95A5A6" },
+  errorSub: { fontSize: 14, color: "#BDC3C7" },
 });

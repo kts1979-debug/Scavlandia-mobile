@@ -351,13 +351,13 @@ const styles = StyleSheet.create({
   },
   huntName: {
     fontSize: FONTS.sizes.md,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     textAlign: "center",
     marginBottom: 4,
   },
   city: {
     fontSize: FONTS.sizes.sm,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     textAlign: "center",
     marginBottom: SPACING.xl,
   },

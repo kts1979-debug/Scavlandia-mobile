@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   },
   codeBoxFilled: {
     borderColor: COLORS.primary,
-    backgroundColor: "#EBF5FB",
+    backgroundColor: "#e8f4fd",
   },
   codeBoxActive: {
     borderColor: COLORS.accent,

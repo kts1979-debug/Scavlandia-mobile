@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   },
   museumCardSelected: {
     borderColor: COLORS.primary,
-    backgroundColor: "#EBF5FB",
+    backgroundColor: "#e8f4fd",
   },
   museumCardTop: {
     flexDirection: "row",

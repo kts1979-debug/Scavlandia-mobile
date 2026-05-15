@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   loadingText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
   emptyContainer: { padding: SPACING.md, alignItems: "center" },
-  emptyText: { fontSize: FONTS.sizes.sm, color: "#AED6F1" },
+  emptyText: { fontSize: FONTS.sizes.sm, color: "#b3d9f5" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

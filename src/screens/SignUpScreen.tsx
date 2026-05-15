@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   headerSub: {
     fontSize: FONTS.sizes.md,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     textAlign: "center",
   },
   formCard: {
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  footerText: { color: "#AED6F1", fontSize: FONTS.sizes.md },
+  footerText: { color: "#b3d9f5", fontSize: FONTS.sizes.md },
   footerLink: {
     color: COLORS.accent,
     fontSize: FONTS.sizes.md,

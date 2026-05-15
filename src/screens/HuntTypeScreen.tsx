@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: FONTS.sizes.md,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     marginBottom: SPACING.xl,
   },
   card: {

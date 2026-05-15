@@ -34,7 +34,7 @@ const SLIDES = [
     title: "Home Screen",
     subtitle: "Your adventure hub",
     body: 'The Home tab is where you start every adventure. Tap "Start a Hunt" to choose your hunt type and build your personalized experience. You\'ll also find links to your past hunts and photo albums.',
-    color: "#1A6B8A",
+    color: "#3c89d6",
   },
   {
     id: "3",
@@ -50,7 +50,7 @@ const SLIDES = [
     title: "Road Trip Hunt",
     subtitle: "Turn your drive into an adventure",
     body: "Enter your start and end points, then browse potential stops on a live map. Tap the ones that look interesting and we'll write custom road trip clues for each one. Roadside attractions, scenic overlooks, local diners — your road trip just got legendary.",
-    color: "#1E5799",
+    color: "#3c89d6",
   },
   {
     id: "5",
@@ -74,7 +74,7 @@ const SLIDES = [
     title: "Photos & Privacy",
     subtitle: "Your photos, your memories",
     body: "Photos you take during hunts are stored securely and used only to create your hunt album. They are never shared publicly or used for any other purpose. Photo albums are available for 90 days after your hunt, then automatically deleted.",
-    color: "#1A5276",
+    color: "#3c89d6",
   },
   {
     id: "8",

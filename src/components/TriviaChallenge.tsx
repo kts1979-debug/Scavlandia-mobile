@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: SPACING.md,
     marginBottom: SPACING.md,
-    backgroundColor: "#EBF5FB",
+    backgroundColor: "#e8f4fd",
     borderRadius: RADIUS.md,
     padding: SPACING.sm,
   },

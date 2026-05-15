@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   stopName: {
     fontSize: FONTS.sizes.lg,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     textAlign: "center",
     marginBottom: SPACING.sm,
     lineHeight: 24,

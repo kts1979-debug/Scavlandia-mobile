@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
   },
-  statHeroLabel: { fontSize: FONTS.sizes.md, color: "#AED6F1", marginTop: 4 },
+  statHeroLabel: { fontSize: FONTS.sizes.md, color: "#b3d9f5", marginTop: 4 },
   rankBadge: { marginTop: SPACING.sm },
   statsGrid: {
     flexDirection: "row",

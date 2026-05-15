@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
   },
-  headerSub: { fontSize: FONTS.sizes.xs, color: "#AED6F1", marginTop: 2 },
+  headerSub: { fontSize: FONTS.sizes.xs, color: "#b3d9f5", marginTop: 2 },
   badge: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.round,

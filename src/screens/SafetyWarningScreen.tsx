@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   introLabel: {
     fontSize: FONTS.sizes.xs,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     fontWeight: FONTS.weights.bold,
     textTransform: "uppercase",
     letterSpacing: 0.5,

@@ -3,14 +3,17 @@
 // Import from this file in every screen instead of hardcoding values.
 
 // ── COLOR PALETTE ────────────────────────────────────────────────
-// Playful, adventurous palette — deep navy + energetic orange
+// Scavlandia brand palette — teal + blue + purple
 export const COLORS = {
   // Primary brand colors
-  primary: "#1A3A5C", // Deep navy — main background and headers
-  primaryLight: "#2E5F8A", // Lighter navy — cards and secondary backgrounds
-  accent: "#E8622A", // Energetic orange — buttons and highlights
-  accentLight: "#FF8C5A", // Lighter orange — hover states
-  accentPale: "#FEF0E8", // Very pale orange — backgrounds
+  primary: "#3c89d6", // Brand blue — main background and headers
+  primaryLight: "#5fa8e8", // Lighter blue — cards and secondary backgrounds
+  accent: "#5acba6", // Brand teal — buttons and highlights
+  accentLight: "#7ddcba", // Lighter teal — hover states
+  accentPale: "#e6f9f4", // Very pale teal — backgrounds
+  purple: "#7f78de", // Brand purple — special accents
+  purpleLight: "#a09ae8", // Lighter purple — hover states
+  purplePale: "#eeecfb", // Very pale purple — backgrounds
   lred: "#FADBD8", // Pale red — answer reveal background
   lgreen: "#D5F5E3", // Pale green — success backgrounds
   lyellow: "#FEF9E7",
@@ -22,12 +25,12 @@ export const COLORS = {
   successLight: "#D5F5E3", // Pale green — success backgrounds
   danger: "#E74C3C", // Red — warnings and urgent states
   dangerLight: "#FADBD8", // Pale red — warning backgrounds
-  hint: "#8E44AD", // Purple — hints
-  hintLight: "#E8DAEF", // Pale purple — hint backgrounds
+  hint: "#7f78de", // Purple — hints (now brand purple)
+  hintLight: "#eeecfb", // Pale purple — hint backgrounds
 
   // Neutral colors
   white: "#FFFFFF",
-  offWhite: "#F8F9FA",
+  offWhite: "#E8F8F7", // Light teal tint — page backgrounds
   lightGray: "#F0F2F5",
   midGray: "#BDC3C7",
   darkGray: "#566573",
@@ -74,11 +77,10 @@ export const RADIUS = {
   md: 12,
   lg: 16,
   xl: 24,
-  round: 999, // Makes fully rounded pill shapes
+  round: 999,
 };
 
 // ── SHADOWS ───────────────────────────────────────────────────────
-// Apply these as style props to add drop shadows to cards
 export const SHADOW = {
   sm: {
     shadowColor: "#000",
@@ -111,7 +113,7 @@ export const DIFFICULTY = {
     color: "#27AE60",
     multiplier: 1.0,
     hintCount: 3,
-    timerMinutes: null, // No timer for Easy
+    timerMinutes: null,
     description: "Simple clues, 3 hints",
   },
   medium: {
@@ -120,7 +122,7 @@ export const DIFFICULTY = {
     color: "#F39C12",
     multiplier: 1.5,
     hintCount: 3,
-    timerMinutes: null, // No timer for Medium
+    timerMinutes: null,
     description: "Trickier clues, 3 hints",
   },
   hard: {
@@ -129,7 +131,7 @@ export const DIFFICULTY = {
     color: "#E74C3C",
     multiplier: 2.0,
     hintCount: 2,
-    timerMinutes: 120, // 2 hour timer for Hard only
+    timerMinutes: 120,
     description: "Cryptic clues, 2 hints, 2hr timer",
   },
 };
@@ -179,7 +181,7 @@ export const SPECIALTY_HUNTS = {
   art_culture: {
     label: "Art & Culture",
     emoji: "🎨",
-    color: "#1A5276",
+    color: "#3c89d6",
     description: "Galleries, murals and creative spaces",
     clueTheme: "educational and creative",
     huntVibe: "artistic and inspiring",
@@ -199,7 +201,7 @@ export const SPECIALTY_HUNTS = {
   active_outdoor: {
     label: "Active & Outdoor",
     emoji: "🏃",
-    color: "#16A085",
+    color: "#5acba6",
     description: "Parks, trails and outdoor adventures",
     clueTheme: "energetic and adventurous",
     huntVibe: "active and outdoorsy",
@@ -209,7 +211,7 @@ export const SPECIALTY_HUNTS = {
   mystery_escape: {
     label: "Mystery & Escape Room",
     emoji: "🔐",
-    color: "#2E86C1",
+    color: "#7f78de",
     description: "Solve a mystery across every stop",
     clueTheme: "challenging and following a storyline across stops",
     huntVibe: "solving a mystery or on a mission feel",
@@ -219,7 +221,7 @@ export const SPECIALTY_HUNTS = {
   wellness_mindfulness: {
     label: "Wellness & Mindfulness",
     emoji: "🧘",
-    color: "#7D6608",
+    color: "#5acba6",
     description: "A restorative walk through calming spaces",
     clueTheme: "gentle and restorative",
     huntVibe: "unhurried and contemplative",
@@ -229,7 +231,7 @@ export const SPECIALTY_HUNTS = {
   bachelorette_bachelor: {
     label: "Bachelorette / Bachelor",
     emoji: "🥂",
-    color: "#884EA0",
+    color: "#7f78de",
     description: "A celebratory night out to remember",
     clueTheme: "celebratory and slightly irreverent",
     huntVibe: "high energy group celebration",
@@ -239,7 +241,7 @@ export const SPECIALTY_HUNTS = {
   literary_bookshop: {
     label: "Literary & Bookshop Tour",
     emoji: "📚",
-    color: "#1A5276",
+    color: "#3c89d6",
     description: "For readers, dreamers and word lovers",
     clueTheme: "prose-rich and contemplative",
     huntVibe: "quietly reverent of language",

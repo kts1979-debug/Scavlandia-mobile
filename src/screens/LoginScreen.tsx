@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     marginBottom: 4,
   },
-  tagline: { fontSize: FONTS.sizes.md, color: "#AED6F1" },
+  tagline: { fontSize: FONTS.sizes.md, color: "#b3d9f5" },
   formCard: {
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.xl,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  footerText: { color: "#AED6F1", fontSize: FONTS.sizes.md },
+  footerText: { color: "#b3d9f5", fontSize: FONTS.sizes.md },
   footerLink: {
     color: COLORS.accent,
     fontSize: FONTS.sizes.md,

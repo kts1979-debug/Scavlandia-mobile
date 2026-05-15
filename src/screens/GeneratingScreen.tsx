@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   bigEmoji: { fontSize: 80, marginBottom: SPACING.md },
   city: {
     fontSize: FONTS.sizes.lg,
-    color: "#AED6F1",
+    color: "#b3d9f5",
     marginBottom: SPACING.xl,
     fontWeight: FONTS.weights.medium,
   },
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   dotActive: { backgroundColor: COLORS.accent, width: 24 },
   note: {
     fontSize: FONTS.sizes.sm,
-    color: "#7FB3D3",
+    color: "#8ec6e8",
     marginBottom: SPACING.xl,
   },
   watermark: {

@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
   },
-  headerSub: { fontSize: FONTS.sizes.xs, color: "#AED6F1", marginTop: 2 },
+  headerSub: { fontSize: FONTS.sizes.xs, color: "#b3d9f5", marginTop: 2 },
   shareBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.round,
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
     color: COLORS.white,
   },
-  mapOverlayCity: { fontSize: FONTS.sizes.sm, color: "#AED6F1", marginTop: 2 },
+  mapOverlayCity: { fontSize: FONTS.sizes.sm, color: "#b3d9f5", marginTop: 2 },
   gridScroll: { padding: SPACING.md },
   collageContainer: {
     backgroundColor: COLORS.white,
@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     textAlign: "center",
   },
-  collageCity: { fontSize: FONTS.sizes.md, color: "#AED6F1", marginTop: 4 },
+  collageCity: { fontSize: FONTS.sizes.md, color: "#b3d9f5", marginTop: 4 },
   collageMeta: {
     fontSize: FONTS.sizes.xs,
     color: "rgba(255,255,255,0.6)",
@@ -891,11 +891,11 @@ const styles = StyleSheet.create({
     maxHeight: "80%",
   },
   expirationBanner: {
-    backgroundColor: "#EBF5FB",
+    backgroundColor: "#e8f4fd",
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
-    borderBottomColor: "#AED6F1",
+    borderBottomColor: "#b3d9f5",
     alignItems: "center",
   },
   expirationBannerUrgent: {
