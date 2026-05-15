@@ -11,27 +11,24 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
 import { getActiveHunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
+const HERO_BG = require("../../assets/images/hunt_bg_5_explorer_greece.jpg");
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const [activeHunt, setActiveHunt] = useState<any>(null);
 
-  // ── Refresh active hunt on every screen focus ──────────────
-  // This ensures the banner disappears after hunt completion
   useFocusEffect(
     useCallback(() => {
       if (user) {
         getActiveHunt()
           .then((data) => {
             const hunt = data.activeHunt;
-            // Only show banner if hunt is genuinely in progress
             if (hunt && hunt.status === "in_progress" && hunt.activeState) {
               setActiveHunt(hunt);
             } else {
@@ -81,7 +78,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Resume Hunt Banner — only shows for in-progress hunts */}
+        {/* Resume Hunt Banner */}
         {activeHunt && (
           <TouchableOpacity
             style={styles.resumeBanner}
@@ -113,27 +110,34 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Hero Banner */}
-        <Card variant="primary" style={styles.heroBanner}>
+        {/* Hero Banner — photo background */}
+        <TouchableOpacity
+          style={styles.heroBanner}
+          onPress={() => router.push("/hunt-type")}
+          activeOpacity={0.92}
+        >
           <Image
-            source={LOGO_ICON}
-            style={styles.heroIcon}
-            resizeMode="contain"
+            source={HERO_BG}
+            style={styles.heroBannerBg}
+            resizeMode="cover"
           />
-          <Text style={styles.heroTitle}>Scavlandia</Text>
-          <Text style={styles.heroTagline}>Explore · Discover · Hunt</Text>
-          <Button
-            label="Start a Hunt"
-            onPress={() => router.push("/hunt-type")}
-            variant="accent"
-            size="lg"
-            emoji="🚀"
-            style={styles.heroBtn}
-          />
-          <Text style={styles.heroSub}>
-            {"Personalized scavenger hunts in any city!"}
-          </Text>
-        </Card>
+          <View style={styles.heroBannerOverlay} />
+          <View style={styles.heroBannerContent}>
+            <Image
+              source={LOGO_ICON}
+              style={styles.heroIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.heroTitle}>Scavlandia</Text>
+            <Text style={styles.heroTagline}>Explore · Discover · Hunt</Text>
+            <View style={styles.heroBtn}>
+              <Text style={styles.heroBtnText}>🚀 Start a Hunt</Text>
+            </View>
+            <Text style={styles.heroSub}>
+              Personalized scavenger hunts in any city!
+            </Text>
+          </View>
+        </TouchableOpacity>
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
@@ -165,7 +169,7 @@ export default function HomeScreen() {
             emoji: "⚡",
             title: "Micro Hunt",
             desc: "A quick 1–2 stop adventure within half a mile of you. Perfect for a short break.",
-            onPress: () => router.push("/micro-hunt"),
+            onPress: () => router.push("/hunt-type"),
           },
         ].map((item) => (
           <TouchableOpacity
@@ -203,7 +207,7 @@ export default function HomeScreen() {
           </Card>
         </TouchableOpacity>
 
-        {/* How it works — replaced with onboarding link */}
+        {/* Onboarding link */}
         <TouchableOpacity
           style={styles.onboardingLink}
           onPress={() =>
@@ -295,34 +299,68 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: FONTS.weights.heavy,
   },
+  // ── Hero banner with photo ──────────────────────────────────
   heroBanner: {
+    height: 220,
+    borderRadius: RADIUS.xl,
+    overflow: "hidden",
     marginBottom: SPACING.lg,
-    alignItems: "center",
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.md,
   },
-  heroIcon: { width: 80, height: 80, marginBottom: SPACING.sm },
+  heroBannerBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  heroBannerOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.65)",
+  },
+  heroBannerContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: SPACING.lg,
+  },
+  heroIcon: { width: 52, height: 52, marginBottom: 6 },
   heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
     letterSpacing: 1,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   heroTagline: {
-    fontSize: FONTS.sizes.sm,
+    fontSize: FONTS.sizes.xs,
     color: "rgba(255,255,255,0.7)",
     letterSpacing: 2,
     marginBottom: SPACING.md,
   },
+  heroBtn: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  heroBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.heavy,
+  },
   heroSub: {
-    fontSize: FONTS.sizes.sm,
+    fontSize: FONTS.sizes.xs,
     color: "rgba(255,255,255,0.6)",
     textAlign: "center",
-    lineHeight: 20,
-    marginTop: SPACING.sm,
   },
-  heroBtn: { width: "100%" },
+  // ── Stats ─────────────────────────────────────────────────────
   statsRow: { flexDirection: "row", gap: SPACING.sm, marginBottom: SPACING.lg },
   statCard: { flex: 1, alignItems: "center", paddingVertical: SPACING.md },
   statEmoji: { fontSize: 24, marginBottom: 4 },
@@ -332,6 +370,7 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
+  // ── Hunt type cards ───────────────────────────────────────────
   sectionTitle: {
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.bold,
@@ -360,6 +399,15 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   huntTypeArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
+  joinHuntCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: SPACING.sm,
+    gap: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderColor: COLORS.accent,
+    borderWidth: 1.5,
+  },
   onboardingLink: {
     flexDirection: "row",
     alignItems: "center",
@@ -381,13 +429,4 @@ const styles = StyleSheet.create({
   },
   onboardingLinkDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
   onboardingLinkArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
-  joinHuntCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.sm,
-    gap: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderColor: COLORS.accent,
-    borderWidth: 1.5,
-  },
 });

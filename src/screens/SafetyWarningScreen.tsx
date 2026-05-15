@@ -1,10 +1,8 @@
 // src/screens/SafetyWarningScreen.tsx
-// Safety warning shown before every hunt launches.
-// User must tap "I Understand" to proceed to the first clue.
-
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,44 +12,52 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
+const HERO_BG = require("../../assets/images/hunt_bg_1_cliff_city.jpg");
+
 export default function SafetyWarningScreen() {
   const params = useLocalSearchParams();
   const [agreed, setAgreed] = useState(false);
 
   const handleContinue = () => {
     if (!agreed) return;
-    router.replace({
-      pathname: "/active-hunt",
-      params,
-    });
+    router.replace({ pathname: "/active-hunt", params });
   };
+
+  // Parse hunt introduction if present
+  let huntIntroduction: string | null = null;
+  try {
+    if (params.hunt) {
+      const huntData = JSON.parse(params.hunt as string);
+      huntIntroduction = huntData.huntIntroduction || null;
+    }
+  } catch {
+    huntIntroduction = null;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Hero header */}
+      <View style={styles.heroContainer}>
+        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+        <View style={styles.heroOverlay} />
+        <View style={styles.heroContent}>
+          <Text style={styles.heroEmoji}>⚠️</Text>
+          <Text style={styles.heroTitle}>Safety First</Text>
+          <Text style={styles.heroSubtitle}>
+            Please read before starting your adventure
+          </Text>
+        </View>
+      </View>
+
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Icon */}
-        <View style={styles.iconContainer}>
-          <Text style={styles.icon}>⚠️</Text>
-        </View>
-
-        {/* Title */}
-        <Text style={styles.title}>Safety First</Text>
-        <Text style={styles.subtitle}>
-          Please read before starting your adventure
-        </Text>
-
         {/* Hunt Introduction */}
-        {(params.hunt
-          ? JSON.parse(params.hunt as string).huntIntroduction
-          : null) && (
+        {huntIntroduction && (
           <View style={styles.introCard}>
             <Text style={styles.introLabel}>🗺️ Your Adventure</Text>
-            <Text style={styles.introText}>
-              {JSON.parse(params.hunt as string).huntIntroduction}
-            </Text>
+            <Text style={styles.introText}>{huntIntroduction}</Text>
           </View>
         )}
 
@@ -104,7 +110,7 @@ export default function SafetyWarningScreen() {
 
         {/* Agreement checkbox */}
         <TouchableOpacity
-          style={styles.checkRow}
+          style={[styles.checkRow, agreed && styles.checkRowChecked]}
           onPress={() => setAgreed((prev) => !prev)}
           activeOpacity={0.7}
         >
@@ -144,23 +150,70 @@ export default function SafetyWarningScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.offWhite },
-  scroll: { padding: SPACING.lg, paddingBottom: 40 },
-  iconContainer: { alignItems: "center", marginBottom: SPACING.md },
-  icon: { fontSize: 64 },
-  title: {
+  // ── Hero header ───────────────────────────────────────────────
+  heroContainer: {
+    height: 180,
+    position: "relative",
+  },
+  heroBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  heroOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.68)",
+  },
+  heroContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: SPACING.lg,
+  },
+  heroEmoji: { fontSize: 44, marginBottom: 8 },
+  heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    color: COLORS.white,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontSize: FONTS.sizes.sm,
+    color: "rgba(255,255,255,0.8)",
     textAlign: "center",
+  },
+  // ── Scroll content ────────────────────────────────────────────
+  scroll: { padding: SPACING.lg, paddingBottom: 40 },
+  // ── Hunt introduction card ────────────────────────────────────
+  introCard: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  introLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: "rgba(255,255,255,0.6)",
+    fontWeight: FONTS.weights.bold,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
     marginBottom: SPACING.sm,
   },
-  subtitle: {
+  introText: {
     fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
-    textAlign: "center",
-    marginBottom: SPACING.xl,
-    lineHeight: 22,
+    color: COLORS.white,
+    lineHeight: 24,
+    fontStyle: "italic",
   },
+  // ── Warning cards ─────────────────────────────────────────────
   warningCard: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -185,6 +238,7 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     lineHeight: 20,
   },
+  // ── Agreement row ─────────────────────────────────────────────
   checkRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -196,6 +250,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     borderWidth: 2,
     borderColor: COLORS.midGray,
+  },
+  checkRowChecked: {
+    borderColor: COLORS.accent,
+    backgroundColor: COLORS.accentPale,
   },
   checkbox: {
     width: 24,
@@ -223,6 +281,7 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     lineHeight: 20,
   },
+  // ── Buttons ───────────────────────────────────────────────────
   continueBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.lg,
@@ -242,25 +301,5 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.medium,
-  },
-  introCard: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  introLabel: {
-    fontSize: FONTS.sizes.xs,
-    color: "#b3d9f5",
-    fontWeight: FONTS.weights.bold,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: SPACING.sm,
-  },
-  introText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.white,
-    lineHeight: 24,
-    fontStyle: "italic",
   },
 });

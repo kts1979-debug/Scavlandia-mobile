@@ -4,9 +4,10 @@ import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
-  Platform,
   Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,8 +21,10 @@ import { useAuth } from "../context/AuthContext";
 import { ONBOARDING_KEY } from "../screens/OnboardingScreen";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
 
-// ── InputField defined OUTSIDE the component ──────────────────────
-// This prevents remounting on every keystroke which dismisses the keyboard
+const BG_IMAGE = require("../../assets/images/hunt_bg_8_friends_overlook.jpg");
+const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
+
+// InputField defined OUTSIDE component to prevent remounting on keystroke
 interface InputFieldProps {
   label: string;
   value: string;
@@ -57,7 +60,6 @@ const InputField = ({
   </View>
 );
 
-// ── Main component ─────────────────────────────────────────────────
 export default function SignUpScreen() {
   const { signUp } = useAuth();
   const [displayName, setDisplayName] = useState("");
@@ -81,7 +83,6 @@ export default function SignUpScreen() {
       );
     if (password !== confirmPassword)
       return Alert.alert("Mismatch", "Passwords do not match");
-
     if (!agreedToTerms)
       return Alert.alert(
         "Agreement Required",
@@ -112,146 +113,174 @@ export default function SignUpScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+    <View style={styles.container}>
+      {/* Hero background */}
+      <Image source={BG_IMAGE} style={styles.bgImage} resizeMode="cover" />
+      <View style={styles.overlay} />
+
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
         >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.headerEmoji}>🎉</Text>
-            <Text style={styles.headerTitle}>Join Scavlandia</Text>
-            <Text style={styles.headerSub}>
-              Create your free account and start exploring
-            </Text>
-          </View>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Header */}
+            <View style={styles.header}>
+              <Image
+                source={LOGO_ICON}
+                style={styles.logoIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.headerTitle}>Join Scavlandia</Text>
+              <Text style={styles.headerSub}>
+                Create your free account and start exploring
+              </Text>
+            </View>
 
-          {/* Form */}
-          <View style={styles.formCard}>
-            <InputField
-              label="Your Name"
-              value={displayName}
-              onChange={setDisplayName}
-              placeholder="e.g. Alex Johnson"
-            />
-            <InputField
-              label="Email Address"
-              value={email}
-              onChange={setEmail}
-              placeholder="you@example.com"
-              keyboardType="email-address"
-            />
-            <InputField
-              label="Password"
-              value={password}
-              onChange={setPassword}
-              placeholder="At least 6 characters"
-              secure
-            />
-            <InputField
-              label="Confirm Password"
-              value={confirmPassword}
-              onChange={setConfirmPassword}
-              placeholder="Type your password again"
-              secure
-            />
+            {/* Form */}
+            <View style={styles.formCard}>
+              <InputField
+                label="Your Name"
+                value={displayName}
+                onChange={setDisplayName}
+                placeholder="e.g. Alex Johnson"
+              />
+              <InputField
+                label="Email Address"
+                value={email}
+                onChange={setEmail}
+                placeholder="you@example.com"
+                keyboardType="email-address"
+              />
+              <InputField
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                placeholder="At least 6 characters"
+                secure
+              />
+              <InputField
+                label="Confirm Password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                placeholder="Type your password again"
+                secure
+              />
 
-            {/* Password strength indicator */}
-            {password.length > 0 && (
-              <View style={styles.strengthRow}>
+              {/* Password strength */}
+              {password.length > 0 && (
+                <View style={styles.strengthRow}>
+                  <View
+                    style={[
+                      styles.strengthBar,
+                      {
+                        backgroundColor:
+                          password.length >= 8
+                            ? COLORS.success
+                            : password.length >= 6
+                              ? COLORS.gold
+                              : COLORS.danger,
+                      },
+                    ]}
+                  />
+                  <Text style={styles.strengthText}>
+                    {password.length >= 8
+                      ? "💪 Strong"
+                      : password.length >= 6
+                        ? "👍 Good"
+                        : "⚠️ Too short"}
+                  </Text>
+                </View>
+              )}
+
+              <Button
+                label="Create My Account"
+                onPress={handleSignUp}
+                variant="accent"
+                size="lg"
+                loading={loading}
+                emoji="✨"
+                style={styles.signUpBtn}
+              />
+
+              <TouchableOpacity
+                style={styles.termsRow}
+                onPress={() => setAgreedToTerms(!agreedToTerms)}
+                activeOpacity={0.7}
+              >
                 <View
                   style={[
-                    styles.strengthBar,
-                    {
-                      backgroundColor:
-                        password.length >= 8
-                          ? COLORS.success
-                          : password.length >= 6
-                            ? COLORS.gold
-                            : COLORS.danger,
-                    },
+                    styles.checkbox,
+                    agreedToTerms && styles.checkboxChecked,
                   ]}
-                />
-                <Text style={styles.strengthText}>
-                  {password.length >= 8
-                    ? "💪 Strong"
-                    : password.length >= 6
-                      ? "👍 Good"
-                      : "⚠️ Too short"}
-                </Text>
-              </View>
-            )}
-
-            <Button
-              label="Create My Account"
-              onPress={handleSignUp}
-              variant="accent"
-              size="lg"
-              loading={loading}
-              emoji="✨"
-              style={styles.signUpBtn}
-            />
-
-            <TouchableOpacity
-              style={styles.termsRow}
-              onPress={() => setAgreedToTerms(!agreedToTerms)}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.checkbox,
-                  agreedToTerms && styles.checkboxChecked,
-                ]}
-              >
-                {agreedToTerms && <Text style={styles.checkboxTick}>✓</Text>}
-              </View>
-              <Text style={styles.termsText}>
-                I agree to the{" "}
-                <Text
-                  style={styles.termsLink}
-                  onPress={() =>
-                    Linking.openURL(
-                      "https://kts1979-debug.github.io/Scavlandia-mobile/terms-of-service",
-                    )
-                  }
                 >
-                  Terms of Service
-                </Text>{" "}
-                and{" "}
-                <Text
-                  style={styles.termsLink}
-                  onPress={() =>
-                    Linking.openURL(
-                      "https://kts1979-debug.github.io/Scavlandia-mobile/privacy-policy",
-                    )
-                  }
-                >
-                  Privacy Policy
+                  {agreedToTerms && <Text style={styles.checkboxTick}>✓</Text>}
+                </View>
+                <Text style={styles.termsText}>
+                  I agree to the{" "}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={() =>
+                      Linking.openURL(
+                        "https://kts1979-debug.github.io/Scavlandia-mobile/terms-of-service",
+                      )
+                    }
+                  >
+                    Terms of Service
+                  </Text>{" "}
+                  and{" "}
+                  <Text
+                    style={styles.termsLink}
+                    onPress={() =>
+                      Linking.openURL(
+                        "https://kts1979-debug.github.io/Scavlandia-mobile/privacy-policy",
+                      )
+                    }
+                  >
+                    Privacy Policy
+                  </Text>
                 </Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
+              </TouchableOpacity>
+            </View>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push("/login")}>
-              <Text style={styles.footerLink}>Sign in</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push("/login")}>
+                <Text style={styles.footerLink}>Sign in</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
+  bgImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.72)",
+  },
+  safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
   scroll: { flexGrow: 1, padding: SPACING.lg, paddingBottom: 40 },
   header: {
@@ -259,16 +288,17 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xl,
     marginTop: SPACING.lg,
   },
-  headerEmoji: { fontSize: 60, marginBottom: SPACING.sm },
+  logoIcon: { width: 64, height: 64, marginBottom: SPACING.sm },
   headerTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
     marginBottom: 4,
+    letterSpacing: 0.5,
   },
   headerSub: {
     fontSize: FONTS.sizes.md,
-    color: "#b3d9f5",
+    color: "rgba(255,255,255,0.7)",
     textAlign: "center",
   },
   formCard: {
@@ -303,17 +333,16 @@ const styles = StyleSheet.create({
   strengthBar: { height: 4, flex: 1, borderRadius: RADIUS.round },
   strengthText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, width: 80 },
   signUpBtn: { marginTop: SPACING.md },
-
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
   },
-  footerText: { color: "#b3d9f5", fontSize: FONTS.sizes.md },
+  footerText: { color: "rgba(255,255,255,0.75)", fontSize: FONTS.sizes.md },
   footerLink: {
     color: COLORS.accent,
     fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
+    fontWeight: FONTS.weights.heavy,
   },
   termsRow: {
     flexDirection: "row",

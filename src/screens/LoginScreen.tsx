@@ -1,8 +1,9 @@
-// src/screens/LoginScreen.tsx — Playful redesign
+// src/screens/LoginScreen.tsx
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,6 +17,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
+
+const BG_IMAGE = require("../../assets/images/hunt_bg_3_friends_nyc.jpg");
+const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
@@ -53,102 +57,129 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+    <View style={styles.container}>
+      {/* Hero background */}
+      <Image source={BG_IMAGE} style={styles.bgImage} resizeMode="cover" />
+      <View style={styles.overlay} />
+
+      <SafeAreaView style={styles.safeArea}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
         >
-          {/* Logo */}
-          <View style={styles.logoSection}>
-            <Text style={styles.logoEmoji}>🗺️</Text>
-            <Text style={styles.appName}>Scavlandia</Text>
-            <Text style={styles.tagline}>Your next adventure awaits</Text>
-          </View>
-
-          {/* Form Card */}
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Welcome back!</Text>
-            <Text style={styles.formSubtitle}>
-              Sign in to continue your adventures
-            </Text>
-
-            <Text style={styles.label}>Email Address</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="you@example.com"
-              placeholderTextColor={COLORS.midGray}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordRow}>
-              <TextInput
-                style={[styles.input, styles.passwordInput]}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Your password"
-                placeholderTextColor={COLORS.midGray}
-                secureTextEntry={!showPass}
-                autoCapitalize="none"
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Logo */}
+            <View style={styles.logoSection}>
+              <Image
+                source={LOGO_ICON}
+                style={styles.logoIcon}
+                resizeMode="contain"
               />
-              <TouchableOpacity
-                style={styles.showPassBtn}
-                onPress={() => setShowPass(!showPass)}
-              >
-                <Text style={styles.showPassText}>
-                  {showPass ? "🙈" : "👁️"}
-                </Text>
-              </TouchableOpacity>
+              <Text style={styles.appName}>Scavlandia</Text>
+              <Text style={styles.tagline}>Your next adventure awaits</Text>
             </View>
 
-            <Button
-              label="Sign In"
-              onPress={handleSignIn}
-              variant="accent"
-              size="lg"
-              loading={loading}
-              emoji="🚀"
-              style={styles.signInBtn}
-            />
-          </View>
+            {/* Form Card */}
+            <View style={styles.formCard}>
+              <Text style={styles.formTitle}>Welcome back!</Text>
+              <Text style={styles.formSubtitle}>
+                Sign in to continue your adventures
+              </Text>
 
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              <Text>{"Don't have an account?"}</Text>
-            </Text>
-            <TouchableOpacity onPress={() => router.push("/signup")}>
-              <Text style={styles.footerLink}>Create one free</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+              <Text style={styles.label}>Email Address</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="you@example.com"
+                placeholderTextColor={COLORS.midGray}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.passwordRow}>
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Your password"
+                  placeholderTextColor={COLORS.midGray}
+                  secureTextEntry={!showPass}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.showPassBtn}
+                  onPress={() => setShowPass(!showPass)}
+                >
+                  <Text style={styles.showPassText}>
+                    {showPass ? "🙈" : "👁️"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <Button
+                label="Sign In"
+                onPress={handleSignIn}
+                variant="accent"
+                size="lg"
+                loading={loading}
+                emoji="🚀"
+                style={styles.signInBtn}
+              />
+            </View>
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>{"Don't have an account? "}</Text>
+              <TouchableOpacity onPress={() => router.push("/signup")}>
+                <Text style={styles.footerLink}>Create one free</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
+  bgImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.72)",
+  },
+  safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: "center", padding: SPACING.lg },
   logoSection: { alignItems: "center", marginBottom: SPACING.xl },
-  logoEmoji: { fontSize: 72, marginBottom: SPACING.sm },
+  logoIcon: { width: 72, height: 72, marginBottom: SPACING.sm },
   appName: {
     fontSize: FONTS.sizes.hero,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
     marginBottom: 4,
+    letterSpacing: 1,
   },
-  tagline: { fontSize: FONTS.sizes.md, color: "#b3d9f5" },
+  tagline: { fontSize: FONTS.sizes.md, color: "rgba(255,255,255,0.7)" },
   formCard: {
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.xl,
@@ -193,10 +224,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  footerText: { color: "#b3d9f5", fontSize: FONTS.sizes.md },
+  footerText: { color: "rgba(255,255,255,0.75)", fontSize: FONTS.sizes.md },
   footerLink: {
     color: COLORS.accent,
     fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
+    fontWeight: FONTS.weights.heavy,
   },
 });
