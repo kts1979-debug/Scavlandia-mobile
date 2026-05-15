@@ -165,6 +165,14 @@ export default function HuntCompleteScreen() {
           it. 🎉
         </Text>
 
+        {/* Hunt Finale */}
+        {hunt.huntFinale && (
+          <View style={styles.finaleCard}>
+            <Text style={styles.finaleLabel}>🎉 How to End in Style</Text>
+            <Text style={styles.finaleText}>{hunt.huntFinale}</Text>
+          </View>
+        )}
+
         {/* Skipped stops prompt */}
         {showSkippedPrompt && (
           <View style={styles.skippedCard}>
@@ -362,4 +370,26 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
   },
   btn: { marginBottom: SPACING.sm },
+  finaleCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.accent,
+  },
+  finaleLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.accent,
+    fontWeight: FONTS.weights.bold,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: SPACING.sm,
+  },
+  finaleText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.darkGray,
+    lineHeight: 24,
+    fontStyle: "italic",
+  },
 });

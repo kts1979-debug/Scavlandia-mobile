@@ -304,6 +304,8 @@ export interface Hunt {
   stops: HuntStop[];
   reserveStops?: HuntStop[];
   isRoadTripHunt?: boolean;
+  huntIntroduction?: string;
+  huntFinale?: string;
   isMuseumHunt?: boolean;
   isMicroHunt?: boolean;
   startLocation?: string;

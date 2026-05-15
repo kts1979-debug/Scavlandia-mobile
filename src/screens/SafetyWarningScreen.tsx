@@ -43,6 +43,18 @@ export default function SafetyWarningScreen() {
           Please read before starting your adventure
         </Text>
 
+        {/* Hunt Introduction */}
+        {(params.hunt
+          ? JSON.parse(params.hunt as string).huntIntroduction
+          : null) && (
+          <View style={styles.introCard}>
+            <Text style={styles.introLabel}>🗺️ Your Adventure</Text>
+            <Text style={styles.introText}>
+              {JSON.parse(params.hunt as string).huntIntroduction}
+            </Text>
+          </View>
+        )}
+
         {/* Warning cards */}
         {[
           {
@@ -230,5 +242,25 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.medium,
+  },
+  introCard: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  introLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: "#AED6F1",
+    fontWeight: FONTS.weights.bold,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: SPACING.sm,
+  },
+  introText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.white,
+    lineHeight: 24,
+    fontStyle: "italic",
   },
 });
