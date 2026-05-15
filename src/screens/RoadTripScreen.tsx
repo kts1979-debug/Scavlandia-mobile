@@ -111,6 +111,7 @@ export default function RoadTripScreen() {
   };
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
+  const [searching, setSearching] = useState(false);
 
   // ── Step 2 state ──────────────────────────────────────────────
   const [candidates, setCandidates] = useState<any[]>([]);
@@ -193,6 +194,7 @@ export default function RoadTripScreen() {
     }
 
     setLoadingCandidates(true);
+    setSearching(true);
     try {
       const data = await getRoadTripCandidates(
         startLocation.trim(),
@@ -220,6 +222,7 @@ export default function RoadTripScreen() {
       );
     } finally {
       setLoadingCandidates(false);
+      setSearching(false);
     }
   };
 
@@ -454,6 +457,63 @@ export default function RoadTripScreen() {
 
           <View style={{ height: 40 }} />
         </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // ── Searching for stops screen ─────────────────────────────────
+  if (searching) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: COLORS.primary }]}
+      >
+        <View
+          style={{
+            flex: 1,
+            alignItems: "center",
+            justifyContent: "center",
+            padding: SPACING.xl,
+          }}
+        >
+          <Text style={{ fontSize: 72, marginBottom: SPACING.md }}>🛣️</Text>
+          <ActivityIndicator
+            size="large"
+            color={COLORS.accent}
+            style={{ marginBottom: SPACING.lg }}
+          />
+          <Text
+            style={{
+              fontSize: FONTS.sizes.xxl,
+              fontWeight: FONTS.weights.heavy,
+              color: COLORS.white,
+              textAlign: "center",
+              marginBottom: SPACING.sm,
+            }}
+          >
+            Mapping Your Route
+          </Text>
+          <Text
+            style={{
+              fontSize: FONTS.sizes.md,
+              color: "#AED6F1",
+              textAlign: "center",
+              marginBottom: SPACING.xl,
+              lineHeight: 24,
+            }}
+          >
+            {`Searching for great stops between\n${startLocation} and ${endLocation}...`}
+          </Text>
+          <Text
+            style={{
+              fontSize: FONTS.sizes.sm,
+              color: "rgba(255,255,255,0.5)",
+              textAlign: "center",
+              fontStyle: "italic",
+            }}
+          >
+            This can take up to 30 seconds ✨
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
