@@ -17,7 +17,6 @@ import {
   saveHuntPhotos,
   submitStop,
   completeHunt,
-  generateShareCode,
 } from "../services/apiService";
 import {
   updateAllTimeStats,
@@ -27,11 +26,8 @@ import { uploadHuntPhoto } from "../services/storageService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 import {
-  ActivityIndicator,
   Alert,
-  Clipboard,
   Image,
-  Modal,
   ScrollView,
   Share,
   StyleSheet,
@@ -43,8 +39,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import HuntMap from "../components/HuntMap";
 import { useLocation } from "../hooks/useLocation";
-
-// ── Constants ──────────────────────────────────────────────────────
 
 export default function ActiveHuntScreen() {
   // ── Params ─────────────────────────────────────────────────────────
@@ -83,7 +77,9 @@ export default function ActiveHuntScreen() {
   const [showMap, setShowMap] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [hintDeductions, setHintDeductions] = useState(0);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(
+    params.showLeaderboard === "true",
+  );
   const [answerRevealed, setAnswerRevealed] = useState(false);
   const [answerDeductions, setAnswerDeductions] = useState(0);
   const [stopPhotos, setStopPhotos] =
@@ -96,9 +92,6 @@ export default function ActiveHuntScreen() {
   );
   const [triviaCompleted, setTriviaCompleted] = useState(false);
   const [triviaBonus, setTriviaBonus] = useState(0);
-  const [shareModalVisible, setShareModalVisible] = useState(false);
-  const [shareCode, setShareCode] = useState<string | null>(null);
-  const [generatingCode, setGeneratingCode] = useState(false);
 
   // ── Debug log on mount only ────────────────────────────────────────
   useEffect(() => {
@@ -230,22 +223,6 @@ export default function ActiveHuntScreen() {
       });
     } catch (error) {
       console.log("Share cancelled:", error);
-    }
-  };
-
-  // ── Share hunt code (solo share) ───────────────────────────────────
-  const handleShareHunt = async () => {
-    setShareModalVisible(true);
-    if (shareCode) return; // already generated
-    setGeneratingCode(true);
-    try {
-      const code = await generateShareCode(hunt.huntId);
-      setShareCode(code);
-    } catch {
-      Alert.alert("Error", "Could not generate share code. Try again.");
-      setShareModalVisible(false);
-    } finally {
-      setGeneratingCode(false);
     }
   };
 
@@ -693,7 +670,7 @@ export default function ActiveHuntScreen() {
 
             Alert.alert(
               "✅ Stop Swapped!",
-              `Your stop has been replaced with a nearby alternative. Your new clue is waiting!`,
+              "Your stop has been replaced with a nearby alternative. Your new clue is waiting!",
               [
                 {
                   text: "OK",
@@ -1078,14 +1055,6 @@ export default function ActiveHuntScreen() {
             </View>
           )}
 
-          {/* Share Hunt button */}
-          <TouchableOpacity
-            style={styles.shareHuntBtn}
-            onPress={handleShareHunt}
-          >
-            <Text style={styles.shareHuntBtnText}>🔗 Share This Hunt</Text>
-          </TouchableOpacity>
-
           {/* Manual arrival */}
           {!atLocation && (
             <TouchableOpacity
@@ -1103,59 +1072,6 @@ export default function ActiveHuntScreen() {
           )}
         </ScrollView>
       )}
-
-      {/* Share Hunt Modal */}
-      <Modal
-        visible={shareModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShareModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.shareModal}>
-            <Text style={styles.shareModalTitle}>🔗 Share This Hunt</Text>
-            <Text style={styles.shareModalSubtitle}>
-              {
-                "Give this code to a friend. They'll get their own copy of your hunt to complete on their device."
-              }
-            </Text>
-
-            {generatingCode ? (
-              <ActivityIndicator
-                size="large"
-                color={COLORS.accent}
-                style={{ marginVertical: 24 }}
-              />
-            ) : (
-              <>
-                <View style={styles.shareCodeBox}>
-                  <Text style={styles.shareCodeText}>{shareCode}</Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.copyBtn}
-                  onPress={() => {
-                    Clipboard.setString(shareCode || "");
-                    Alert.alert("Copied!", "Share code copied to clipboard.");
-                  }}
-                >
-                  <Text style={styles.copyBtnText}>📋 Copy Code</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            <Text style={styles.shareModalNote}>
-              Each code can only be used once by one person.
-            </Text>
-
-            <TouchableOpacity
-              style={styles.shareModalClose}
-              onPress={() => setShareModalVisible(false)}
-            >
-              <Text style={styles.shareModalCloseText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -1332,20 +1248,6 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.medium,
   },
   swapBtnTextDisabled: { color: COLORS.midGray },
-  shareHuntBtn: {
-    alignSelf: "center",
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-    borderRadius: RADIUS.round,
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
-    marginBottom: SPACING.sm,
-  },
-  shareHuntBtnText: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.primary,
-    fontWeight: FONTS.weights.bold,
-  },
   arrivalButton: {
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
@@ -1439,74 +1341,5 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  shareModal: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: SPACING.xl,
-    paddingBottom: 40,
-    alignItems: "center",
-  },
-  shareModalTitle: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
-    marginBottom: SPACING.sm,
-  },
-  shareModalSubtitle: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.darkGray,
-    textAlign: "center",
-    lineHeight: 20,
-    marginBottom: SPACING.lg,
-  },
-  shareCodeBox: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.xl,
-    marginBottom: SPACING.md,
-    width: "100%",
-    alignItems: "center",
-  },
-  shareCodeText: {
-    fontSize: 42,
-    fontWeight: FONTS.weights.heavy,
-    color: COLORS.white,
-    letterSpacing: 8,
-  },
-  copyBtn: {
-    backgroundColor: COLORS.accent,
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xl,
-    marginBottom: SPACING.md,
-  },
-  copyBtnText: {
-    color: COLORS.white,
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
-  },
-  shareModalNote: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.midGray,
-    textAlign: "center",
-    fontStyle: "italic",
-    marginBottom: SPACING.lg,
-  },
-  shareModalClose: {
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xl,
-  },
-  shareModalCloseText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.primary,
-    fontWeight: FONTS.weights.bold,
   },
 });

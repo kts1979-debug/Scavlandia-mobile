@@ -92,6 +92,23 @@ export default function RoadTripScreen() {
   const [endLocation, setEndLocation] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState("Medium");
+  const RANDOM_INTERESTS_LIST = [
+    "Food & Drink",
+    "History",
+    "Art",
+    "Nature",
+    "Music",
+    "Architecture",
+    "Sports",
+    "Hidden Gems",
+    "Street Art",
+    "Photography",
+  ];
+
+  const handleRandomize = () => {
+    const shuffled = [...RANDOM_INTERESTS_LIST].sort(() => Math.random() - 0.5);
+    setSelectedInterests(shuffled.slice(0, Math.floor(Math.random() * 3) + 3));
+  };
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
 
@@ -328,7 +345,15 @@ export default function RoadTripScreen() {
 
           {/* Interests */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🎯 Interests</Text>
+            <View style={styles.sectionTitleRow}>
+              <Text style={styles.sectionTitle}>🎯 Interests</Text>
+              <TouchableOpacity
+                style={styles.randomBtn}
+                onPress={handleRandomize}
+              >
+                <Text style={styles.randomBtnText}>🎲 Randomize</Text>
+              </TouchableOpacity>
+            </View>
             <Text style={styles.sectionSubtitle}>
               What kind of stops do you want to find?
             </Text>
@@ -362,31 +387,52 @@ export default function RoadTripScreen() {
           {/* Difficulty */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🧩 Clue Difficulty</Text>
-            {DIFFICULTIES.map((d) => (
-              <TouchableOpacity
-                key={d.label}
-                style={[
-                  styles.difficultyCard,
-                  difficulty === d.label && styles.difficultyCardActive,
-                ]}
-                onPress={() => setDifficulty(d.label)}
-              >
-                <View style={styles.difficultyLeft}>
-                  <Text
+            <View style={styles.difficultyRow}>
+              {DIFFICULTIES.map((d) => {
+                const selected = difficulty === d.label;
+                const colors: Record<string, string> = {
+                  Easy: "#27AE60",
+                  Medium: "#F39C12",
+                  Hard: "#C0392B",
+                };
+                const emojis: Record<string, string> = {
+                  Easy: "🟢",
+                  Medium: "🟡",
+                  Hard: "🔴",
+                };
+                return (
+                  <TouchableOpacity
+                    key={d.label}
                     style={[
-                      styles.difficultyLabel,
-                      difficulty === d.label && styles.difficultyLabelActive,
+                      styles.diffBtn,
+                      selected && {
+                        backgroundColor: colors[d.label],
+                        borderColor: colors[d.label],
+                      },
                     ]}
+                    onPress={() => setDifficulty(d.label)}
                   >
-                    {d.label}
-                  </Text>
-                  <Text style={styles.difficultyDesc}>{d.desc}</Text>
-                </View>
-                {difficulty === d.label && (
-                  <Text style={styles.difficultyCheck}>✓</Text>
-                )}
-              </TouchableOpacity>
-            ))}
+                    <Text style={styles.diffEmoji}>{emojis[d.label]}</Text>
+                    <Text
+                      style={[
+                        styles.diffLabel,
+                        selected && styles.diffLabelSelected,
+                      ]}
+                    >
+                      {d.label}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.diffDesc,
+                        selected && styles.diffLabelSelected,
+                      ]}
+                    >
+                      {d.desc}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
           <TouchableOpacity
@@ -620,34 +666,29 @@ const styles = StyleSheet.create({
   },
   interestLabelActive: { color: COLORS.white },
 
-  difficultyCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    borderWidth: 1.5,
-    borderColor: COLORS.lightGray,
-    flexDirection: "row",
+  difficultyRow: { flexDirection: "row", gap: 8 },
+  diffBtn: {
+    flex: 1,
     alignItems: "center",
-    justifyContent: "space-between",
+    padding: 12,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.white,
   },
-  difficultyCardActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: "#EBF5FB",
-  },
-  difficultyLeft: { flex: 1 },
-  difficultyLabel: {
-    fontSize: FONTS.sizes.md,
+  diffEmoji: { fontSize: 22, marginBottom: 4 },
+  diffLabel: {
+    fontSize: FONTS.sizes.sm,
     fontWeight: FONTS.weights.bold,
     color: COLORS.black,
     marginBottom: 2,
+    textAlign: "center",
   },
-  difficultyLabelActive: { color: COLORS.primary },
-  difficultyDesc: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
-  difficultyCheck: {
-    fontSize: FONTS.sizes.xl,
-    color: COLORS.primary,
-    fontWeight: FONTS.weights.heavy,
+  diffLabelSelected: { color: COLORS.white },
+  diffDesc: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    textAlign: "center",
   },
   generateBtn: {
     backgroundColor: "#27AE60",
@@ -756,4 +797,21 @@ const styles = StyleSheet.create({
     maxWidth: 80,
   },
   stopPillRemove: { fontSize: FONTS.sizes.xs, color: COLORS.midGray },
+  sectionTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  randomBtn: {
+    backgroundColor: COLORS.accentPale,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  randomBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.accent,
+    fontWeight: FONTS.weights.bold,
+  },
 });

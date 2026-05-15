@@ -1,13 +1,12 @@
 // src/screens/StopCompleteScreen.tsx
-// Shown after each stop is completed.
-// Celebrates the completion and asks if user wants
-// to continue to the next stop or quit the hunt.
-
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  Clipboard,
+  ActivityIndicator,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -15,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+import { generateShareCode } from "../services/apiService";
 
 export default function StopCompleteScreen() {
   const params = useLocalSearchParams();
@@ -36,8 +36,30 @@ export default function StopCompleteScreen() {
     ? JSON.parse(params.completedIndices as string)
     : [];
 
-  // ── Hunt completion logic ──────────────────────────────────────
+  // ── Share modal state ──────────────────────────────────────────
+  const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+
   const huntData = JSON.parse(hunt);
+  const huntId = huntData.huntId;
+
+  const handleShareHunt = async () => {
+    setShareModalVisible(true);
+    if (shareCode) return;
+    setGeneratingCode(true);
+    try {
+      const code = await generateShareCode(huntId);
+      setShareCode(code);
+    } catch {
+      Alert.alert("Error", "Could not generate share code. Try again.");
+      setShareModalVisible(false);
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
+  // ── Hunt completion logic ──────────────────────────────────────
   const allStopIndices = huntData.stops.map((_: any, i: number) => i);
   const isHuntComplete = allStopIndices.every(
     (i: number) =>
@@ -52,21 +74,12 @@ export default function StopCompleteScreen() {
   );
   const hasMoreSkipped = remainingSkipped.length > 0 && !isHuntComplete;
 
-  console.log("🔍 StopComplete mounted with:");
-  console.log("  stopOrder:", stopOrder);
-  console.log("  totalStops:", totalStops);
-  console.log("  completedIndices:", completedIndices);
-  console.log("  skippedStops:", skippedStops);
-  console.log("  isHuntComplete:", isHuntComplete);
-  console.log("  allStopIndices:", allStopIndices);
-
   // ── Animations ─────────────────────────────────────────────────
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Sequence: pop in badge → fade in content → bounce points
     Animated.sequence([
       Animated.spring(scaleAnim, {
         toValue: 1,
@@ -122,6 +135,24 @@ export default function StopCompleteScreen() {
         quitEarly: isHuntComplete ? "false" : "true",
         skippedStops: JSON.stringify(skippedStops),
         swapsUsed,
+      },
+    });
+  };
+
+  const handleViewLeaderboard = () => {
+    // Navigate to active hunt with leaderboard open
+    router.replace({
+      pathname: "/active-hunt",
+      params: {
+        hunt,
+        sessionCode,
+        stopPhotos,
+        resumeAtStop: String(stopOrder + 1),
+        totalPoints: String(totalPoints),
+        skippedStops: JSON.stringify(skippedStops),
+        swapsUsed,
+        completedIndices: JSON.stringify(completedIndices),
+        showLeaderboard: "true",
       },
     });
   };
@@ -211,7 +242,6 @@ export default function StopCompleteScreen() {
         <Animated.View style={[styles.buttons, { opacity: fadeAnim }]}>
           {isLastStop ? (
             skippedStops.length > 0 ? (
-              // Has skipped stops — ask before showing results
               <View style={styles.skippedPrompt}>
                 <Text style={styles.skippedPromptTitle}>
                   ⏭ You skipped {skippedStops.length} stop
@@ -226,13 +256,9 @@ export default function StopCompleteScreen() {
                   style={styles.continueBtn}
                   onPress={() => {
                     const firstSkippedOrder = skippedStops[0];
-                    // Don't remove from skippedStops yet — ActiveHuntScreen needs it
-                    // to correctly calculate isLastStop. It will be removed when completed.
-
                     const skippedStopIndex = huntData.stops.findIndex(
                       (s: any) => s.order === firstSkippedOrder,
                     );
-
                     router.replace({
                       pathname: "/active-hunt",
                       params: {
@@ -241,7 +267,7 @@ export default function StopCompleteScreen() {
                         stopPhotos,
                         resumeAtStop: String(skippedStopIndex + 1),
                         totalPoints: String(totalPoints),
-                        skippedStops: JSON.stringify(skippedStops), // ← pass ALL skipped, not remainingSkipped
+                        skippedStops: JSON.stringify(skippedStops),
                         swapsUsed,
                         completedIndices: JSON.stringify(completedIndices),
                       },
@@ -259,7 +285,6 @@ export default function StopCompleteScreen() {
                 </TouchableOpacity>
               </View>
             ) : (
-              // No skipped stops — go straight to results
               <TouchableOpacity style={styles.continueBtn} onPress={handleQuit}>
                 <Text style={styles.continueBtnText}>🏆 See My Results</Text>
               </TouchableOpacity>
@@ -272,6 +297,24 @@ export default function StopCompleteScreen() {
               >
                 <Text style={styles.continueBtnText}>Next Stop →</Text>
               </TouchableOpacity>
+
+              {/* Share hunt link */}
+              <TouchableOpacity
+                style={styles.linkBtn}
+                onPress={handleShareHunt}
+              >
+                <Text style={styles.linkBtnText}>🔗 Share This Hunt</Text>
+              </TouchableOpacity>
+
+              {/* View leaderboard — competing only */}
+              {sessionCode ? (
+                <TouchableOpacity
+                  style={styles.linkBtn}
+                  onPress={handleViewLeaderboard}
+                >
+                  <Text style={styles.linkBtnText}>🏆 View Leaderboard</Text>
+                </TouchableOpacity>
+              ) : null}
 
               <TouchableOpacity
                 style={styles.quitBtn}
@@ -296,6 +339,54 @@ export default function StopCompleteScreen() {
           )}
         </Animated.View>
       </View>
+
+      {/* Share Hunt Modal */}
+      <Modal
+        visible={shareModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShareModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.shareModal}>
+            <Text style={styles.shareModalTitle}>🔗 Share This Hunt</Text>
+            <Text style={styles.shareModalSubtitle}>
+              Give this code to a friend to get their own copy of your hunt.
+            </Text>
+            {generatingCode ? (
+              <ActivityIndicator
+                size="large"
+                color={COLORS.accent}
+                style={{ marginVertical: 24 }}
+              />
+            ) : (
+              <>
+                <View style={styles.shareCodeBox}>
+                  <Text style={styles.shareCodeText}>{shareCode}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.copyBtn}
+                  onPress={() => {
+                    Clipboard.setString(shareCode || "");
+                    Alert.alert("Copied!", "Share code copied to clipboard.");
+                  }}
+                >
+                  <Text style={styles.copyBtnText}>📋 Copy Code</Text>
+                </TouchableOpacity>
+              </>
+            )}
+            <Text style={styles.shareModalNote}>
+              Each code can only be used once by one person.
+            </Text>
+            <TouchableOpacity
+              style={styles.shareModalClose}
+              onPress={() => setShareModalVisible(false)}
+            >
+              <Text style={styles.shareModalCloseText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -403,6 +494,17 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
   },
+  linkBtn: {
+    backgroundColor: "transparent",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.sm,
+    alignItems: "center",
+  },
+  linkBtnText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.medium,
+  },
   quitBtn: {
     backgroundColor: "transparent",
     borderRadius: RADIUS.lg,
@@ -435,5 +537,74 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.7)",
     textAlign: "center",
     marginBottom: SPACING.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  shareModal: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: SPACING.xl,
+    paddingBottom: 40,
+    alignItems: "center",
+  },
+  shareModalTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: SPACING.sm,
+  },
+  shareModalSubtitle: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: SPACING.lg,
+  },
+  shareCodeBox: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
+    width: "100%",
+    alignItems: "center",
+  },
+  shareCodeText: {
+    fontSize: 42,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+    letterSpacing: 8,
+  },
+  copyBtn: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.lg,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
+  },
+  copyBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+  },
+  shareModalNote: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.midGray,
+    textAlign: "center",
+    fontStyle: "italic",
+    marginBottom: SPACING.lg,
+  },
+  shareModalClose: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+  },
+  shareModalCloseText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.primary,
+    fontWeight: FONTS.weights.bold,
   },
 });

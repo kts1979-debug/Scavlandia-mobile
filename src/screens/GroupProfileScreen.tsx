@@ -100,6 +100,38 @@ export default function GroupProfileScreen() {
       return Alert.alert("Missing info", "Please enter a city name");
     if (!mobility)
       return Alert.alert("Missing info", "Please select a mobility option");
+    // Warn if user selected only niche interests that may have limited spots
+    const nicheInterests = [
+      "True Crime",
+      "Ghosts",
+      "Film & TV",
+      "Street Art",
+      "Architecture",
+      "Music",
+    ];
+    const selectedNiche = interests.filter((i) => nicheInterests.includes(i));
+    const hasOnlyNiche =
+      interests.length > 0 &&
+      interests.length <= 2 &&
+      selectedNiche.length === interests.length;
+
+    if (hasOnlyNiche && !isSpecialty) {
+      const proceed = await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          "Limited Spots Available",
+          `We may find fewer stops for "${interests.join(" & ")}" alone in some cities.\n\nAdding more interests like History, Art, or Hidden Gems will give you a richer hunt.`,
+          [
+            {
+              text: "Add More Interests",
+              style: "cancel",
+              onPress: () => resolve(false),
+            },
+            { text: "Generate Anyway", onPress: () => resolve(true) },
+          ],
+        );
+      });
+      if (!proceed) return;
+    }
 
     const finalInterests = isSpecialty
       ? []

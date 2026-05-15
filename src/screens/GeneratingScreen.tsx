@@ -193,7 +193,9 @@ export default function GeneratingScreen() {
         <Text style={styles.note}>
           {isMuseumHunt
             ? "Crafting your artwork clues..."
-            : "This takes about 20–30 seconds"}
+            : isRoadTrip
+              ? "Mapping your route and finding stops along the way..."
+              : "This can take up to a minute — we're crafting real clues for real places ✨"}
         </Text>
 
         {/* Logo watermark */}

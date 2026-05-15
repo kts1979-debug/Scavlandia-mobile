@@ -30,8 +30,6 @@ export default function HuntSetupScreen() {
   const isSolo = playMode === "solo";
 
   const [sessionAction, setAction] = useState<"create" | "join">("create");
-  const [isTeam, setIsTeam] = useState(false);
-  const [teamName, setTeamName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [shareCode, setShareCode] = useState<string | null>(null);
@@ -65,16 +63,13 @@ export default function HuntSetupScreen() {
 
   // ── Compete: create session ───────────────────────────────────
   const handleCreateSession = async () => {
-    if (isTeam && !teamName.trim()) {
-      return Alert.alert("Missing info", "Please enter a team name");
-    }
     setLoading(true);
     try {
       const result = await createSession(
         hunt.huntTitle,
         hunt.city,
-        isTeam,
-        teamName.trim() || undefined,
+        false,
+        undefined,
       );
       showSessionCode(result.sessionCode);
     } catch (error: any) {
@@ -125,16 +120,13 @@ export default function HuntSetupScreen() {
     if (!joinCode.trim()) {
       return Alert.alert("Missing info", "Please enter a session code");
     }
-    if (isTeam && !teamName.trim()) {
-      return Alert.alert("Missing info", "Please enter a team name");
-    }
     setLoading(true);
     try {
       const result = await joinSession(
         joinCode.trim().toUpperCase(),
         hunt.city,
-        isTeam,
-        teamName.trim() || undefined,
+        false,
+        undefined,
       );
       Alert.alert(
         "✅ Joined Session!",
@@ -232,51 +224,6 @@ export default function HuntSetupScreen() {
                   "🌍 Everyone generates their own unique hunt in whatever city they are in — your scores are combined on a live leaderboard. May the best explorer win!"
                 }
               </Text>
-            </Card>
-
-            {/* Individual vs Team */}
-            <Card style={styles.section}>
-              <Text style={styles.sectionTitle}>Individual or team?</Text>
-              <View style={styles.modeRow}>
-                <TouchableOpacity
-                  style={[styles.modeBtn, !isTeam && styles.modeBtnActive]}
-                  onPress={() => setIsTeam(false)}
-                >
-                  <Text style={styles.modeEmoji}>🏅</Text>
-                  <Text
-                    style={[
-                      styles.modeLabel,
-                      !isTeam && styles.modeLabelActive,
-                    ]}
-                  >
-                    Individual
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modeBtn, isTeam && styles.modeBtnActive]}
-                  onPress={() => setIsTeam(true)}
-                >
-                  <Text style={styles.modeEmoji}>🏆</Text>
-                  <Text
-                    style={[styles.modeLabel, isTeam && styles.modeLabelActive]}
-                  >
-                    Team
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              {isTeam && (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Team Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={teamName}
-                    onChangeText={setTeamName}
-                    placeholder="e.g. Team Rocket"
-                    placeholderTextColor={COLORS.midGray}
-                    maxLength={20}
-                  />
-                </View>
-              )}
             </Card>
 
             {/* Create or Join */}

@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -126,6 +127,40 @@ export default function MicroHuntScreen() {
           },
         });
         return;
+      }
+
+      // Warn if user selected only niche interests with potentially limited spots
+      if (!isSpecialty && interests.length > 0 && interests.length <= 2) {
+        const nicheInterests = [
+          "True Crime",
+          "Ghosts",
+          "Film & TV",
+          "Street Art",
+          "Architecture",
+          "Music",
+        ];
+        const selectedNiche = interests.filter((i) =>
+          nicheInterests.includes(i),
+        );
+        if (selectedNiche.length === interests.length) {
+          setPhase("intro");
+          const proceed = await new Promise<boolean>((resolve) => {
+            Alert.alert(
+              "Limited Spots Nearby",
+              `We may find fewer stops for "${interests.join(" & ")}" in your immediate area.\n\nAdding more interests like History, Art, or Hidden Gems will give you a richer hunt.`,
+              [
+                {
+                  text: "Add More Interests",
+                  style: "cancel",
+                  onPress: () => resolve(false),
+                },
+                { text: "Generate Anyway", onPress: () => resolve(true) },
+              ],
+            );
+          });
+          if (!proceed) return;
+          setPhase("generating");
+        }
       }
 
       const hunt = await generateMicroHunt(
