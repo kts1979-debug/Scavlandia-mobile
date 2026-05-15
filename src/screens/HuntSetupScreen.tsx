@@ -1,6 +1,7 @@
 // src/screens/HuntSetupScreen.tsx
-// Shown before a hunt starts — lets users choose solo/team mode
-// and create or join a leaderboard session.
+// Shown after hunt generation.
+// Solo mode: shows share code option then starts hunt.
+// Compete mode: shows create/join session then starts hunt.
 
 import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
@@ -19,18 +20,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { createSession, joinSession } from "../services/leaderboardService";
+import { generateShareCode } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 export default function HuntSetupScreen() {
   const params = useLocalSearchParams();
   const hunt = JSON.parse(params.hunt as string);
+  const playMode = (params.playMode as string) || "solo";
+  const isSolo = playMode === "solo";
 
-  const [mode, setMode] = useState<"solo" | "session">("solo");
   const [sessionAction, setAction] = useState<"create" | "join">("create");
   const [isTeam, setIsTeam] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [loadingShareCode, setLoadingShareCode] = useState(false);
 
   const handleStartHunt = async (sessionCode?: string) => {
     router.replace({
@@ -42,10 +47,23 @@ export default function HuntSetupScreen() {
     });
   };
 
-  const handleSolo = () => {
-    handleStartHunt();
+  // ── Solo: generate share code ─────────────────────────────────
+  const handleGenerateShareCode = async () => {
+    setLoadingShareCode(true);
+    try {
+      const code = await generateShareCode(hunt.huntId);
+      setShareCode(code);
+    } catch {
+      Alert.alert(
+        "Error",
+        "Could not generate share code. You can still start your hunt.",
+      );
+    } finally {
+      setLoadingShareCode(false);
+    }
   };
 
+  // ── Compete: create session ───────────────────────────────────
   const handleCreateSession = async () => {
     if (isTeam && !teamName.trim()) {
       return Alert.alert("Missing info", "Please enter a team name");
@@ -58,8 +76,6 @@ export default function HuntSetupScreen() {
         isTeam,
         teamName.trim() || undefined,
       );
-
-      // Show the code with share options
       showSessionCode(result.sessionCode);
     } catch (error: any) {
       Alert.alert(
@@ -79,18 +95,13 @@ export default function HuntSetupScreen() {
         {
           text: "📋 Copy Code",
           onPress: async () => {
-            // Copy to clipboard
             await Clipboard.setStringAsync(sessionCode);
-            Alert.alert(
-              "✅ Copied!",
-              "Code copied to clipboard. Paste it anywhere to share.",
-              [
-                {
-                  text: "Start Hunt",
-                  onPress: () => handleStartHunt(sessionCode),
-                },
-              ],
-            );
+            Alert.alert("✅ Copied!", "Code copied to clipboard.", [
+              {
+                text: "Start Hunt",
+                onPress: () => handleStartHunt(sessionCode),
+              },
+            ]);
           },
         },
         {
@@ -100,20 +111,16 @@ export default function HuntSetupScreen() {
               message:
                 `🗺️ Join my Scavlandia scavenger hunt!\n\n` +
                 `Use session code: ${sessionCode}\n\n` +
-                `Open Scavlandia, start a hunt in any city, ` +
-                `tap "Compete" and enter this code to join my leaderboard. Let's see who wins! 🏆`,
-              title: "Join my Scavlandia Hunt!",
+                `Open Scavlandia, start a hunt in any city, tap "Compete" and enter this code. Let's see who wins! 🏆`,
             });
           },
         },
-        {
-          text: "Start Hunt",
-          onPress: () => handleStartHunt(sessionCode),
-        },
+        { text: "Start Hunt", onPress: () => handleStartHunt(sessionCode) },
       ],
     );
   };
 
+  // ── Compete: join session ─────────────────────────────────────
   const handleJoinSession = async () => {
     if (!joinCode.trim()) {
       return Alert.alert("Missing info", "Please enter a session code");
@@ -156,7 +163,6 @@ export default function HuntSetupScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <Text style={styles.emoji}>🏁</Text>
         <Text style={styles.title}>Ready to Hunt?</Text>
         <Text style={styles.huntName} numberOfLines={2}>
@@ -164,70 +170,70 @@ export default function HuntSetupScreen() {
         </Text>
         <Text style={styles.city}>📍 {hunt.city}</Text>
 
-        {/* Solo vs Session */}
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>How are you playing?</Text>
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[styles.modeBtn, mode === "solo" && styles.modeBtnActive]}
-              onPress={() => setMode("solo")}
-            >
-              <Text style={styles.modeEmoji}>🧍</Text>
-              <Text
-                style={[
-                  styles.modeLabel,
-                  mode === "solo" && styles.modeLabelActive,
-                ]}
-              >
-                Solo
+        {/* ── SOLO FLOW ─────────────────────────────────────────── */}
+        {isSolo && (
+          <>
+            <Card style={styles.section}>
+              <Text style={styles.sectionTitle}>🔗 Share This Hunt</Text>
+              <Text style={styles.sectionDesc}>
+                Want a friend to follow along on the same hunt? Generate a share
+                code and send it to them — they get their own copy on their
+                device.
               </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  mode === "solo" && styles.modeSubActive,
-                ]}
-              >
-                Just you
+              {shareCode ? (
+                <View style={styles.codeBox}>
+                  <Text style={styles.codeText}>{shareCode}</Text>
+                  <TouchableOpacity
+                    style={styles.copyBtn}
+                    onPress={async () => {
+                      await Clipboard.setStringAsync(shareCode);
+                      Alert.alert("Copied!", "Share code copied to clipboard.");
+                    }}
+                  >
+                    <Text style={styles.copyBtnText}>📋 Copy</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <Button
+                  label={
+                    loadingShareCode ? "Generating..." : "Generate Share Code"
+                  }
+                  onPress={handleGenerateShareCode}
+                  variant="secondary"
+                  size="md"
+                  emoji="🔗"
+                  loading={loadingShareCode}
+                  style={styles.shareCodeBtn}
+                />
+              )}
+              <Text style={styles.shareNote}>
+                Each code can only be used once. Optional — you can skip this
+                and start now.
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                mode === "session" && styles.modeBtnActive,
-              ]}
-              onPress={() => setMode("session")}
-            >
-              <Text style={styles.modeEmoji}>👥</Text>
-              <Text
-                style={[
-                  styles.modeLabel,
-                  mode === "session" && styles.modeLabelActive,
-                ]}
-              >
-                Compete
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  mode === "session" && styles.modeSubActive,
-                ]}
-              >
-                Any city
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Card>
+            </Card>
 
-        {/* Session options */}
-        {mode === "session" && (
+            <Button
+              label="Start Hunt"
+              onPress={() => handleStartHunt()}
+              variant="accent"
+              size="lg"
+              emoji="🚀"
+              style={styles.startBtn}
+            />
+          </>
+        )}
+
+        {/* ── COMPETE FLOW ──────────────────────────────────────── */}
+        {!isSolo && (
           <>
             <Card style={styles.section}>
               <Text style={styles.competingExplainer}>
-                🌍 Everyone generates their own unique hunt in whatever city
-                they are in — your scores are combined on a live leaderboard.
-                May the best explorer win!
+                {
+                  "🌍 Everyone generates their own unique hunt in whatever city they are in — your scores are combined on a live leaderboard. May the best explorer win!"
+                }
               </Text>
             </Card>
+
             {/* Individual vs Team */}
             <Card style={styles.section}>
               <Text style={styles.sectionTitle}>Individual or team?</Text>
@@ -258,8 +264,6 @@ export default function HuntSetupScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
-
-              {/* Team name input */}
               {isTeam && (
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Team Name</Text>
@@ -330,8 +334,6 @@ export default function HuntSetupScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
-
-              {/* Join code input */}
               {sessionAction === "join" && (
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Session Code</Text>
@@ -347,50 +349,37 @@ export default function HuntSetupScreen() {
                 </View>
               )}
             </Card>
+
+            {sessionAction === "create" ? (
+              <Button
+                label="Create Session & Start"
+                onPress={handleCreateSession}
+                variant="accent"
+                size="lg"
+                emoji="➕"
+                loading={loading}
+                style={styles.startBtn}
+              />
+            ) : (
+              <Button
+                label="Join Session & Start"
+                onPress={handleJoinSession}
+                variant="accent"
+                size="lg"
+                emoji="🔗"
+                loading={loading}
+                style={styles.startBtn}
+              />
+            )}
+
+            <Button
+              label="Skip — Play Solo Instead"
+              onPress={() => handleStartHunt()}
+              variant="ghost"
+              size="md"
+              style={styles.skipBtn}
+            />
           </>
-        )}
-
-        {/* Action buttons */}
-        {mode === "solo" ? (
-          <Button
-            label="Start Hunt"
-            onPress={handleSolo}
-            variant="accent"
-            size="lg"
-            emoji="🚀"
-            style={styles.startBtn}
-          />
-        ) : sessionAction === "create" ? (
-          <Button
-            label="Create Session & Start"
-            onPress={handleCreateSession}
-            variant="accent"
-            size="lg"
-            emoji="➕"
-            loading={loading}
-            style={styles.startBtn}
-          />
-        ) : (
-          <Button
-            label="Join Session & Start"
-            onPress={handleJoinSession}
-            variant="accent"
-            size="lg"
-            emoji="🔗"
-            loading={loading}
-            style={styles.startBtn}
-          />
-        )}
-
-        {/* Skip to solo */}
-        {mode === "session" && (
-          <Button
-            label="Skip — Play Solo Instead"
-            onPress={handleSolo}
-            variant="ghost"
-            size="md"
-            style={styles.skipBtn}
-          />
         )}
       </ScrollView>
     </SafeAreaView>
@@ -431,6 +420,51 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
     color: COLORS.primary,
     marginBottom: SPACING.sm,
+  },
+  sectionDesc: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    lineHeight: 20,
+    marginBottom: SPACING.md,
+  },
+  competingExplainer: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  codeBox: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    alignItems: "center",
+    marginBottom: SPACING.sm,
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  codeText: {
+    fontSize: 32,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+    letterSpacing: 6,
+  },
+  copyBtn: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+  },
+  copyBtnText: {
+    color: COLORS.white,
+    fontWeight: FONTS.weights.bold,
+    fontSize: FONTS.sizes.sm,
+  },
+  shareCodeBtn: { marginBottom: SPACING.sm },
+  shareNote: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.midGray,
+    fontStyle: "italic",
+    textAlign: "center",
   },
   modeRow: { flexDirection: "row", gap: SPACING.sm },
   modeBtn: {
@@ -480,10 +514,4 @@ const styles = StyleSheet.create({
   },
   startBtn: { marginTop: SPACING.md },
   skipBtn: { marginTop: SPACING.sm },
-  competingExplainer: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.darkGray,
-    lineHeight: 20,
-    textAlign: "center",
-  },
 });

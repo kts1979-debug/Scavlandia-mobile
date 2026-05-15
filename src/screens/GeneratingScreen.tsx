@@ -114,7 +114,10 @@ export default function GeneratingScreen() {
 
       router.replace({
         pathname: "/hunt-setup",
-        params: { hunt: JSON.stringify(result.hunt) },
+        params: {
+          hunt: JSON.stringify(result.hunt),
+          playMode: profile.playMode || "solo",
+        },
       });
     } catch (error: any) {
       const errorMsg = error.response?.data?.error || "";

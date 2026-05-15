@@ -1,6 +1,6 @@
 // src/screens/MicroHuntScreen.tsx
 import * as Location from "expo-location";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -61,14 +61,20 @@ const RANDOM_INTERESTS = [
 ];
 
 export default function MicroHuntScreen() {
+  const params = useLocalSearchParams();
+  const huntStyle = (params.huntStyle as string) || "personalized";
+  const incomingSpecialtyKey = (params.specialtyKey as string) || "";
+
   const [phase, setPhase] = useState<Phase>("intro");
   const [error, setError] = useState<string | null>(null);
   const [stopCount, setStopCount] = useState(2);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "easy",
   );
-  const [specialtyHunt, setSpecialtyHunt] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
+  const [playMode, setPlayMode] = useState<"solo" | "compete">("solo");
+
+  const isSpecialty = huntStyle === "specialty";
 
   const toggleInterest = (label: string) => {
     setInterests((prev) =>
@@ -78,10 +84,7 @@ export default function MicroHuntScreen() {
 
   const handleRandomize = () => {
     const shuffled = [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5);
-    const count = Math.floor(Math.random() * 3) + 3;
-    setInterests(shuffled.slice(0, count));
-    const keys = Object.keys(SPECIALTY_HUNTS);
-    setSpecialtyHunt(keys[Math.floor(Math.random() * keys.length)]);
+    setInterests(shuffled.slice(0, Math.floor(Math.random() * 3) + 3));
   };
 
   const handleStart = async () => {
@@ -101,13 +104,14 @@ export default function MicroHuntScreen() {
 
       setPhase("generating");
 
-      const finalInterests =
-        interests.length > 0
+      const finalInterests = isSpecialty
+        ? []
+        : interests.length > 0
           ? interests
           : [...RANDOM_INTERESTS].sort(() => Math.random() - 0.5).slice(0, 4);
 
-      const selectedSpecialty = specialtyHunt
-        ? SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]
+      const selectedSpecialty = incomingSpecialtyKey
+        ? SPECIALTY_HUNTS[incomingSpecialtyKey as keyof typeof SPECIALTY_HUNTS]
         : null;
 
       const canGenerate = await canGenerateHunt("micro");
@@ -135,17 +139,14 @@ export default function MicroHuntScreen() {
       );
 
       router.replace({
-        pathname: "/safety-warning",
-        params: { hunt: JSON.stringify(hunt), sessionCode: "" },
+        pathname: "/hunt-setup",
+        params: {
+          hunt: JSON.stringify(hunt),
+          playMode,
+        },
       });
     } catch (err: any) {
       console.error("Micro hunt error:", err.message);
-      console.error("Micro hunt error detail:", err.response?.data);
-      console.error("Micro hunt error status:", err.response?.status);
-      console.error(
-        "Micro hunt full error:",
-        JSON.stringify(err.response?.data),
-      );
       setError(
         err.response?.data?.error ||
           "Could not generate a micro hunt. Please try again.",
@@ -230,7 +231,15 @@ export default function MicroHuntScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>⚡ Micro Hunt</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
+          <Text style={styles.backText}>‹ Back</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.pageTitle}>
+          {isSpecialty && incomingSpecialtyKey
+            ? `${SPECIALTY_HUNTS[incomingSpecialtyKey as keyof typeof SPECIALTY_HUNTS]?.emoji} Micro Hunt`
+            : "⚡ Micro Hunt"}
+        </Text>
         <Text style={styles.pageSubtitle}>
           {"A quick adventure built around where you are right now"}
         </Text>
@@ -262,110 +271,126 @@ export default function MicroHuntScreen() {
           </Text>
         </Card>
 
-        {/* Interests */}
+        {/* Play mode */}
         <Card style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <SectionHeader emoji="❤️" title="What do you love?" />
-            <View style={styles.optionalRow}>
-              <Text style={styles.optionalLabel}>Optional</Text>
-              <TouchableOpacity
-                style={styles.randomBtn}
-                onPress={handleRandomize}
-              >
-                <Text style={styles.randomBtnText}>🎲 Randomize</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <SectionHeader emoji="🏁" title="How are you playing?" />
           <Text style={styles.hint}>
-            Pick what fits — or tap Randomize to let us choose
+            Solo hunts include a shareable code. Competing hunts join a live
+            leaderboard.
           </Text>
-          {interests.length > 0 && (
+          <View style={styles.modeRow}>
             <TouchableOpacity
-              style={styles.clearBtn}
-              onPress={() => setInterests([])}
+              style={[
+                styles.modeBtn,
+                playMode === "solo" && styles.modeBtnActive,
+              ]}
+              onPress={() => setPlayMode("solo")}
             >
-              <Text style={styles.clearBtnText}>✕ Clear selections</Text>
+              <Text style={styles.modeEmoji}>🧍</Text>
+              <Text
+                style={[
+                  styles.modeLabel,
+                  playMode === "solo" && styles.modeLabelActive,
+                ]}
+              >
+                Solo / Group
+              </Text>
+              <Text
+                style={[
+                  styles.modeSub,
+                  playMode === "solo" && styles.modeSubActive,
+                ]}
+              >
+                Share hunt with a friend
+              </Text>
             </TouchableOpacity>
-          )}
-          <View style={styles.chipGrid}>
-            {INTERESTS.map(({ label, emoji }) => {
-              const selected = interests.includes(label);
-              return (
-                <TouchableOpacity
-                  key={label}
-                  style={[styles.chip, selected && styles.chipSelected]}
-                  onPress={() => toggleInterest(label)}
-                >
-                  <Text style={styles.chipEmoji}>{emoji}</Text>
-                  <Text
-                    style={[
-                      styles.chipText,
-                      selected && styles.chipTextSelected,
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            <TouchableOpacity
+              style={[
+                styles.modeBtn,
+                playMode === "compete" && styles.modeBtnActive,
+              ]}
+              onPress={() => setPlayMode("compete")}
+            >
+              <Text style={styles.modeEmoji}>🏆</Text>
+              <Text
+                style={[
+                  styles.modeLabel,
+                  playMode === "compete" && styles.modeLabelActive,
+                ]}
+              >
+                Compete
+              </Text>
+              <Text
+                style={[
+                  styles.modeSub,
+                  playMode === "compete" && styles.modeSubActive,
+                ]}
+              >
+                Live leaderboard
+              </Text>
+            </TouchableOpacity>
           </View>
+          {playMode === "compete" && (
+            <View style={styles.competingNote}>
+              <Text style={styles.competingNoteText}>
+                {
+                  "🌍 Everyone generates their own unique hunt wherever they are — scores combine on a live leaderboard."
+                }
+              </Text>
+            </View>
+          )}
         </Card>
 
-        {/* Specialty Hunt */}
-        <Card style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <SectionHeader emoji="⭐" title="Specialty Hunt" />
-            <Text style={styles.optionalLabel}>Optional</Text>
-          </View>
-          <Text style={styles.hint}>
-            Turn your hunt into a themed experience
-          </Text>
-          {specialtyHunt !== "" && (
-            <TouchableOpacity
-              style={styles.clearBtn}
-              onPress={() => setSpecialtyHunt("")}
-            >
-              <Text style={styles.clearBtnText}>✕ Clear specialty</Text>
-            </TouchableOpacity>
-          )}
-          {Object.entries(SPECIALTY_HUNTS).map(([key, s]) => {
-            const selected = specialtyHunt === key;
-            return (
+        {/* Interests — personalized only */}
+        {!isSpecialty && (
+          <Card style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <SectionHeader emoji="❤️" title="What do you love?" />
+              <View style={styles.optionalRow}>
+                <Text style={styles.optionalLabel}>Optional</Text>
+                <TouchableOpacity
+                  style={styles.randomBtn}
+                  onPress={handleRandomize}
+                >
+                  <Text style={styles.randomBtnText}>🎲 Randomize</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <Text style={styles.hint}>
+              Pick what fits — or tap Randomize to let us choose
+            </Text>
+            {interests.length > 0 && (
               <TouchableOpacity
-                key={key}
-                style={[
-                  styles.vibeRow,
-                  selected && {
-                    backgroundColor: s.color,
-                    borderColor: s.color,
-                  },
-                ]}
-                onPress={() => setSpecialtyHunt(selected ? "" : key)}
+                style={styles.clearBtn}
+                onPress={() => setInterests([])}
               >
-                <Text style={styles.optionEmoji}>{s.emoji}</Text>
-                <View style={styles.vibeContent}>
-                  <Text
-                    style={[
-                      styles.vibeLabel,
-                      selected && styles.optionTextSelected,
-                    ]}
-                  >
-                    {s.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.vibeDesc,
-                      selected && styles.vibeDescSelected,
-                    ]}
-                  >
-                    {s.description}
-                  </Text>
-                </View>
-                {selected && <Text style={styles.checkmark}>✓</Text>}
+                <Text style={styles.clearBtnText}>✕ Clear selections</Text>
               </TouchableOpacity>
-            );
-          })}
-        </Card>
+            )}
+            <View style={styles.chipGrid}>
+              {INTERESTS.map(({ label, emoji }) => {
+                const selected = interests.includes(label);
+                return (
+                  <TouchableOpacity
+                    key={label}
+                    style={[styles.chip, selected && styles.chipSelected]}
+                    onPress={() => toggleInterest(label)}
+                  >
+                    <Text style={styles.chipEmoji}>{emoji}</Text>
+                    <Text
+                      style={[
+                        styles.chipText,
+                        selected && styles.chipTextSelected,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </Card>
+        )}
 
         {/* Difficulty */}
         <Card style={styles.section}>
@@ -431,6 +456,12 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
   },
   scroll: { padding: SPACING.md, paddingBottom: 40 },
+  backRow: { marginBottom: SPACING.sm },
+  backText: {
+    color: COLORS.primary,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+  },
   pageTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
@@ -510,27 +541,46 @@ const styles = StyleSheet.create({
   chipEmoji: { fontSize: 14 },
   chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
   chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  vibeRow: {
-    flexDirection: "row",
+  modeRow: { flexDirection: "row", gap: SPACING.sm },
+  modeBtn: {
+    flex: 1,
     alignItems: "center",
-    padding: 14,
+    padding: SPACING.md,
     borderRadius: RADIUS.md,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: COLORS.midGray,
-    marginBottom: 8,
-    gap: 10,
+    backgroundColor: COLORS.offWhite,
   },
-  vibeContent: { flex: 1 },
-  vibeLabel: {
+  modeBtnActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  modeEmoji: { fontSize: 28, marginBottom: 6 },
+  modeLabel: {
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
     color: COLORS.black,
+    marginBottom: 2,
+    textAlign: "center",
   },
-  vibeDesc: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
-  vibeDescSelected: { color: "rgba(255,255,255,0.8)" },
-  optionEmoji: { fontSize: 18 },
-  optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  checkmark: { fontSize: 18, color: COLORS.white },
+  modeLabelActive: { color: COLORS.white },
+  modeSub: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    textAlign: "center",
+  },
+  modeSubActive: { color: "rgba(255,255,255,0.7)" },
+  competingNote: {
+    backgroundColor: COLORS.accentPale,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  competingNoteText: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.accent,
+    lineHeight: 20,
+  },
   difficultyRow: { flexDirection: "row", gap: 8 },
   diffBtn: {
     flex: 1,

@@ -28,7 +28,12 @@ export default function HuntTypeScreen() {
         {/* City Hunt */}
         <TouchableOpacity
           style={styles.card}
-          onPress={() => router.push("/group-profile")}
+          onPress={() =>
+            router.push({
+              pathname: "/hunt-style",
+              params: { huntType: "city" },
+            })
+          }
           activeOpacity={0.85}
         >
           <Text style={styles.cardEmoji}>🏙️</Text>
@@ -86,7 +91,12 @@ export default function HuntTypeScreen() {
         {/* Micro Hunt */}
         <TouchableOpacity
           style={[styles.card, styles.cardMicro]}
-          onPress={() => router.push("/micro-hunt")}
+          onPress={() =>
+            router.push({
+              pathname: "/hunt-style",
+              params: { huntType: "micro" },
+            })
+          }
           activeOpacity={0.85}
         >
           <Text style={styles.cardEmoji}>⚡</Text>

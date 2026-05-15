@@ -21,7 +21,7 @@ import MapView, {
 } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getRoadTripCandidates } from "../services/apiService";
-import { COLORS, FONTS, RADIUS, SPACING, SPECIALTY_HUNTS } from "../theme";
+import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍽️" },
@@ -91,7 +91,6 @@ export default function RoadTripScreen() {
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [specialtyHunt, setSpecialtyHunt] = useState("");
   const [difficulty, setDifficulty] = useState("Medium");
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
@@ -220,10 +219,6 @@ export default function RoadTripScreen() {
       (a, b) => a.routeFraction - b.routeFraction,
     );
 
-    const selectedSpecialty = specialtyHunt
-      ? SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]
-      : null;
-
     // Unselected candidates for Add Stop feature
     const unselectedCandidates = candidates.filter(
       (c) => !selectedStops.find((s) => s.placeId === c.placeId),
@@ -240,13 +235,9 @@ export default function RoadTripScreen() {
           selectedStops: sortedStops,
           stopCount: sortedStops.length,
           interests: selectedInterests,
-          vibe: specialtyHunt || null,
-          specialtyHunt: specialtyHunt || null,
-          specialtyLabel: selectedSpecialty?.label || null,
-          specialtySpotFocus: selectedSpecialty?.spotFocus || null,
-          clueTheme: selectedSpecialty?.clueTheme || "fun and educational",
-          huntVibe: selectedSpecialty?.huntVibe || "fun and educational",
-          tone: selectedSpecialty?.clueTheme || "fun and educational",
+          specialtyHunt: null,
+          specialtyLabel: null,
+          specialtySpotFocus: null,
           difficulty: difficulty.toLowerCase(),
           timeBetweenStops: 60,
           ages: 30,
@@ -361,50 +352,6 @@ export default function RoadTripScreen() {
                       ]}
                     >
                       {interest.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Specialty Hunt */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>⭐ Specialty Hunt</Text>
-            <Text style={styles.sectionSubtitle}>
-              Shapes both stop selection and clue style (optional)
-            </Text>
-            {specialtyHunt !== "" && (
-              <TouchableOpacity
-                style={styles.clearSpecialtyBtn}
-                onPress={() => setSpecialtyHunt("")}
-              >
-                <Text style={styles.clearSpecialtyText}>✕ Clear</Text>
-              </TouchableOpacity>
-            )}
-            <View style={styles.vibeGrid}>
-              {Object.entries(SPECIALTY_HUNTS).map(([key, s]) => {
-                const selected = specialtyHunt === key;
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[
-                      styles.vibeChip,
-                      selected && {
-                        backgroundColor: s.color,
-                        borderColor: s.color,
-                      },
-                    ]}
-                    onPress={() => setSpecialtyHunt(selected ? "" : key)}
-                  >
-                    <Text style={styles.vibeEmoji}>{s.emoji}</Text>
-                    <Text
-                      style={[
-                        styles.vibeLabel,
-                        selected && styles.vibeLabelActive,
-                      ]}
-                    >
-                      {s.label}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -672,26 +619,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.medium,
   },
   interestLabelActive: { color: COLORS.white },
-  vibeGrid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm },
-  vibeChip: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderWidth: 1.5,
-    borderColor: COLORS.lightGray,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    minWidth: "45%",
-  },
-  vibeEmoji: { fontSize: 20 },
-  vibeLabel: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.darkGray,
-    fontWeight: FONTS.weights.medium,
-  },
-  vibeLabelActive: { color: COLORS.white },
+
   difficultyCard: {
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.md,
@@ -828,13 +756,4 @@ const styles = StyleSheet.create({
     maxWidth: 80,
   },
   stopPillRemove: { fontSize: FONTS.sizes.xs, color: COLORS.midGray },
-  clearSpecialtyBtn: {
-    alignSelf: "flex-start",
-    marginBottom: SPACING.sm,
-  },
-  clearSpecialtyText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.danger,
-    fontWeight: FONTS.weights.medium,
-  },
 });
