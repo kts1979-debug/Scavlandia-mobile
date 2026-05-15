@@ -59,6 +59,7 @@ export default function AddStopScreen() {
   const completedIndices: number[] = params.completedIndices
     ? JSON.parse(params.completedIndices as string)
     : [];
+  const activeStopIndex = parseInt((params.activeStopIndex as string) || "0");
   const totalPoints = parseInt(params.totalPoints as string) || 0;
   const sessionCode = (params.sessionCode as string) || "";
   const stopPhotos = (params.stopPhotos as string) || "{}";
@@ -87,9 +88,16 @@ export default function AddStopScreen() {
     completedIndices.map((i: number) => hunt.stops[i]?.placeId).filter(Boolean),
   );
 
+  // Get the routeFraction of the current active stop
+  // Only show candidates AHEAD of where the user currently is
+  const currentStop = hunt.stops[activeStopIndex];
+  const currentRouteFraction = currentStop?.routeFraction || 0;
+
   const availableCandidates = unselectedCandidates.filter(
     (c) =>
-      !existingPlaceIds.has(c.placeId) && !completedPlaceIds.has(c.placeId),
+      !existingPlaceIds.has(c.placeId) &&
+      !completedPlaceIds.has(c.placeId) &&
+      (c.routeFraction || 0) > currentRouteFraction,
   );
 
   const getMapRegion = () => {
@@ -121,12 +129,18 @@ export default function AddStopScreen() {
 
     setAdding(true);
     try {
-      const result = await addStopToHunt(hunt.huntId, selectedCandidate);
+      const result = await addStopToHunt(
+        hunt.huntId,
+        selectedCandidate,
+        currentRouteFraction,
+      );
 
-      // Update hunt object with new stops
+      // Backend already returns stops sorted by routeFraction
       const updatedHunt = {
         ...hunt,
-        stops: result.updatedStops,
+        stops: result.updatedStops.sort(
+          (a: any, b: any) => (a.routeFraction || 0) - (b.routeFraction || 0),
+        ),
         unselectedCandidates: (hunt.unselectedCandidates || []).filter(
           (c: any) => c.placeId !== selectedCandidate.placeId,
         ),

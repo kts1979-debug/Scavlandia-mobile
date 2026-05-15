@@ -1036,6 +1036,7 @@ export default function ActiveHuntScreen() {
                       params: {
                         hunt: JSON.stringify(hunt),
                         completedIndices: JSON.stringify(completedIndices),
+                        activeStopIndex: String(activeStopIndex),
                         totalPoints: String(totalPoints),
                         sessionCode,
                         stopPhotos: JSON.stringify(localPhotos),

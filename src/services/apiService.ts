@@ -116,9 +116,14 @@ export const generateRoadTripHunt = async (
   return response.data;
 };
 
-export async function addStopToHunt(huntId: string, candidate: any) {
+export async function addStopToHunt(
+  huntId: string,
+  candidate: any,
+  currentRouteFraction: number = 0,
+) {
   const response = await api.post(`/api/hunts/${huntId}/add-stop`, {
     candidate,
+    currentRouteFraction,
   });
   return response.data;
 }
