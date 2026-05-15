@@ -6,6 +6,7 @@ import {
   Animated,
   Clipboard,
   ActivityIndicator,
+  Image,
   Modal,
   StyleSheet,
   Text,
@@ -15,6 +16,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 import { generateShareCode } from "../services/apiService";
+
+const STOP_HERO_IMAGES = [
+  require("../../assets/images/hunt_bg_9_couple_positano.jpg"),
+  require("../../assets/images/hunt_bg_2_couple_cobblestone.jpg"),
+  require("../../assets/images/hunt_bg_5_explorer_greece.jpg"),
+  require("../../assets/images/hunt_bg_8_friends_overlook.jpg"),
+];
+
+function getStopHeroImage(stopOrder: number) {
+  return STOP_HERO_IMAGES[(stopOrder - 1) % STOP_HERO_IMAGES.length];
+}
 
 export default function StopCompleteScreen() {
   const params = useLocalSearchParams();
@@ -36,13 +48,13 @@ export default function StopCompleteScreen() {
     ? JSON.parse(params.completedIndices as string)
     : [];
 
-  // ── Share modal state ──────────────────────────────────────────
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [shareCode, setShareCode] = useState<string | null>(null);
   const [generatingCode, setGeneratingCode] = useState(false);
 
   const huntData = JSON.parse(hunt);
   const huntId = huntData.huntId;
+  const heroImage = getStopHeroImage(stopOrder);
 
   const handleShareHunt = async () => {
     setShareModalVisible(true);
@@ -59,7 +71,6 @@ export default function StopCompleteScreen() {
     }
   };
 
-  // ── Hunt completion logic ──────────────────────────────────────
   const allStopIndices = huntData.stops.map((_: any, i: number) => i);
   const isHuntComplete = allStopIndices.every(
     (i: number) =>
@@ -67,17 +78,16 @@ export default function StopCompleteScreen() {
       skippedStops.includes(huntData.stops[i].order),
   );
   const isLastStop = stopOrder >= totalStops || isHuntComplete;
-
   const remainingSkipped = skippedStops.filter(
     (order: number) =>
       !completedIndices.some((i: number) => huntData.stops[i]?.order === order),
   );
   const hasMoreSkipped = remainingSkipped.length > 0 && !isHuntComplete;
 
-  // ── Animations ─────────────────────────────────────────────────
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(120)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const bounceAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.sequence([
@@ -87,11 +97,19 @@ export default function StopCompleteScreen() {
         friction: 5,
         useNativeDriver: true,
       }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
       Animated.sequence([
         Animated.timing(bounceAnim, {
           toValue: 1.15,
@@ -140,7 +158,6 @@ export default function StopCompleteScreen() {
   };
 
   const handleViewLeaderboard = () => {
-    // Navigate to active hunt with leaderboard open
     router.replace({
       pathname: "/active-hunt",
       params: {
@@ -158,187 +175,189 @@ export default function StopCompleteScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        {/* Celebration badge */}
-        <Animated.View
-          style={[styles.badgeContainer, { transform: [{ scale: scaleAnim }] }]}
-        >
-          <View style={styles.badge}>
-            <Text style={styles.badgeEmoji}>
-              {wasSkipped ? "⏭" : isHuntComplete ? "🏆" : "✅"}
-            </Text>
-          </View>
-          <View style={styles.confettiRow}>
-            {["🎉", "⭐", "🎊", "✨", "🎉"].map((e, i) => (
-              <Text key={i} style={styles.confetti}>
-                {e}
-              </Text>
-            ))}
-          </View>
-        </Animated.View>
+    <View style={styles.container}>
+      {/* Hero image */}
+      <Image source={heroImage} style={styles.heroImage} resizeMode="cover" />
+      <View style={styles.heroOverlay} />
 
-        {/* Main message */}
-        <Animated.View style={{ opacity: fadeAnim }}>
-          <Text style={styles.congrats}>
-            {wasSkipped
-              ? "Stop Skipped"
-              : isHuntComplete
-                ? "Hunt Complete!"
-                : "Stop Complete!"}
-          </Text>
-          <Text style={styles.stopName} numberOfLines={2}>
-            {stopName}
-          </Text>
-          {wasSkipped ? (
-            hasMoreSkipped ? (
-              <Text style={styles.skippedNote}>
-                You still have {remainingSkipped.length} skipped stop
-                {remainingSkipped.length !== 1 ? "s" : ""} to complete
+      <SafeAreaView style={styles.safeArea}>
+        {/* Hero section with badge */}
+        <View style={styles.heroContent}>
+          <Animated.View
+            style={[
+              styles.badgeContainer,
+              { transform: [{ scale: scaleAnim }] },
+            ]}
+          >
+            <View style={styles.badge}>
+              <Text style={styles.badgeEmoji}>
+                {wasSkipped ? "⏭" : isHuntComplete ? "🏆" : "✅"}
               </Text>
-            ) : (
-              <Text style={styles.skippedNote}>
-                You can complete this stop at the end of the hunt
-              </Text>
-            )
-          ) : (
+            </View>
+            <View style={styles.confettiRow}>
+              {["🎉", "⭐", "🎊", "✨", "🎉"].map((e, i) => (
+                <Text key={i} style={styles.confetti}>
+                  {e}
+                </Text>
+              ))}
+            </View>
+            <Text style={styles.congrats}>
+              {wasSkipped
+                ? "Stop Skipped"
+                : isHuntComplete
+                  ? "Hunt Complete!"
+                  : "Stop Complete!"}
+            </Text>
+            <Text style={styles.stopNameHero} numberOfLines={2}>
+              {stopName}
+            </Text>
+          </Animated.View>
+        </View>
+
+        {/* Sliding white card */}
+        <Animated.View
+          style={[
+            styles.contentCard,
+            { transform: [{ translateY: slideAnim }], opacity: fadeAnim },
+          ]}
+        >
+          {!wasSkipped && (
             <Text style={styles.progress}>
               Stop {stopOrder} of {totalStops} completed
             </Text>
           )}
-        </Animated.View>
-
-        {/* Points earned */}
-        <Animated.View
-          style={[
-            styles.pointsCard,
-            { transform: [{ scale: bounceAnim }], opacity: fadeAnim },
-          ]}
-        >
-          <View style={styles.pointsRow}>
-            <View style={styles.pointsBox}>
-              <Text style={styles.pointsValue}>+{pointsEarned}</Text>
-              <Text style={styles.pointsLabel}>Points earned</Text>
-            </View>
-            <View style={styles.pointsDivider} />
-            <View style={styles.pointsBox}>
-              <Text style={styles.pointsTotal}>{totalPoints}</Text>
-              <Text style={styles.pointsLabel}>Total points</Text>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* Next stop teaser */}
-        {!isLastStop && (
-          <Animated.View style={[styles.nextCard, { opacity: fadeAnim }]}>
-            <Text style={styles.nextLabel}>Up next</Text>
-            <Text style={styles.nextText}>
-              Stop {stopOrder + 1} of {totalStops} awaits...
+          {wasSkipped && (
+            <Text style={styles.skippedNote}>
+              {hasMoreSkipped
+                ? `You still have ${remainingSkipped.length} skipped stop${remainingSkipped.length !== 1 ? "s" : ""} to complete`
+                : "You can complete this stop at the end of the hunt"}
             </Text>
-          </Animated.View>
-        )}
+          )}
 
-        {/* Action buttons */}
-        <Animated.View style={[styles.buttons, { opacity: fadeAnim }]}>
-          {isLastStop ? (
-            skippedStops.length > 0 ? (
-              <View style={styles.skippedPrompt}>
-                <Text style={styles.skippedPromptTitle}>
-                  ⏭ You skipped {skippedStops.length} stop
-                  {skippedStops.length > 1 ? "s" : ""}
-                </Text>
-                <Text style={styles.skippedPromptDesc}>
-                  Would you like to complete{" "}
-                  {skippedStops.length > 1 ? "them" : "it"} before seeing your
-                  results?
-                </Text>
+          <Animated.View
+            style={[styles.pointsCard, { transform: [{ scale: bounceAnim }] }]}
+          >
+            <View style={styles.pointsRow}>
+              <View style={styles.pointsBox}>
+                <Text style={styles.pointsValue}>+{pointsEarned}</Text>
+                <Text style={styles.pointsLabel}>Points earned</Text>
+              </View>
+              <View style={styles.pointsDivider} />
+              <View style={styles.pointsBox}>
+                <Text style={styles.pointsTotal}>{totalPoints}</Text>
+                <Text style={styles.pointsLabel}>Total points</Text>
+              </View>
+            </View>
+          </Animated.View>
+
+          {!isLastStop && (
+            <View style={styles.nextCard}>
+              <Text style={styles.nextLabel}>Up next</Text>
+              <Text style={styles.nextText}>
+                Stop {stopOrder + 1} of {totalStops} awaits...
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.buttons}>
+            {isLastStop ? (
+              skippedStops.length > 0 ? (
+                <View style={styles.skippedPrompt}>
+                  <Text style={styles.skippedPromptTitle}>
+                    ⏭ You skipped {skippedStops.length} stop
+                    {skippedStops.length > 1 ? "s" : ""}
+                  </Text>
+                  <Text style={styles.skippedPromptDesc}>
+                    Would you like to complete{" "}
+                    {skippedStops.length > 1 ? "them" : "it"} before seeing your
+                    results?
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.continueBtn}
+                    onPress={() => {
+                      const firstSkippedOrder = skippedStops[0];
+                      const skippedStopIndex = huntData.stops.findIndex(
+                        (s: any) => s.order === firstSkippedOrder,
+                      );
+                      router.replace({
+                        pathname: "/active-hunt",
+                        params: {
+                          hunt,
+                          sessionCode,
+                          stopPhotos,
+                          resumeAtStop: String(skippedStopIndex + 1),
+                          totalPoints: String(totalPoints),
+                          skippedStops: JSON.stringify(skippedStops),
+                          swapsUsed,
+                          completedIndices: JSON.stringify(completedIndices),
+                        },
+                      });
+                    }}
+                  >
+                    <Text style={styles.continueBtnText}>
+                      ✅ Complete Skipped Stop
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.quitBtn} onPress={handleQuit}>
+                    <Text style={styles.quitBtnText}>
+                      Skip — See My Results 🏆
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
                 <TouchableOpacity
                   style={styles.continueBtn}
-                  onPress={() => {
-                    const firstSkippedOrder = skippedStops[0];
-                    const skippedStopIndex = huntData.stops.findIndex(
-                      (s: any) => s.order === firstSkippedOrder,
-                    );
-                    router.replace({
-                      pathname: "/active-hunt",
-                      params: {
-                        hunt,
-                        sessionCode,
-                        stopPhotos,
-                        resumeAtStop: String(skippedStopIndex + 1),
-                        totalPoints: String(totalPoints),
-                        skippedStops: JSON.stringify(skippedStops),
-                        swapsUsed,
-                        completedIndices: JSON.stringify(completedIndices),
-                      },
-                    });
-                  }}
+                  onPress={handleQuit}
                 >
-                  <Text style={styles.continueBtnText}>
-                    ✅ Complete Skipped Stop
-                  </Text>
+                  <Text style={styles.continueBtnText}>🏆 See My Results</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.quitBtn} onPress={handleQuit}>
-                  <Text style={styles.quitBtnText}>
-                    Skip — See My Results 🏆
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              )
             ) : (
-              <TouchableOpacity style={styles.continueBtn} onPress={handleQuit}>
-                <Text style={styles.continueBtnText}>🏆 See My Results</Text>
-              </TouchableOpacity>
-            )
-          ) : (
-            <>
-              <TouchableOpacity
-                style={styles.continueBtn}
-                onPress={handleContinue}
-              >
-                <Text style={styles.continueBtnText}>Next Stop →</Text>
-              </TouchableOpacity>
-
-              {/* Share hunt link */}
-              <TouchableOpacity
-                style={styles.linkBtn}
-                onPress={handleShareHunt}
-              >
-                <Text style={styles.linkBtnText}>🔗 Share This Hunt</Text>
-              </TouchableOpacity>
-
-              {/* View leaderboard — competing only */}
-              {sessionCode ? (
+              <>
+                <TouchableOpacity
+                  style={styles.continueBtn}
+                  onPress={handleContinue}
+                >
+                  <Text style={styles.continueBtnText}>Next Stop →</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.linkBtn}
-                  onPress={handleViewLeaderboard}
+                  onPress={handleShareHunt}
                 >
-                  <Text style={styles.linkBtnText}>🏆 View Leaderboard</Text>
+                  <Text style={styles.linkBtnText}>🔗 Share This Hunt</Text>
                 </TouchableOpacity>
-              ) : null}
-
-              <TouchableOpacity
-                style={styles.quitBtn}
-                onPress={() => {
-                  Alert.alert(
-                    "Quit Hunt?",
-                    `You've completed ${stopOrder} of ${totalStops} stops and earned ${totalPoints} points.\n\nYour photos and progress will be saved.`,
-                    [
-                      { text: "Keep Going!", style: "cancel" },
-                      {
-                        text: "End Hunt",
-                        style: "destructive",
-                        onPress: handleQuit,
-                      },
-                    ],
-                  );
-                }}
-              >
-                <Text style={styles.quitBtnText}>End Hunt Early</Text>
-              </TouchableOpacity>
-            </>
-          )}
+                {sessionCode ? (
+                  <TouchableOpacity
+                    style={styles.linkBtn}
+                    onPress={handleViewLeaderboard}
+                  >
+                    <Text style={styles.linkBtnText}>🏆 View Leaderboard</Text>
+                  </TouchableOpacity>
+                ) : null}
+                <TouchableOpacity
+                  style={styles.quitBtn}
+                  onPress={() => {
+                    Alert.alert(
+                      "Quit Hunt?",
+                      `You've completed ${stopOrder} of ${totalStops} stops and earned ${totalPoints} points.\n\nYour photos and progress will be saved.`,
+                      [
+                        { text: "Keep Going!", style: "cancel" },
+                        {
+                          text: "End Hunt",
+                          style: "destructive",
+                          onPress: handleQuit,
+                        },
+                      ],
+                    );
+                  }}
+                >
+                  <Text style={styles.quitBtnText}>End Hunt Early</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </Animated.View>
-      </View>
+      </SafeAreaView>
 
       {/* Share Hunt Modal */}
       <Modal
@@ -387,91 +406,120 @@ export default function StopCompleteScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
-  content: {
+  heroImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  heroOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(30, 60, 100, 0.55)",
+  },
+  safeArea: { flex: 1, justifyContent: "space-between" },
+  heroContent: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: SPACING.xl,
+    paddingHorizontal: SPACING.xl,
   },
-  badgeContainer: { alignItems: "center", marginBottom: SPACING.lg },
+  badgeContainer: { alignItems: "center" },
   badge: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     backgroundColor: COLORS.accent,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: SPACING.sm,
   },
-  badgeEmoji: { fontSize: 52 },
-  confettiRow: { flexDirection: "row", gap: SPACING.sm },
+  badgeEmoji: { fontSize: 48 },
+  confettiRow: {
+    flexDirection: "row",
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
   confetti: { fontSize: 20 },
   congrats: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
     textAlign: "center",
-    marginBottom: SPACING.sm,
+    marginBottom: 6,
   },
-  stopName: {
-    fontSize: FONTS.sizes.lg,
-    color: "#b3d9f5",
+  stopNameHero: {
+    fontSize: FONTS.sizes.md,
+    color: "rgba(255,255,255,0.85)",
     textAlign: "center",
-    marginBottom: SPACING.sm,
-    lineHeight: 24,
+    lineHeight: 22,
+  },
+  contentCard: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: SPACING.lg,
+    paddingTop: SPACING.xl,
   },
   progress: {
     fontSize: FONTS.sizes.sm,
-    color: "rgba(255,255,255,0.5)",
+    color: COLORS.darkGray,
     textAlign: "center",
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
+  },
+  skippedNote: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    textAlign: "center",
+    marginBottom: SPACING.md,
+    fontStyle: "italic",
   },
   pointsCard: {
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: COLORS.offWhite,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
-    width: "100%",
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   pointsRow: { flexDirection: "row", alignItems: "center" },
   pointsBox: { flex: 1, alignItems: "center" },
-  pointsDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
+  pointsDivider: { width: 1, height: 40, backgroundColor: COLORS.lightGray },
   pointsValue: {
     fontSize: FONTS.sizes.hero,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.gold,
+    color: "#F39C12",
   },
   pointsTotal: {
     fontSize: FONTS.sizes.hero,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.white,
+    color: COLORS.primary,
   },
   pointsLabel: {
     fontSize: FONTS.sizes.xs,
-    color: "rgba(255,255,255,0.6)",
+    color: COLORS.darkGray,
     marginTop: 4,
   },
   nextCard: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: COLORS.accentPale,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
-    width: "100%",
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
     alignItems: "center",
   },
   nextLabel: {
     fontSize: FONTS.sizes.xs,
-    color: "rgba(255,255,255,0.5)",
+    color: COLORS.accent,
     fontWeight: FONTS.weights.bold,
     marginBottom: 4,
     textTransform: "uppercase",
@@ -479,10 +527,10 @@ const styles = StyleSheet.create({
   },
   nextText: {
     fontSize: FONTS.sizes.md,
-    color: COLORS.white,
+    color: COLORS.primary,
     fontWeight: FONTS.weights.medium,
   },
-  buttons: { width: "100%", gap: SPACING.sm },
+  buttons: { gap: SPACING.sm },
   continueBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.lg,
@@ -494,47 +542,30 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
   },
-  linkBtn: {
-    backgroundColor: "transparent",
-    borderRadius: RADIUS.lg,
-    padding: SPACING.sm,
-    alignItems: "center",
-  },
+  linkBtn: { padding: SPACING.sm, alignItems: "center" },
   linkBtnText: {
-    color: "rgba(255,255,255,0.7)",
+    color: COLORS.primary,
     fontSize: FONTS.sizes.sm,
     fontWeight: FONTS.weights.medium,
   },
   quitBtn: {
-    backgroundColor: "transparent",
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderColor: COLORS.lightGray,
   },
-  quitBtnText: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.medium,
-  },
-  skippedNote: {
-    fontSize: FONTS.sizes.md,
-    color: "rgba(255,255,255,0.7)",
-    textAlign: "center",
-    marginBottom: SPACING.xl,
-    fontStyle: "italic",
-  },
-  skippedPrompt: { width: "100%", gap: SPACING.sm },
+  quitBtnText: { color: COLORS.darkGray, fontSize: FONTS.sizes.md },
+  skippedPrompt: { gap: SPACING.sm },
   skippedPromptTitle: {
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.white,
+    color: COLORS.primary,
     textAlign: "center",
   },
   skippedPromptDesc: {
     fontSize: FONTS.sizes.md,
-    color: "rgba(255,255,255,0.7)",
+    color: COLORS.darkGray,
     textAlign: "center",
     marginBottom: SPACING.sm,
   },

@@ -2,6 +2,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
+  Image,
   ScrollView,
   Share,
   StyleSheet,
@@ -10,12 +11,24 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Badge from "../components/ui/Badge";
 import Button from "../components/ui/Button";
-import Card from "../components/ui/Card";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
-// ── Star rating helpers ───────────────────────────────────────────
+const HERO_IMAGES = [
+  require("../../assets/images/hunt_bg_4_friends_mountains.jpg"),
+  require("../../assets/images/hunt_bg_8_friends_overlook.jpg"),
+  require("../../assets/images/hunt_bg_3_friends_nyc.jpg"),
+  require("../../assets/images/hunt_bg_1_cliff_city.jpg"),
+];
+
+function getHeroImage(huntId: string) {
+  let hash = 0;
+  for (let i = 0; i < huntId.length; i++) {
+    hash = (hash + huntId.charCodeAt(i)) % HERO_IMAGES.length;
+  }
+  return HERO_IMAGES[hash];
+}
+
 function getStarRating(hintsUsed: number, answerRevealed: boolean): number {
   if (answerRevealed) return 1;
   if (hintsUsed === 0) return 3;
@@ -25,6 +38,12 @@ function getStarRating(hintsUsed: number, answerRevealed: boolean): number {
 
 function StarRating({ stars }: { stars: number }) {
   const labels = ["", "You got there!", "Nice work!", "Flawless! 🎉"];
+  const subs = [
+    "",
+    "Keep practicing — you'll nail it next time",
+    "Used a couple hints along the way",
+    "Solved every clue without any hints!",
+  ];
   return (
     <View style={starStyles.container}>
       <View style={starStyles.starsRow}>
@@ -38,15 +57,7 @@ function StarRating({ stars }: { stars: number }) {
         ))}
       </View>
       <Text style={starStyles.label}>{labels[stars]}</Text>
-      {stars === 3 && (
-        <Text style={starStyles.sub}>Solved every clue with no hints!</Text>
-      )}
-      {stars === 2 && (
-        <Text style={starStyles.sub}>Used a couple hints along the way</Text>
-      )}
-      {stars === 1 && (
-        <Text style={starStyles.sub}>You made it — keep practicing!</Text>
-      )}
+      <Text style={starStyles.sub}>{subs[stars]}</Text>
     </View>
   );
 }
@@ -69,13 +80,14 @@ export default function HuntCompleteScreen() {
   );
 
   const stars = getStarRating(hintsUsed, answerRevealed);
+  const heroImage = getHeroImage(hunt.huntId || hunt.huntTitle || "default");
+  const percentage = Math.round(
+    (totalPoints / (hunt.totalPossiblePoints || 1)) * 100,
+  );
 
   const handleShare = async () => {
     try {
       const cityName = hunt.city?.split(",")[0] || hunt.city;
-      const percentage = Math.round(
-        (totalPoints / (hunt.totalPossiblePoints || 1)) * 100,
-      );
       const scoreEmoji =
         percentage >= 80 ? "🏆" : percentage >= 60 ? "⭐" : "🎯";
       const diffMap = { easy: "🟢", medium: "🟡", hard: "🔴" } as Record<
@@ -95,11 +107,11 @@ export default function HuntCompleteScreen() {
           `💯 ${percentage}% score\n` +
           `${starStr}` +
           `${diffEmoji} ${hunt.groupProfile?.difficulty || "Medium"} difficulty\n\n` +
-          `Think you can beat my score? Try Scavlandia for your next city adventure! 🗺️`,
+          `Think you can beat my score? Try Scavlandia! 🗺️`,
         title: `Scavlandia Hunt — ${cityName}`,
       });
     } catch (error) {
-      console.log("Share cancelled or failed:", error);
+      console.log("Share cancelled:", error);
     }
   };
 
@@ -125,128 +137,142 @@ export default function HuntCompleteScreen() {
     });
   };
 
-  const percentage = Math.round(
-    (totalPoints / (hunt.totalPossiblePoints || 1)) * 100,
-  );
-
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.trophy}>🏆</Text>
-        <Text style={styles.title}>Hunt Complete!</Text>
-        <Text style={styles.huntName}>{hunt.huntTitle}</Text>
-        <Badge
-          label={hunt.city?.split(",")[0]}
-          emoji="📍"
-          color={COLORS.primaryLight}
-          style={styles.cityBadge}
-        />
+    <View style={styles.container}>
+      {/* Hero image */}
+      <Image source={heroImage} style={styles.heroImage} resizeMode="cover" />
+      <View style={styles.heroOverlay} />
 
-        {/* Star rating — solo only */}
-        {!sessionCode && <StarRating stars={stars} />}
-
-        {/* Stats */}
-        <View style={styles.statsGrid}>
-          {[
-            { emoji: "⭐", value: totalPoints, label: "Points" },
-            { emoji: "🚩", value: completedStops, label: "Stops" },
-            { emoji: "💯", value: `${percentage}%`, label: "Score" },
-          ].map((s, i) => (
-            <Card key={i} variant="dark" style={styles.statCard}>
-              <Text style={styles.statEmoji}>{s.emoji}</Text>
-              <Text style={styles.statValue}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
-            </Card>
-          ))}
-        </View>
-
-        <Text style={styles.message}>
-          Amazing work! You explored the city, solved every clue, and crushed
-          it. 🎉
-        </Text>
-
-        {/* Hunt Finale */}
-        {hunt.huntFinale && (
-          <View style={styles.finaleCard}>
-            <Text style={styles.finaleLabel}>🎉 How to End in Style</Text>
-            <Text style={styles.finaleText}>{hunt.huntFinale}</Text>
-          </View>
-        )}
-
-        {/* Skipped stops prompt */}
-        {showSkippedPrompt && (
-          <View style={styles.skippedCard}>
-            <Text style={styles.skippedCardTitle}>
-              ⏭ You skipped {skippedStops.length} stop
-              {skippedStops.length > 1 ? "s" : ""}
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Hero section */}
+          <View style={styles.heroSection}>
+            <Text style={styles.trophy}>🏆</Text>
+            <Text style={styles.title}>Hunt Complete!</Text>
+            <Text style={styles.huntName} numberOfLines={2}>
+              {hunt.huntTitle}
             </Text>
-            <Text style={styles.skippedCardDesc}>
-              Would you like to go back and complete{" "}
-              {skippedStops.length > 1 ? "them" : "it"} now?
-            </Text>
-            <View style={styles.skippedCardBtns}>
-              <TouchableOpacity
-                style={styles.skippedYesBtn}
-                onPress={handleReturnToSkippedStop}
-              >
-                <Text style={styles.skippedYesBtnText}>{"Yes, let's go!"}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.skippedNoBtn}
-                onPress={() => setShowSkippedPrompt(false)}
-              >
-                <Text style={styles.skippedNoBtnText}>No thanks</Text>
-              </TouchableOpacity>
+            <View style={styles.cityBadge}>
+              <Text style={styles.cityBadgeText}>
+                📍 {hunt.city?.split(",")[0]}
+              </Text>
             </View>
           </View>
-        )}
 
-        <Button
-          label="Share Your Results"
-          onPress={handleShare}
-          variant="accent"
-          size="lg"
-          emoji="📤"
-          style={styles.btn}
-        />
-        <Button
-          label="View Photo Album"
-          onPress={() =>
-            router.push({
-              pathname: "/photo-album",
-              params: { hunt: JSON.stringify(hunt), stopPhotos },
-            })
-          }
-          variant="secondary"
-          size="lg"
-          emoji="📸"
-          style={styles.btn}
-        />
-        <Button
-          label="Start Another Hunt"
-          onPress={() => router.replace("/(tabs)")}
-          variant="secondary"
-          size="lg"
-          emoji="🗺️"
-          style={styles.btn}
-        />
-        {sessionCode ? (
-          <Button
-            label="View Final Leaderboard"
-            onPress={() =>
-              router.push({
-                pathname: "/final-leaderboard",
-                params: { sessionCode, myPoints: String(totalPoints) },
-              })
-            }
-            variant="primary"
-            size="lg"
-            emoji="🏆"
-            style={styles.btn}
-          />
-        ) : null}
-      </ScrollView>
-    </SafeAreaView>
+          {/* Content card */}
+          <View style={styles.contentCard}>
+            {/* Stars — solo only */}
+            {!sessionCode && <StarRating stars={stars} />}
+
+            {/* Stats */}
+            <View style={styles.statsGrid}>
+              {[
+                { emoji: "⭐", value: String(totalPoints), label: "Points" },
+                { emoji: "🚩", value: String(completedStops), label: "Stops" },
+                { emoji: "💯", value: `${percentage}%`, label: "Score" },
+              ].map((s, i) => (
+                <View key={i} style={styles.statCard}>
+                  <Text style={styles.statEmoji}>{s.emoji}</Text>
+                  <Text style={styles.statValue}>{s.value}</Text>
+                  <Text style={styles.statLabel}>{s.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            <Text style={styles.message}>
+              Amazing work! You explored the city, solved every clue, and
+              crushed it. 🎉
+            </Text>
+
+            {/* Hunt Finale */}
+            {hunt.huntFinale && (
+              <View style={styles.finaleCard}>
+                <Text style={styles.finaleLabel}>🎉 How to End in Style</Text>
+                <Text style={styles.finaleText}>{hunt.huntFinale}</Text>
+              </View>
+            )}
+
+            {/* Skipped stops */}
+            {showSkippedPrompt && (
+              <View style={styles.skippedCard}>
+                <Text style={styles.skippedCardTitle}>
+                  ⏭ You skipped {skippedStops.length} stop
+                  {skippedStops.length > 1 ? "s" : ""}
+                </Text>
+                <Text style={styles.skippedCardDesc}>
+                  Would you like to go back and complete{" "}
+                  {skippedStops.length > 1 ? "them" : "it"} now?
+                </Text>
+                <View style={styles.skippedCardBtns}>
+                  <TouchableOpacity
+                    style={styles.skippedYesBtn}
+                    onPress={handleReturnToSkippedStop}
+                  >
+                    <Text style={styles.skippedYesBtnText}>
+                      {"Yes, let's go!"}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.skippedNoBtn}
+                    onPress={() => setShowSkippedPrompt(false)}
+                  >
+                    <Text style={styles.skippedNoBtnText}>No thanks</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            <Button
+              label="Share Your Results"
+              onPress={handleShare}
+              variant="accent"
+              size="lg"
+              emoji="📤"
+              style={styles.btn}
+            />
+            <Button
+              label="View Photo Album"
+              onPress={() =>
+                router.push({
+                  pathname: "/photo-album",
+                  params: { hunt: JSON.stringify(hunt), stopPhotos },
+                })
+              }
+              variant="secondary"
+              size="lg"
+              emoji="📸"
+              style={styles.btn}
+            />
+            <Button
+              label="Start Another Hunt"
+              onPress={() => router.replace("/(tabs)")}
+              variant="secondary"
+              size="lg"
+              emoji="🗺️"
+              style={styles.btn}
+            />
+            {sessionCode ? (
+              <Button
+                label="View Final Leaderboard"
+                onPress={() =>
+                  router.push({
+                    pathname: "/final-leaderboard",
+                    params: { sessionCode, myPoints: String(totalPoints) },
+                  })
+                }
+                variant="primary"
+                size="lg"
+                emoji="🏆"
+                style={styles.btn}
+              />
+            ) : null}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -254,23 +280,13 @@ const starStyles = StyleSheet.create({
   container: {
     alignItems: "center",
     marginBottom: SPACING.lg,
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginHorizontal: 0,
+    paddingBottom: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
   },
-  starsRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: SPACING.sm,
-  },
-  star: {
-    fontSize: 48,
-    color: COLORS.midGray,
-  },
-  starFilled: {
-    color: "#F39C12",
-  },
+  starsRow: { flexDirection: "row", gap: 8, marginBottom: SPACING.sm },
+  star: { fontSize: 44, color: COLORS.lightGray },
+  starFilled: { color: "#F39C12" },
   label: {
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
@@ -286,49 +302,114 @@ const starStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
-  scroll: { padding: SPACING.lg, paddingBottom: 40 },
-  trophy: {
-    fontSize: 72,
-    textAlign: "center",
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
+  heroImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320,
+    width: "100%",
   },
+  heroOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320,
+    backgroundColor: "rgba(30, 60, 100, 0.5)",
+  },
+  safeArea: { flex: 1 },
+  scroll: { paddingBottom: 40 },
+  heroSection: {
+    alignItems: "center",
+    height: 260,
+    justifyContent: "center",
+    paddingHorizontal: SPACING.lg,
+  },
+  trophy: { fontSize: 56, marginBottom: SPACING.sm },
   title: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   huntName: {
     fontSize: FONTS.sizes.md,
-    color: "#b3d9f5",
+    color: "rgba(255,255,255,0.85)",
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: SPACING.sm,
+    lineHeight: 22,
   },
-  cityBadge: { alignSelf: "center", marginBottom: SPACING.lg },
+  cityBadge: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: RADIUS.round,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+  },
+  cityBadgeText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+  },
+  contentCard: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: SPACING.lg,
+    paddingTop: SPACING.xl,
+    minHeight: 500,
+  },
   statsGrid: {
     flexDirection: "row",
     gap: SPACING.sm,
     marginBottom: SPACING.lg,
   },
-  statCard: { flex: 1, alignItems: "center", padding: SPACING.md },
+  statCard: {
+    flex: 1,
+    alignItems: "center",
+    padding: SPACING.md,
+    backgroundColor: COLORS.offWhite,
+    borderRadius: RADIUS.lg,
+  },
   statEmoji: { fontSize: 24, marginBottom: 4 },
   statValue: {
     fontSize: FONTS.sizes.xl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.white,
+    color: COLORS.primary,
   },
-  statLabel: { fontSize: FONTS.sizes.xs, color: "rgba(255,255,255,0.7)" },
+  statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
   message: {
     fontSize: FONTS.sizes.md,
-    color: "#b3d9f5",
+    color: COLORS.darkGray,
     textAlign: "center",
     marginBottom: SPACING.lg,
     lineHeight: 22,
   },
+  finaleCard: {
+    backgroundColor: COLORS.accentPale,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.accent,
+  },
+  finaleLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.accent,
+    fontWeight: FONTS.weights.bold,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: SPACING.sm,
+  },
+  finaleText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.darkGray,
+    lineHeight: 22,
+    fontStyle: "italic",
+  },
   skippedCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.offWhite,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
@@ -365,31 +446,6 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
     alignItems: "center",
   },
-  skippedNoBtnText: {
-    color: COLORS.darkGray,
-    fontSize: FONTS.sizes.sm,
-  },
+  skippedNoBtnText: { color: COLORS.darkGray, fontSize: FONTS.sizes.sm },
   btn: { marginBottom: SPACING.sm },
-  finaleCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.accent,
-  },
-  finaleLabel: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.accent,
-    fontWeight: FONTS.weights.bold,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: SPACING.sm,
-  },
-  finaleText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
-    lineHeight: 24,
-    fontStyle: "italic",
-  },
 });
