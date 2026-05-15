@@ -212,7 +212,7 @@ export default function HuntSetupScreen() {
                   mode === "session" && styles.modeSubActive,
                 ]}
               >
-                With friends
+                Any city
               </Text>
             </TouchableOpacity>
           </View>
@@ -221,6 +221,13 @@ export default function HuntSetupScreen() {
         {/* Session options */}
         {mode === "session" && (
           <>
+            <Card style={styles.section}>
+              <Text style={styles.competingExplainer}>
+                🌍 Everyone generates their own unique hunt in whatever city
+                they are in — your scores are combined on a live leaderboard.
+                May the best explorer win!
+              </Text>
+            </Card>
             {/* Individual vs Team */}
             <Card style={styles.section}>
               <Text style={styles.sectionTitle}>Individual or team?</Text>
@@ -473,4 +480,10 @@ const styles = StyleSheet.create({
   },
   startBtn: { marginTop: SPACING.md },
   skipBtn: { marginTop: SPACING.sm },
+  competingExplainer: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    lineHeight: 20,
+    textAlign: "center",
+  },
 });

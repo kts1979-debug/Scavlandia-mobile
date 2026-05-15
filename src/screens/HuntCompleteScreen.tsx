@@ -15,6 +15,42 @@ import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
+// ── Star rating helpers ───────────────────────────────────────────
+function getStarRating(hintsUsed: number, answerRevealed: boolean): number {
+  if (answerRevealed) return 1;
+  if (hintsUsed === 0) return 3;
+  if (hintsUsed <= 2) return 2;
+  return 1;
+}
+
+function StarRating({ stars }: { stars: number }) {
+  const labels = ["", "You got there!", "Nice work!", "Flawless! 🎉"];
+  return (
+    <View style={starStyles.container}>
+      <View style={starStyles.starsRow}>
+        {[1, 2, 3].map((i) => (
+          <Text
+            key={i}
+            style={[starStyles.star, i <= stars && starStyles.starFilled]}
+          >
+            ★
+          </Text>
+        ))}
+      </View>
+      <Text style={starStyles.label}>{labels[stars]}</Text>
+      {stars === 3 && (
+        <Text style={starStyles.sub}>Solved every clue with no hints!</Text>
+      )}
+      {stars === 2 && (
+        <Text style={starStyles.sub}>Used a couple hints along the way</Text>
+      )}
+      {stars === 1 && (
+        <Text style={starStyles.sub}>You made it — keep practicing!</Text>
+      )}
+    </View>
+  );
+}
+
 export default function HuntCompleteScreen() {
   const params = useLocalSearchParams();
   const hunt = JSON.parse(params.hunt as string);
@@ -22,7 +58,8 @@ export default function HuntCompleteScreen() {
   const completedStops = parseInt(params.completedStops as string);
   const sessionCode = (params.sessionCode as string) || "";
   const stopPhotos = (params.stopPhotos as string) || "{}";
-
+  const hintsUsed = parseInt((params.hintsUsed as string) || "0");
+  const answerRevealed = params.answerRevealed === "true";
   const skippedStops: number[] = params.skippedStops
     ? JSON.parse(params.skippedStops as string)
     : [];
@@ -30,6 +67,8 @@ export default function HuntCompleteScreen() {
   const [showSkippedPrompt, setShowSkippedPrompt] = useState(
     skippedStops.length > 0,
   );
+
+  const stars = getStarRating(hintsUsed, answerRevealed);
 
   const handleShare = async () => {
     try {
@@ -45,13 +84,16 @@ export default function HuntCompleteScreen() {
       >;
       const diffEmoji =
         diffMap[hunt.groupProfile?.difficulty || "medium"] || "🟡";
-
+      const starStr = sessionCode
+        ? ""
+        : `${"★".repeat(stars)}${"☆".repeat(3 - stars)} ${stars}/3 stars\n`;
       await Share.share({
         message:
           `${scoreEmoji} Just crushed a Scavlandia scavenger hunt in ${cityName}!\n\n` +
           `🚩 ${completedStops} stops completed\n` +
           `⭐ ${totalPoints} points earned\n` +
           `💯 ${percentage}% score\n` +
+          `${starStr}` +
           `${diffEmoji} ${hunt.groupProfile?.difficulty || "Medium"} difficulty\n\n` +
           `Think you can beat my score? Try Scavlandia for your next city adventure! 🗺️`,
         title: `Scavlandia Hunt — ${cityName}`,
@@ -63,27 +105,22 @@ export default function HuntCompleteScreen() {
 
   const handleReturnToSkippedStop = () => {
     const firstSkippedOrder = skippedStops[0];
-
-    // Find the stop INDEX for this order number
     const skippedStopIndex = hunt.stops.findIndex(
       (s: any) => s.order === firstSkippedOrder,
     );
-
-    // Parse completedIndices from params if available
     const completedIndices: number[] = params.completedIndices
       ? JSON.parse(params.completedIndices as string)
       : [];
-
     router.replace({
       pathname: "/active-hunt",
       params: {
         hunt: params.hunt,
         sessionCode,
         stopPhotos,
-        resumeAtStop: String(skippedStopIndex + 1), // +1 because ActiveHunt subtracts 1
+        resumeAtStop: String(skippedStopIndex + 1),
         totalPoints: String(totalPoints),
-        skippedStops: JSON.stringify(skippedStops), // ← keep ALL skips, not remainingSkipped
-        completedIndices: JSON.stringify(completedIndices), // ← pass completed state
+        skippedStops: JSON.stringify(skippedStops),
+        completedIndices: JSON.stringify(completedIndices),
       },
     });
   };
@@ -104,6 +141,9 @@ export default function HuntCompleteScreen() {
           color={COLORS.primaryLight}
           style={styles.cityBadge}
         />
+
+        {/* Star rating — solo only */}
+        {!sessionCode && <StarRating stars={stars} />}
 
         {/* Stats */}
         <View style={styles.statsGrid}>
@@ -141,7 +181,7 @@ export default function HuntCompleteScreen() {
                 style={styles.skippedYesBtn}
                 onPress={handleReturnToSkippedStop}
               >
-                <Text style={styles.message}>{"Yes, let's go!"}</Text>
+                <Text style={styles.skippedYesBtnText}>{"Yes, let's go!"}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.skippedNoBtn}
@@ -202,58 +242,93 @@ export default function HuntCompleteScreen() {
   );
 }
 
+const starStyles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginHorizontal: 0,
+  },
+  starsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: SPACING.sm,
+  },
+  star: {
+    fontSize: 48,
+    color: COLORS.midGray,
+  },
+  starFilled: {
+    color: "#F39C12",
+  },
+  label: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  sub: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    textAlign: "center",
+  },
+});
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
-  scroll: { padding: SPACING.lg, alignItems: "center", paddingBottom: 40 },
-  trophy: { fontSize: 80, marginTop: SPACING.xl, marginBottom: SPACING.md },
+  scroll: { padding: SPACING.lg, paddingBottom: 40 },
+  trophy: {
+    fontSize: 72,
+    textAlign: "center",
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
   title: {
-    fontSize: FONTS.sizes.hero,
+    fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
+    textAlign: "center",
     marginBottom: 8,
   },
   huntName: {
-    fontSize: FONTS.sizes.lg,
+    fontSize: FONTS.sizes.md,
     color: "#AED6F1",
     textAlign: "center",
-    marginBottom: SPACING.sm,
+    marginBottom: 4,
   },
-  cityBadge: { marginBottom: SPACING.lg },
+  cityBadge: { alignSelf: "center", marginBottom: SPACING.lg },
   statsGrid: {
     flexDirection: "row",
     gap: SPACING.sm,
     marginBottom: SPACING.lg,
-    width: "100%",
   },
-  statCard: { flex: 1, alignItems: "center", paddingVertical: SPACING.md },
-  statEmoji: { fontSize: 28, marginBottom: 4 },
+  statCard: { flex: 1, alignItems: "center", padding: SPACING.md },
+  statEmoji: { fontSize: 24, marginBottom: 4 },
   statValue: {
-    fontSize: FONTS.sizes.xxl,
+    fontSize: FONTS.sizes.xl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.gold,
+    color: COLORS.white,
   },
-  statLabel: { fontSize: FONTS.sizes.xs, color: "#AED6F1", marginTop: 2 },
+  statLabel: { fontSize: FONTS.sizes.xs, color: "rgba(255,255,255,0.7)" },
   message: {
     fontSize: FONTS.sizes.md,
     color: "#AED6F1",
     textAlign: "center",
-    lineHeight: 24,
-    marginBottom: SPACING.xl,
-    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.lg,
+    lineHeight: 22,
   },
   skippedCard: {
-    backgroundColor: "#FEF9E7",
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    padding: SPACING.lg,
     marginBottom: SPACING.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.gold,
-    width: "100%",
   },
   skippedCardTitle: {
-    fontSize: FONTS.sizes.lg,
+    fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
-    color: COLORS.black,
+    color: COLORS.primary,
     marginBottom: 4,
   },
   skippedCardDesc: {
@@ -264,7 +339,7 @@ const styles = StyleSheet.create({
   skippedCardBtns: { flexDirection: "row", gap: SPACING.sm },
   skippedYesBtn: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accent,
     borderRadius: RADIUS.md,
     padding: SPACING.sm,
     alignItems: "center",
@@ -272,7 +347,7 @@ const styles = StyleSheet.create({
   skippedYesBtnText: {
     color: COLORS.white,
     fontWeight: FONTS.weights.bold,
-    fontSize: FONTS.sizes.md,
+    fontSize: FONTS.sizes.sm,
   },
   skippedNoBtn: {
     flex: 1,
@@ -282,6 +357,9 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
     alignItems: "center",
   },
-  skippedNoBtnText: { color: COLORS.darkGray, fontSize: FONTS.sizes.md },
-  btn: { width: "100%", marginBottom: SPACING.sm },
+  skippedNoBtnText: {
+    color: COLORS.darkGray,
+    fontSize: FONTS.sizes.sm,
+  },
+  btn: { marginBottom: SPACING.sm },
 });

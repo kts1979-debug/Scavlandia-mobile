@@ -154,6 +154,8 @@ export default function ActiveHuntScreen() {
                   stopPhotos: JSON.stringify(localPhotos),
                   skippedStops: JSON.stringify(skippedStops),
                   completedIndices: JSON.stringify(completedIndices),
+                  hintsUsed: String(Math.round(hintDeductions / 5)),
+                  answerRevealed: String(answerRevealed),
                 },
               }),
           },
@@ -310,6 +312,8 @@ export default function ActiveHuntScreen() {
             stopPhotos: JSON.stringify(localPhotos),
             skippedStops: JSON.stringify(newSkippedList),
             completedIndices: JSON.stringify(newCompletedList),
+            hintsUsed: String(Math.round(hintDeductions / 5)),
+            answerRevealed: String(answerRevealed),
           },
         });
         return;
@@ -474,6 +478,8 @@ export default function ActiveHuntScreen() {
             }),
             skippedStops: JSON.stringify(newSkippedList),
             completedIndices: JSON.stringify(newCompletedList),
+            hintsUsed: String(Math.round(hintDeductions / 5)),
+            answerRevealed: String(answerRevealed),
           },
         });
         return;
@@ -560,6 +566,8 @@ export default function ActiveHuntScreen() {
                   stopPhotos: JSON.stringify(localPhotos),
                   skippedStops: JSON.stringify(updatedSkipped),
                   completedIndices: JSON.stringify(completedIndices),
+                  hintsUsed: String(Math.round(hintDeductions / 5)),
+                  answerRevealed: String(answerRevealed),
                 },
               });
               return;
