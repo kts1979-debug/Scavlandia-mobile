@@ -1,13 +1,10 @@
 // src/screens/HuntSetupScreen.tsx
-// Shown after hunt generation.
-// Solo mode: shows share code option then starts hunt.
-// Compete mode: shows create/join session then starts hunt.
-
 import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   ScrollView,
   Share,
   StyleSheet,
@@ -22,6 +19,8 @@ import Card from "../components/ui/Card";
 import { createSession, joinSession } from "../services/leaderboardService";
 import { generateShareCode } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+
+const HERO_BG = require("../../assets/images/hunt_bg_4_friends_mountains.jpg");
 
 export default function HuntSetupScreen() {
   const params = useLocalSearchParams();
@@ -38,14 +37,10 @@ export default function HuntSetupScreen() {
   const handleStartHunt = async (sessionCode?: string) => {
     router.replace({
       pathname: "/safety-warning",
-      params: {
-        hunt: JSON.stringify(hunt),
-        sessionCode: sessionCode || "",
-      },
+      params: { hunt: JSON.stringify(hunt), sessionCode: sessionCode || "" },
     });
   };
 
-  // ── Solo: generate share code ─────────────────────────────────
   const handleGenerateShareCode = async () => {
     setLoadingShareCode(true);
     try {
@@ -61,7 +56,6 @@ export default function HuntSetupScreen() {
     }
   };
 
-  // ── Compete: create session ───────────────────────────────────
   const handleCreateSession = async () => {
     setLoading(true);
     try {
@@ -103,10 +97,7 @@ export default function HuntSetupScreen() {
           text: "📤 Share Code",
           onPress: async () => {
             await Share.share({
-              message:
-                `🗺️ Join my Scavlandia scavenger hunt!\n\n` +
-                `Use session code: ${sessionCode}\n\n` +
-                `Open Scavlandia, start a hunt in any city, tap "Compete" and enter this code. Let's see who wins! 🏆`,
+              message: `🗺️ Join my Scavlandia scavenger hunt!\n\nUse session code: ${sessionCode}\n\nOpen Scavlandia, start a hunt in any city, tap "Compete" and enter this code. Let's see who wins! 🏆`,
             });
           },
         },
@@ -115,11 +106,9 @@ export default function HuntSetupScreen() {
     );
   };
 
-  // ── Compete: join session ─────────────────────────────────────
   const handleJoinSession = async () => {
-    if (!joinCode.trim()) {
+    if (!joinCode.trim())
       return Alert.alert("Missing info", "Please enter a session code");
-    }
     setLoading(true);
     try {
       const result = await joinSession(
@@ -150,217 +139,261 @@ export default function HuntSetupScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.emoji}>🏁</Text>
-        <Text style={styles.title}>Ready to Hunt?</Text>
-        <Text style={styles.huntName} numberOfLines={2}>
-          {hunt.huntTitle}
-        </Text>
-        <Text style={styles.city}>📍 {hunt.city}</Text>
+    <View style={styles.container}>
+      <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+      <View style={styles.overlay} />
 
-        {/* ── SOLO FLOW ─────────────────────────────────────────── */}
-        {isSolo && (
-          <>
-            <Card style={styles.section}>
-              <Text style={styles.sectionTitle}>🔗 Share This Hunt</Text>
-              <Text style={styles.sectionDesc}>
-                Want a friend to follow along on the same hunt? Generate a share
-                code and send it to them — they get their own copy on their
-                device.
-              </Text>
-              {shareCode ? (
-                <View style={styles.codeBox}>
-                  <Text style={styles.codeText}>{shareCode}</Text>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Hero section */}
+        <View style={styles.heroSection}>
+          <Text style={styles.heroEmoji}>🏁</Text>
+          <Text style={styles.heroTitle}>Ready to Hunt?</Text>
+          <Text style={styles.huntName} numberOfLines={2}>
+            {hunt.huntTitle}
+          </Text>
+          <View style={styles.cityBadge}>
+            <Text style={styles.cityBadgeText}>📍 {hunt.city}</Text>
+          </View>
+        </View>
+
+        {/* White card */}
+        <ScrollView
+          style={styles.card}
+          contentContainerStyle={styles.cardContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* ── SOLO FLOW ─────────────────────────────────── */}
+          {isSolo && (
+            <>
+              <Card style={styles.section}>
+                <Text style={styles.sectionTitle}>🔗 Share This Hunt</Text>
+                <Text style={styles.sectionDesc}>
+                  Want a friend to follow along on the same hunt? Generate a
+                  share code and send it to them.
+                </Text>
+                {shareCode ? (
+                  <View style={styles.codeBox}>
+                    <Text style={styles.codeText}>{shareCode}</Text>
+                    <TouchableOpacity
+                      style={styles.copyBtn}
+                      onPress={async () => {
+                        await Clipboard.setStringAsync(shareCode);
+                        Alert.alert(
+                          "Copied!",
+                          "Share code copied to clipboard.",
+                        );
+                      }}
+                    >
+                      <Text style={styles.copyBtnText}>📋 Copy</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <Button
+                    label={
+                      loadingShareCode ? "Generating..." : "Generate Share Code"
+                    }
+                    onPress={handleGenerateShareCode}
+                    variant="secondary"
+                    size="md"
+                    emoji="🔗"
+                    loading={loadingShareCode}
+                    style={styles.shareCodeBtn}
+                  />
+                )}
+                <Text style={styles.shareNote}>
+                  Each code can only be used once. Optional — you can skip this
+                  and start now.
+                </Text>
+              </Card>
+
+              <Button
+                label="Start Hunt"
+                onPress={() => handleStartHunt()}
+                variant="accent"
+                size="lg"
+                emoji="🚀"
+                style={styles.startBtn}
+              />
+            </>
+          )}
+
+          {/* ── COMPETE FLOW ──────────────────────────────── */}
+          {!isSolo && (
+            <>
+              <Card style={styles.section}>
+                <Text style={styles.competingExplainer}>
+                  {
+                    "🌍 Everyone generates their own unique hunt in whatever city they are in — your scores are combined on a live leaderboard. May the best explorer win!"
+                  }
+                </Text>
+              </Card>
+
+              {/* Create or Join */}
+              <Card style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  Create or join a session?
+                </Text>
+                <View style={styles.modeRow}>
                   <TouchableOpacity
-                    style={styles.copyBtn}
-                    onPress={async () => {
-                      await Clipboard.setStringAsync(shareCode);
-                      Alert.alert("Copied!", "Share code copied to clipboard.");
-                    }}
+                    style={[
+                      styles.modeBtn,
+                      sessionAction === "create" && styles.modeBtnActive,
+                    ]}
+                    onPress={() => setAction("create")}
                   >
-                    <Text style={styles.copyBtnText}>📋 Copy</Text>
+                    <Text style={styles.modeEmoji}>➕</Text>
+                    <Text
+                      style={[
+                        styles.modeLabel,
+                        sessionAction === "create" && styles.modeLabelActive,
+                      ]}
+                    >
+                      Create
+                    </Text>
+                    <Text
+                      style={[
+                        styles.modeSub,
+                        sessionAction === "create" && styles.modeSubActive,
+                      ]}
+                    >
+                      Get a code
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.modeBtn,
+                      sessionAction === "join" && styles.modeBtnActive,
+                    ]}
+                    onPress={() => setAction("join")}
+                  >
+                    <Text style={styles.modeEmoji}>🔗</Text>
+                    <Text
+                      style={[
+                        styles.modeLabel,
+                        sessionAction === "join" && styles.modeLabelActive,
+                      ]}
+                    >
+                      Join
+                    </Text>
+                    <Text
+                      style={[
+                        styles.modeSub,
+                        sessionAction === "join" && styles.modeSubActive,
+                      ]}
+                    >
+                      Enter a code
+                    </Text>
                   </TouchableOpacity>
                 </View>
+                {sessionAction === "join" && (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Session Code</Text>
+                    <TextInput
+                      style={[styles.input, styles.codeInput]}
+                      value={joinCode}
+                      onChangeText={(text) => setJoinCode(text.toUpperCase())}
+                      placeholder="e.g. HNT4X2"
+                      placeholderTextColor={COLORS.midGray}
+                      maxLength={6}
+                      autoCapitalize="characters"
+                    />
+                  </View>
+                )}
+              </Card>
+
+              {sessionAction === "create" ? (
+                <Button
+                  label="Create Session & Start"
+                  onPress={handleCreateSession}
+                  variant="accent"
+                  size="lg"
+                  emoji="➕"
+                  loading={loading}
+                  style={styles.startBtn}
+                />
               ) : (
                 <Button
-                  label={
-                    loadingShareCode ? "Generating..." : "Generate Share Code"
-                  }
-                  onPress={handleGenerateShareCode}
-                  variant="secondary"
-                  size="md"
+                  label="Join Session & Start"
+                  onPress={handleJoinSession}
+                  variant="accent"
+                  size="lg"
                   emoji="🔗"
-                  loading={loadingShareCode}
-                  style={styles.shareCodeBtn}
+                  loading={loading}
+                  style={styles.startBtn}
                 />
               )}
-              <Text style={styles.shareNote}>
-                Each code can only be used once. Optional — you can skip this
-                and start now.
-              </Text>
-            </Card>
 
-            <Button
-              label="Start Hunt"
-              onPress={() => handleStartHunt()}
-              variant="accent"
-              size="lg"
-              emoji="🚀"
-              style={styles.startBtn}
-            />
-          </>
-        )}
-
-        {/* ── COMPETE FLOW ──────────────────────────────────────── */}
-        {!isSolo && (
-          <>
-            <Card style={styles.section}>
-              <Text style={styles.competingExplainer}>
-                {
-                  "🌍 Everyone generates their own unique hunt in whatever city they are in — your scores are combined on a live leaderboard. May the best explorer win!"
-                }
-              </Text>
-            </Card>
-
-            {/* Create or Join */}
-            <Card style={styles.section}>
-              <Text style={styles.sectionTitle}>Create or join a session?</Text>
-              <View style={styles.modeRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.modeBtn,
-                    sessionAction === "create" && styles.modeBtnActive,
-                  ]}
-                  onPress={() => setAction("create")}
-                >
-                  <Text style={styles.modeEmoji}>➕</Text>
-                  <Text
-                    style={[
-                      styles.modeLabel,
-                      sessionAction === "create" && styles.modeLabelActive,
-                    ]}
-                  >
-                    Create
-                  </Text>
-                  <Text
-                    style={[
-                      styles.modeSub,
-                      sessionAction === "create" && styles.modeSubActive,
-                    ]}
-                  >
-                    Get a code
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.modeBtn,
-                    sessionAction === "join" && styles.modeBtnActive,
-                  ]}
-                  onPress={() => setAction("join")}
-                >
-                  <Text style={styles.modeEmoji}>🔗</Text>
-                  <Text
-                    style={[
-                      styles.modeLabel,
-                      sessionAction === "join" && styles.modeLabelActive,
-                    ]}
-                  >
-                    Join
-                  </Text>
-                  <Text
-                    style={[
-                      styles.modeSub,
-                      sessionAction === "join" && styles.modeSubActive,
-                    ]}
-                  >
-                    Enter a code
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              {sessionAction === "join" && (
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Session Code</Text>
-                  <TextInput
-                    style={[styles.input, styles.codeInput]}
-                    value={joinCode}
-                    onChangeText={(text) => setJoinCode(text.toUpperCase())}
-                    placeholder="e.g. HNT4X2"
-                    placeholderTextColor={COLORS.midGray}
-                    maxLength={6}
-                    autoCapitalize="characters"
-                  />
-                </View>
-              )}
-            </Card>
-
-            {sessionAction === "create" ? (
               <Button
-                label="Create Session & Start"
-                onPress={handleCreateSession}
-                variant="accent"
-                size="lg"
-                emoji="➕"
-                loading={loading}
-                style={styles.startBtn}
+                label="Skip — Play Solo Instead"
+                onPress={() => handleStartHunt()}
+                variant="ghost"
+                size="md"
+                style={styles.skipBtn}
               />
-            ) : (
-              <Button
-                label="Join Session & Start"
-                onPress={handleJoinSession}
-                variant="accent"
-                size="lg"
-                emoji="🔗"
-                loading={loading}
-                style={styles.startBtn}
-              />
-            )}
-
-            <Button
-              label="Skip — Play Solo Instead"
-              onPress={() => handleStartHunt()}
-              variant="ghost"
-              size="md"
-              style={styles.skipBtn}
-            />
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+            </>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
-  scroll: { padding: SPACING.lg, paddingBottom: 40 },
-  emoji: {
-    fontSize: 64,
-    textAlign: "center",
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
+  heroBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
   },
-  title: {
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.68)",
+  },
+  safeArea: { flex: 1 },
+  heroSection: {
+    alignItems: "center",
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+  },
+  heroEmoji: { fontSize: 56, marginBottom: SPACING.sm },
+  heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
-    textAlign: "center",
     marginBottom: 8,
   },
   huntName: {
     fontSize: FONTS.sizes.md,
-    color: "#b3d9f5",
+    color: "rgba(255,255,255,0.85)",
     textAlign: "center",
-    marginBottom: 4,
+    marginBottom: SPACING.sm,
   },
-  city: {
+  cityBadge: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: RADIUS.round,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+  },
+  cityBadgeText: {
+    color: COLORS.white,
     fontSize: FONTS.sizes.sm,
-    color: "#b3d9f5",
-    textAlign: "center",
-    marginBottom: SPACING.xl,
+    fontWeight: FONTS.weights.bold,
   },
+  card: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  cardContent: { padding: SPACING.lg, paddingBottom: 40 },
   section: { marginBottom: SPACING.md },
   sectionTitle: {
     fontSize: FONTS.sizes.md,

@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +24,8 @@ import {
   SPECIALTY_HUNTS,
 } from "../theme";
 import { canGenerateHunt } from "../services/purchaseService";
+
+const HERO_BG = require("../../assets/images/hunt_bg_8_friends_overlook.jpg");
 
 type Phase = "intro" | "locating" | "generating" | "error";
 
@@ -91,18 +94,15 @@ export default function MicroHuntScreen() {
   const handleStart = async () => {
     try {
       setPhase("locating");
-
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setError("Location permission is required for micro hunts.");
         setPhase("error");
         return;
       }
-
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-
       setPhase("generating");
 
       const finalInterests = isSpecialty
@@ -129,7 +129,7 @@ export default function MicroHuntScreen() {
         return;
       }
 
-      // Warn if user selected only niche interests with potentially limited spots
+      // Niche interest warning
       if (!isSpecialty && interests.length > 0 && interests.length <= 2) {
         const nicheInterests = [
           "True Crime",
@@ -175,13 +175,9 @@ export default function MicroHuntScreen() {
 
       router.replace({
         pathname: "/hunt-setup",
-        params: {
-          hunt: JSON.stringify(hunt),
-          playMode,
-        },
+        params: { hunt: JSON.stringify(hunt), playMode },
       });
     } catch (err: any) {
-      console.error("Micro hunt error:", err.message);
       setError(
         err.response?.data?.error ||
           "Could not generate a micro hunt. Please try again.",
@@ -203,11 +199,13 @@ export default function MicroHuntScreen() {
     </View>
   );
 
-  // ── Locating / Generating states ───────────────────────────────
+  // ── Loading / error states ─────────────────────────────────────
   if (phase === "locating" || phase === "generating") {
     return (
-      <SafeAreaView style={[styles.container, styles.containerDark]}>
-        <View style={styles.centered}>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+        <View style={styles.overlay} />
+        <SafeAreaView style={[styles.safeArea, styles.centeredSafeArea]}>
           <Text style={styles.loadingEmoji}>
             {phase === "locating" ? "📍" : "⚡"}
           </Text>
@@ -226,19 +224,20 @@ export default function MicroHuntScreen() {
               ? "We need your location to find nearby spots"
               : "Crafting clues for spots near you"}
           </Text>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────
   if (phase === "error") {
     return (
-      <SafeAreaView style={[styles.container, styles.containerDark]}>
-        <View style={styles.centered}>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+        <View style={styles.overlay} />
+        <SafeAreaView style={[styles.safeArea, styles.centeredSafeArea]}>
           <Text style={styles.loadingEmoji}>⚠️</Text>
-          <Text style={styles.errorTitle}>Something went wrong</Text>
-          <Text style={styles.errorDesc}>{error}</Text>
+          <Text style={styles.loadingTitle}>Something went wrong</Text>
+          <Text style={styles.loadingSubtitle}>{error}</Text>
           <TouchableOpacity
             style={styles.retryBtn}
             onPress={() => {
@@ -249,265 +248,295 @@ export default function MicroHuntScreen() {
             <Text style={styles.retryBtnText}>Try Again</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.backBtn}
+            style={styles.backBtn2}
             onPress={() => router.back()}
           >
-            <Text style={styles.backBtnText}>← Go Back</Text>
+            <Text style={styles.backBtn2Text}>← Go Back</Text>
           </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </View>
     );
   }
 
   // ── Intro state ────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+      <View style={styles.overlay} />
 
-        <Text style={styles.pageTitle}>
-          {isSpecialty && incomingSpecialtyKey
-            ? `${SPECIALTY_HUNTS[incomingSpecialtyKey as keyof typeof SPECIALTY_HUNTS]?.emoji} Micro Hunt`
-            : "⚡ Micro Hunt"}
-        </Text>
-        <Text style={styles.pageSubtitle}>
-          {"A quick adventure built around where you are right now"}
-        </Text>
-
-        {/* Stop count */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🚩" title="How many stops?" />
-          <Text style={styles.hint}>More stops = longer adventure</Text>
-          <View style={styles.stopCountRow}>
-            <TouchableOpacity
-              style={styles.stopCountBtn}
-              onPress={() => setStopCount((prev) => Math.max(1, prev - 1))}
-            >
-              <Text style={styles.stopCountBtnText}>−</Text>
-            </TouchableOpacity>
-            <View style={styles.stopCountDisplay}>
-              <Text style={styles.stopCountValue}>{stopCount}</Text>
-              <Text style={styles.stopCountLabel}>stops</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.stopCountBtn}
-              onPress={() => setStopCount((prev) => Math.min(2, prev + 1))}
-            >
-              <Text style={styles.stopCountBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.stopCountEstimate}>
-            ⏱ Estimated time: {stopCount * 10}–{stopCount * 15} minutes
+      <SafeAreaView style={styles.safeArea}>
+        {/* Hero header */}
+        <View style={styles.heroSection}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backRow}
+          >
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.heroTitle}>
+            {isSpecialty && incomingSpecialtyKey
+              ? `${SPECIALTY_HUNTS[incomingSpecialtyKey as keyof typeof SPECIALTY_HUNTS]?.emoji} Micro Hunt`
+              : "⚡ Micro Hunt"}
           </Text>
-        </Card>
-
-        {/* Play mode */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🏁" title="How are you playing?" />
-          <Text style={styles.hint}>
-            Solo hunts include a shareable code. Competing hunts join a live
-            leaderboard.
+          <Text style={styles.heroSub}>
+            A quick adventure built around where you are right now
           </Text>
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                playMode === "solo" && styles.modeBtnActive,
-              ]}
-              onPress={() => setPlayMode("solo")}
-            >
-              <Text style={styles.modeEmoji}>🧍</Text>
-              <Text
-                style={[
-                  styles.modeLabel,
-                  playMode === "solo" && styles.modeLabelActive,
-                ]}
-              >
-                Solo / Group
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  playMode === "solo" && styles.modeSubActive,
-                ]}
-              >
-                Share hunt with a friend
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                playMode === "compete" && styles.modeBtnActive,
-              ]}
-              onPress={() => setPlayMode("compete")}
-            >
-              <Text style={styles.modeEmoji}>🏆</Text>
-              <Text
-                style={[
-                  styles.modeLabel,
-                  playMode === "compete" && styles.modeLabelActive,
-                ]}
-              >
-                Compete
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  playMode === "compete" && styles.modeSubActive,
-                ]}
-              >
-                Live leaderboard
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {playMode === "compete" && (
-            <View style={styles.competingNote}>
-              <Text style={styles.competingNoteText}>
-                {
-                  "🌍 Everyone generates their own unique hunt wherever they are — scores combine on a live leaderboard."
-                }
-              </Text>
-            </View>
-          )}
-        </Card>
+        </View>
 
-        {/* Interests — personalized only */}
-        {!isSpecialty && (
+        {/* White card */}
+        <ScrollView
+          style={styles.card}
+          contentContainerStyle={styles.cardContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Stop count */}
           <Card style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <SectionHeader emoji="❤️" title="What do you love?" />
-              <View style={styles.optionalRow}>
-                <Text style={styles.optionalLabel}>Optional</Text>
-                <TouchableOpacity
-                  style={styles.randomBtn}
-                  onPress={handleRandomize}
-                >
-                  <Text style={styles.randomBtnText}>🎲 Randomize</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <Text style={styles.hint}>
-              Pick what fits — or tap Randomize to let us choose
-            </Text>
-            {interests.length > 0 && (
+            <SectionHeader emoji="🚩" title="How many stops?" />
+            <Text style={styles.hint}>More stops = longer adventure</Text>
+            <View style={styles.stopCountRow}>
               <TouchableOpacity
-                style={styles.clearBtn}
-                onPress={() => setInterests([])}
+                style={styles.stopCountBtn}
+                onPress={() => setStopCount((p) => Math.max(1, p - 1))}
               >
-                <Text style={styles.clearBtnText}>✕ Clear selections</Text>
+                <Text style={styles.stopCountBtnText}>−</Text>
               </TouchableOpacity>
+              <View style={styles.stopCountDisplay}>
+                <Text style={styles.stopCountValue}>{stopCount}</Text>
+                <Text style={styles.stopCountLabel}>stops</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.stopCountBtn}
+                onPress={() => setStopCount((p) => Math.min(2, p + 1))}
+              >
+                <Text style={styles.stopCountBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.stopCountEstimate}>
+              ⏱ Estimated time: {stopCount * 10}–{stopCount * 15} minutes
+            </Text>
+          </Card>
+
+          {/* Play mode */}
+          <Card style={styles.section}>
+            <SectionHeader emoji="🏁" title="How are you playing?" />
+            <Text style={styles.hint}>
+              Solo hunts include a shareable code. Competing hunts join a live
+              leaderboard.
+            </Text>
+            <View style={styles.modeRow}>
+              <TouchableOpacity
+                style={[
+                  styles.modeBtn,
+                  playMode === "solo" && styles.modeBtnActive,
+                ]}
+                onPress={() => setPlayMode("solo")}
+              >
+                <Text style={styles.modeEmoji}>🧍</Text>
+                <Text
+                  style={[
+                    styles.modeLabel,
+                    playMode === "solo" && styles.modeLabelActive,
+                  ]}
+                >
+                  Solo / Group
+                </Text>
+                <Text
+                  style={[
+                    styles.modeSub,
+                    playMode === "solo" && styles.modeSubActive,
+                  ]}
+                >
+                  Share hunt with a friend
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modeBtn,
+                  playMode === "compete" && styles.modeBtnActive,
+                ]}
+                onPress={() => setPlayMode("compete")}
+              >
+                <Text style={styles.modeEmoji}>🏆</Text>
+                <Text
+                  style={[
+                    styles.modeLabel,
+                    playMode === "compete" && styles.modeLabelActive,
+                  ]}
+                >
+                  Compete
+                </Text>
+                <Text
+                  style={[
+                    styles.modeSub,
+                    playMode === "compete" && styles.modeSubActive,
+                  ]}
+                >
+                  Live leaderboard
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {playMode === "compete" && (
+              <View style={styles.competingNote}>
+                <Text style={styles.competingNoteText}>
+                  {
+                    "🌍 Everyone generates their own unique hunt wherever they are — scores combine on a live leaderboard."
+                  }
+                </Text>
+              </View>
             )}
-            <View style={styles.chipGrid}>
-              {INTERESTS.map(({ label, emoji }) => {
-                const selected = interests.includes(label);
+          </Card>
+
+          {/* Interests — personalized only */}
+          {!isSpecialty && (
+            <Card style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <SectionHeader emoji="❤️" title="What do you love?" />
+                <View style={styles.optionalRow}>
+                  <Text style={styles.optionalLabel}>Optional</Text>
+                  <TouchableOpacity
+                    style={styles.randomBtn}
+                    onPress={handleRandomize}
+                  >
+                    <Text style={styles.randomBtnText}>🎲 Randomize</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <Text style={styles.hint}>
+                Pick what fits — or tap Randomize to let us choose
+              </Text>
+              {interests.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearBtn}
+                  onPress={() => setInterests([])}
+                >
+                  <Text style={styles.clearBtnText}>✕ Clear selections</Text>
+                </TouchableOpacity>
+              )}
+              <View style={styles.chipGrid}>
+                {INTERESTS.map(({ label, emoji }) => {
+                  const selected = interests.includes(label);
+                  return (
+                    <TouchableOpacity
+                      key={label}
+                      style={[styles.chip, selected && styles.chipSelected]}
+                      onPress={() => toggleInterest(label)}
+                    >
+                      <Text style={styles.chipEmoji}>{emoji}</Text>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          selected && styles.chipTextSelected,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </Card>
+          )}
+
+          {/* Difficulty */}
+          <Card style={styles.section}>
+            <SectionHeader emoji="🎯" title="Difficulty" />
+            <Text style={styles.hint}>
+              Affects clue complexity and timer length
+            </Text>
+            <View style={styles.difficultyRow}>
+              {(["easy", "medium", "hard"] as const).map((level) => {
+                const d = DIFFICULTY[level];
+                const selected = difficulty === level;
                 return (
                   <TouchableOpacity
-                    key={label}
-                    style={[styles.chip, selected && styles.chipSelected]}
-                    onPress={() => toggleInterest(label)}
+                    key={level}
+                    style={[
+                      styles.diffBtn,
+                      selected && {
+                        backgroundColor: d.color,
+                        borderColor: d.color,
+                      },
+                    ]}
+                    onPress={() => setDifficulty(level)}
                   >
-                    <Text style={styles.chipEmoji}>{emoji}</Text>
+                    <Text style={styles.diffEmoji}>{d.emoji}</Text>
                     <Text
                       style={[
-                        styles.chipText,
-                        selected && styles.chipTextSelected,
+                        styles.diffLabel,
+                        selected && styles.diffLabelSelected,
                       ]}
                     >
-                      {label}
+                      {d.label}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.diffSub,
+                        selected && styles.diffLabelSelected,
+                      ]}
+                    >
+                      {d.description}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
           </Card>
-        )}
 
-        {/* Difficulty */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🎯" title="Difficulty" />
-          <Text style={styles.hint}>
-            Affects clue complexity and timer length
-          </Text>
-          <View style={styles.difficultyRow}>
-            {(["easy", "medium", "hard"] as const).map((level) => {
-              const d = DIFFICULTY[level];
-              const selected = difficulty === level;
-              return (
-                <TouchableOpacity
-                  key={level}
-                  style={[
-                    styles.diffBtn,
-                    selected && {
-                      backgroundColor: d.color,
-                      borderColor: d.color,
-                    },
-                  ]}
-                  onPress={() => setDifficulty(level)}
-                >
-                  <Text style={styles.diffEmoji}>{d.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.diffLabel,
-                      selected && styles.diffLabelSelected,
-                    ]}
-                  >
-                    {d.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.diffSub,
-                      selected && styles.diffLabelSelected,
-                    ]}
-                  >
-                    {d.description}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </Card>
-
-        {/* Start button */}
-        <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
-          <Text style={styles.startBtnText}>⚡ Build My Micro Hunt</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+          <TouchableOpacity style={styles.startBtn} onPress={handleStart}>
+            <Text style={styles.startBtnText}>⚡ Build My Micro Hunt</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
-  containerDark: { backgroundColor: COLORS.primary },
-  centered: {
-    flex: 1,
-    alignItems: "center",
+  container: { flex: 1, backgroundColor: COLORS.primary },
+  heroBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.72)",
+  },
+  safeArea: { flex: 1 },
+  centeredSafeArea: {
     justifyContent: "center",
+    alignItems: "center",
     padding: SPACING.xl,
   },
-  scroll: { padding: SPACING.md, paddingBottom: 40 },
+  heroSection: { padding: SPACING.lg, paddingBottom: SPACING.xl },
   backRow: { marginBottom: SPACING.sm },
   backText: {
-    color: COLORS.primary,
+    color: "rgba(255,255,255,0.75)",
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
   },
-  pageTitle: {
+  heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    color: COLORS.white,
     marginBottom: 4,
   },
-  pageSubtitle: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
-    marginBottom: SPACING.lg,
+  heroSub: { fontSize: FONTS.sizes.md, color: "rgba(255,255,255,0.75)" },
+  card: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
   },
+  cardContent: { padding: SPACING.md, paddingBottom: 60 },
   section: { marginBottom: SPACING.md },
   sectionHeader: { flexDirection: "row", alignItems: "center" },
   sectionEmoji: { fontSize: 22, marginRight: 8 },
@@ -521,61 +550,6 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     marginBottom: SPACING.sm,
   },
-  sectionHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.sm,
-    flexWrap: "wrap",
-    gap: SPACING.xs,
-  },
-  optionalRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    flexShrink: 1,
-  },
-  optionalLabel: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.midGray,
-    fontStyle: "italic",
-  },
-  randomBtn: {
-    backgroundColor: COLORS.accentPale,
-    borderRadius: RADIUS.round,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  randomBtnText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.accent,
-    fontWeight: FONTS.weights.bold,
-  },
-  clearBtn: { alignSelf: "flex-start", marginBottom: SPACING.sm },
-  clearBtnText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.danger,
-    fontWeight: FONTS.weights.medium,
-  },
-  chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: RADIUS.round,
-    borderWidth: 1.5,
-    borderColor: COLORS.midGray,
-    backgroundColor: COLORS.offWhite,
-    gap: 4,
-  },
-  chipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  chipEmoji: { fontSize: 14 },
-  chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
-  chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
   modeRow: { flexDirection: "row", gap: SPACING.sm },
   modeBtn: {
     flex: 1,
@@ -616,6 +590,25 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     lineHeight: 20,
   },
+  chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADIUS.round,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.offWhite,
+    gap: 4,
+  },
+  chipSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  chipEmoji: { fontSize: 14 },
+  chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
+  chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
   difficultyRow: { flexDirection: "row", gap: 8 },
   diffBtn: {
     flex: 1,
@@ -679,13 +672,49 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontStyle: "italic",
   },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SPACING.sm,
+    flexWrap: "wrap",
+    gap: SPACING.xs,
+  },
+  optionalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+    flexShrink: 1,
+  },
+  optionalLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.midGray,
+    fontStyle: "italic",
+  },
+  randomBtn: {
+    backgroundColor: COLORS.accentPale,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  randomBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.accent,
+    fontWeight: FONTS.weights.bold,
+  },
+  clearBtn: { alignSelf: "flex-start", marginBottom: SPACING.sm },
+  clearBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.danger,
+    fontWeight: FONTS.weights.medium,
+  },
   startBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     alignItems: "center",
     marginTop: SPACING.md,
-    marginBottom: 40,
+    marginBottom: 20,
   },
   startBtnText: {
     color: COLORS.white,
@@ -704,17 +733,6 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     color: "rgba(255,255,255,0.7)",
     textAlign: "center",
-  },
-  errorTitle: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: FONTS.weights.heavy,
-    color: COLORS.white,
-    marginBottom: SPACING.sm,
-  },
-  errorDesc: {
-    fontSize: FONTS.sizes.md,
-    color: "rgba(255,255,255,0.7)",
-    textAlign: "center",
     marginBottom: SPACING.xl,
   },
   retryBtn: {
@@ -729,6 +747,6 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.heavy,
   },
-  backBtn: { padding: SPACING.md },
-  backBtnText: { color: "rgba(255,255,255,0.7)", fontSize: FONTS.sizes.md },
+  backBtn2: { padding: SPACING.md },
+  backBtn2Text: { color: "rgba(255,255,255,0.7)", fontSize: FONTS.sizes.md },
 });

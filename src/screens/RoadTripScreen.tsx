@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -43,6 +44,8 @@ const INTERESTS = [
   { label: "Film & TV", emoji: "🎬" },
   { label: "Shopping", emoji: "🛍️" },
 ];
+
+const HERO_BG = require("../../assets/images/hunt_bg_6_roadtrip_map_sunset.jpg");
 
 const DIFFICULTIES = [
   { label: "Easy", desc: "Simple clues, great for families" },
@@ -290,13 +293,11 @@ export default function RoadTripScreen() {
   // ── STEP 1 ────────────────────────────────────────────────────
   if (step === 1) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.header}>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+        <View style={styles.heroOverlay} />
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.heroSection}>
             <TouchableOpacity
               onPress={() => router.back()}
               style={styles.backBtn}
@@ -308,213 +309,221 @@ export default function RoadTripScreen() {
               Enter your route and interests to find stops along the way
             </Text>
           </View>
+          <ScrollView
+            style={styles.card}
+            contentContainerStyle={styles.cardScroll}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Starting point */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>📍 Starting Point</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Seattle, WA"
+                placeholderTextColor={COLORS.midGray}
+                value={startLocation}
+                onChangeText={setStartLocation}
+              />
+              <TouchableOpacity
+                style={styles.locationBtn}
+                onPress={handleUseCurrentLocation}
+                disabled={loadingLocation}
+              >
+                {loadingLocation ? (
+                  <ActivityIndicator size="small" color={COLORS.white} />
+                ) : (
+                  <Text style={styles.locationBtnText}>
+                    📱 Use My Current Location
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
 
-          {/* Starting point */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📍 Starting Point</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Seattle, WA"
-              placeholderTextColor={COLORS.midGray}
-              value={startLocation}
-              onChangeText={setStartLocation}
-            />
+            {/* Destination */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>🏁 Destination</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g. Portland, OR"
+                placeholderTextColor={COLORS.midGray}
+                value={endLocation}
+                onChangeText={setEndLocation}
+              />
+            </View>
+
+            {/* Interests */}
+            <View style={styles.section}>
+              <View style={styles.sectionTitleRow}>
+                <Text style={styles.sectionTitle}>🎯 Interests</Text>
+                <TouchableOpacity
+                  style={styles.randomBtn}
+                  onPress={handleRandomize}
+                >
+                  <Text style={styles.randomBtnText}>🎲 Randomize</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.sectionSubtitle}>
+                What kind of stops do you want to find?
+              </Text>
+              <View style={styles.interestGrid}>
+                {INTERESTS.map((interest) => {
+                  const selected = selectedInterests.includes(interest.label);
+                  return (
+                    <TouchableOpacity
+                      key={interest.label}
+                      style={[
+                        styles.interestChip,
+                        selected && styles.interestChipActive,
+                      ]}
+                      onPress={() => toggleInterest(interest.label)}
+                    >
+                      <Text style={styles.interestEmoji}>{interest.emoji}</Text>
+                      <Text
+                        style={[
+                          styles.interestLabel,
+                          selected && styles.interestLabelActive,
+                        ]}
+                      >
+                        {interest.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Difficulty */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>🧩 Clue Difficulty</Text>
+              <View style={styles.difficultyRow}>
+                {DIFFICULTIES.map((d) => {
+                  const selected = difficulty === d.label;
+                  const colors: Record<string, string> = {
+                    Easy: "#27AE60",
+                    Medium: "#F39C12",
+                    Hard: "#C0392B",
+                  };
+                  const emojis: Record<string, string> = {
+                    Easy: "🟢",
+                    Medium: "🟡",
+                    Hard: "🔴",
+                  };
+                  return (
+                    <TouchableOpacity
+                      key={d.label}
+                      style={[
+                        styles.diffBtn,
+                        selected && {
+                          backgroundColor: colors[d.label],
+                          borderColor: colors[d.label],
+                        },
+                      ]}
+                      onPress={() => setDifficulty(d.label)}
+                    >
+                      <Text style={styles.diffEmoji}>{emojis[d.label]}</Text>
+                      <Text
+                        style={[
+                          styles.diffLabel,
+                          selected && styles.diffLabelSelected,
+                        ]}
+                      >
+                        {d.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.diffDesc,
+                          selected && styles.diffLabelSelected,
+                        ]}
+                      >
+                        {d.desc}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
             <TouchableOpacity
-              style={styles.locationBtn}
-              onPress={handleUseCurrentLocation}
-              disabled={loadingLocation}
+              style={[
+                styles.generateBtn,
+                loadingCandidates && styles.generateBtnDisabled,
+              ]}
+              onPress={handleFindStops}
+              disabled={loadingCandidates}
             >
-              {loadingLocation ? (
+              {loadingCandidates ? (
                 <ActivityIndicator size="small" color={COLORS.white} />
               ) : (
-                <Text style={styles.locationBtnText}>
-                  📱 Use My Current Location
+                <Text style={styles.generateBtnText}>
+                  🗺️ Find Stops Along My Route
                 </Text>
               )}
             </TouchableOpacity>
-          </View>
 
-          {/* Destination */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🏁 Destination</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Portland, OR"
-              placeholderTextColor={COLORS.midGray}
-              value={endLocation}
-              onChangeText={setEndLocation}
-            />
-          </View>
-
-          {/* Interests */}
-          <View style={styles.section}>
-            <View style={styles.sectionTitleRow}>
-              <Text style={styles.sectionTitle}>🎯 Interests</Text>
-              <TouchableOpacity
-                style={styles.randomBtn}
-                onPress={handleRandomize}
-              >
-                <Text style={styles.randomBtnText}>🎲 Randomize</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.sectionSubtitle}>
-              What kind of stops do you want to find?
-            </Text>
-            <View style={styles.interestGrid}>
-              {INTERESTS.map((interest) => {
-                const selected = selectedInterests.includes(interest.label);
-                return (
-                  <TouchableOpacity
-                    key={interest.label}
-                    style={[
-                      styles.interestChip,
-                      selected && styles.interestChipActive,
-                    ]}
-                    onPress={() => toggleInterest(interest.label)}
-                  >
-                    <Text style={styles.interestEmoji}>{interest.emoji}</Text>
-                    <Text
-                      style={[
-                        styles.interestLabel,
-                        selected && styles.interestLabelActive,
-                      ]}
-                    >
-                      {interest.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Difficulty */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🧩 Clue Difficulty</Text>
-            <View style={styles.difficultyRow}>
-              {DIFFICULTIES.map((d) => {
-                const selected = difficulty === d.label;
-                const colors: Record<string, string> = {
-                  Easy: "#27AE60",
-                  Medium: "#F39C12",
-                  Hard: "#C0392B",
-                };
-                const emojis: Record<string, string> = {
-                  Easy: "🟢",
-                  Medium: "🟡",
-                  Hard: "🔴",
-                };
-                return (
-                  <TouchableOpacity
-                    key={d.label}
-                    style={[
-                      styles.diffBtn,
-                      selected && {
-                        backgroundColor: colors[d.label],
-                        borderColor: colors[d.label],
-                      },
-                    ]}
-                    onPress={() => setDifficulty(d.label)}
-                  >
-                    <Text style={styles.diffEmoji}>{emojis[d.label]}</Text>
-                    <Text
-                      style={[
-                        styles.diffLabel,
-                        selected && styles.diffLabelSelected,
-                      ]}
-                    >
-                      {d.label}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.diffDesc,
-                        selected && styles.diffLabelSelected,
-                      ]}
-                    >
-                      {d.desc}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.generateBtn,
-              loadingCandidates && styles.generateBtnDisabled,
-            ]}
-            onPress={handleFindStops}
-            disabled={loadingCandidates}
-          >
-            {loadingCandidates ? (
-              <ActivityIndicator size="small" color={COLORS.white} />
-            ) : (
-              <Text style={styles.generateBtnText}>
-                🗺️ Find Stops Along My Route
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          <View style={{ height: 40 }} />
-        </ScrollView>
-      </SafeAreaView>
+            <View style={{ height: 40 }} />
+          </ScrollView>
+        </SafeAreaView>
+      </View>
     );
   }
 
   // ── Searching for stops screen ─────────────────────────────────
   if (searching) {
     return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: COLORS.primary }]}
-      >
-        <View
-          style={{
-            flex: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            padding: SPACING.xl,
-          }}
-        >
-          <Text style={{ fontSize: 72, marginBottom: SPACING.md }}>🛣️</Text>
-          <ActivityIndicator
-            size="large"
-            color={COLORS.accent}
-            style={{ marginBottom: SPACING.lg }}
-          />
-          <Text
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+        <View style={styles.heroOverlay} />
+        <SafeAreaView style={styles.safeArea}>
+          <View
             style={{
-              fontSize: FONTS.sizes.xxl,
-              fontWeight: FONTS.weights.heavy,
-              color: COLORS.white,
-              textAlign: "center",
-              marginBottom: SPACING.sm,
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              padding: SPACING.xl,
             }}
           >
-            Mapping Your Route
-          </Text>
-          <Text
-            style={{
-              fontSize: FONTS.sizes.md,
-              color: "#b3d9f5",
-              textAlign: "center",
-              marginBottom: SPACING.xl,
-              lineHeight: 24,
-            }}
-          >
-            {`Searching for great stops between\n${startLocation} and ${endLocation}...`}
-          </Text>
-          <Text
-            style={{
-              fontSize: FONTS.sizes.sm,
-              color: "rgba(255,255,255,0.5)",
-              textAlign: "center",
-              fontStyle: "italic",
-            }}
-          >
-            This can take up to 30 seconds ✨
-          </Text>
-        </View>
-      </SafeAreaView>
+            <Text style={{ fontSize: 72, marginBottom: SPACING.md }}>🛣️</Text>
+            <ActivityIndicator
+              size="large"
+              color={COLORS.accent}
+              style={{ marginBottom: SPACING.lg }}
+            />
+            <Text
+              style={{
+                fontSize: FONTS.sizes.xxl,
+                fontWeight: FONTS.weights.heavy,
+                color: COLORS.white,
+                textAlign: "center",
+                marginBottom: SPACING.sm,
+              }}
+            >
+              Mapping Your Route
+            </Text>
+            <Text
+              style={{
+                fontSize: FONTS.sizes.md,
+                color: "rgba(255,255,255,0.75)",
+                textAlign: "center",
+                marginBottom: SPACING.xl,
+                lineHeight: 24,
+              }}
+            >
+              {`Searching for great stops between\n${startLocation} and ${endLocation}...`}
+            </Text>
+            <Text
+              style={{
+                fontSize: FONTS.sizes.sm,
+                color: "rgba(255,255,255,0.5)",
+                textAlign: "center",
+                fontStyle: "italic",
+              }}
+            >
+              This can take up to 30 seconds ✨
+            </Text>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
@@ -649,7 +658,7 @@ export default function RoadTripScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
+  container: { flex: 1, backgroundColor: COLORS.primary },
   scroll: { padding: SPACING.md },
   header: { marginBottom: SPACING.lg },
   backBtn: { marginBottom: SPACING.sm },
@@ -874,4 +883,30 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontWeight: FONTS.weights.bold,
   },
+  heroBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  heroOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.72)",
+  },
+  safeArea: { flex: 1 },
+  heroSection: { padding: SPACING.lg, paddingBottom: SPACING.xl },
+  card: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  cardScroll: { padding: SPACING.md, paddingBottom: 40 },
 });

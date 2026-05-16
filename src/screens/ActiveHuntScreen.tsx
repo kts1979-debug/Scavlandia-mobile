@@ -40,6 +40,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import HuntMap from "../components/HuntMap";
 import { useLocation } from "../hooks/useLocation";
 
+const HUNT_HEADER_BG = require("../../assets/images/hunt_bg_2_couple_cobblestone.jpg");
+
 export default function ActiveHuntScreen() {
   // ── Params ─────────────────────────────────────────────────────────
   const params = useLocalSearchParams();
@@ -710,6 +712,12 @@ export default function ActiveHuntScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <Image
+          source={HUNT_HEADER_BG}
+          style={styles.headerBg}
+          resizeMode="cover"
+        />
+        <View style={styles.headerBgOverlay} />
         <View style={styles.headerTop}>
           <Text style={styles.huntTitle} numberOfLines={1}>
             {isMuseumHunt ? "🏛️ " : ""}
@@ -1077,8 +1085,8 @@ export default function ActiveHuntScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#E8F8F7" },
-  header: { backgroundColor: COLORS.primary },
+  container: { flex: 1, backgroundColor: COLORS.offWhite },
+  header: { backgroundColor: "transparent", overflow: "hidden" },
   headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1341,5 +1349,22 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
     textTransform: "uppercase",
     letterSpacing: 0.5,
+  },
+  headerBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  headerBgOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.75)",
   },
 });

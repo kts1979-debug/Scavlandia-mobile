@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -23,6 +24,8 @@ import {
   SPECIALTY_HUNTS,
 } from "../theme";
 import { canGenerateHunt } from "../services/purchaseService";
+
+const HERO_BG = require("../../assets/images/hunt_bg_3_friends_nyc.jpg");
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍽️" },
@@ -100,7 +103,7 @@ export default function GroupProfileScreen() {
       return Alert.alert("Missing info", "Please enter a city name");
     if (!mobility)
       return Alert.alert("Missing info", "Please select a mobility option");
-    // Warn if user selected only niche interests that may have limited spots
+
     const nicheInterests = [
       "True Crime",
       "Ghosts",
@@ -176,10 +179,7 @@ export default function GroupProfileScreen() {
 
     router.push({
       pathname: "/generating",
-      params: {
-        city: city.trim(),
-        groupProfile: JSON.stringify(groupProfile),
-      },
+      params: { city: city.trim(), groupProfile: JSON.stringify(groupProfile) },
     });
   };
 
@@ -196,367 +196,380 @@ export default function GroupProfileScreen() {
     </View>
   );
 
+  const heroTitle =
+    isSpecialty && specialtyHunt
+      ? `${SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]?.emoji} ${SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]?.label}`
+      : "🏙️ City Adventure";
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <TouchableOpacity onPress={() => router.back()} style={styles.backRow}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+      <View style={styles.overlay} />
 
-        <Text style={styles.pageTitle}>
-          {isSpecialty && specialtyHunt
-            ? `${SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]?.emoji} ${SPECIALTY_HUNTS[specialtyHunt as keyof typeof SPECIALTY_HUNTS]?.label}`
-            : "🏙️ City Adventure"}
-        </Text>
-        <Text style={styles.pageSubtitle}>
-          {"Tell us about your group and we'll do the rest"}
-        </Text>
-
-        {/* City */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="📍" title="Where are you?" />
-          <CityPicker value={city} onChange={setCity} />
-        </Card>
-
-        {/* Play mode */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🏁" title="How are you playing?" />
-          <Text style={styles.hint}>
-            Solo hunts include a shareable code. Competing hunts join a live
-            leaderboard.
+      <SafeAreaView style={styles.safeArea}>
+        {/* Hero header */}
+        <View style={styles.heroSection}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backRow}
+          >
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.heroTitle}>{heroTitle}</Text>
+          <Text style={styles.heroSub}>
+            {"Tell us about your group and we'll do the rest"}
           </Text>
-          <View style={styles.modeRow}>
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                playMode === "solo" && styles.modeBtnActive,
-              ]}
-              onPress={() => setPlayMode("solo")}
-            >
-              <Text style={styles.modeEmoji}>🧍</Text>
-              <Text
-                style={[
-                  styles.modeLabel,
-                  playMode === "solo" && styles.modeLabelActive,
-                ]}
-              >
-                Solo / Group
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  playMode === "solo" && styles.modeSubActive,
-                ]}
-              >
-                Share hunt with a friend
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.modeBtn,
-                playMode === "compete" && styles.modeBtnActive,
-              ]}
-              onPress={() => setPlayMode("compete")}
-            >
-              <Text style={styles.modeEmoji}>🏆</Text>
-              <Text
-                style={[
-                  styles.modeLabel,
-                  playMode === "compete" && styles.modeLabelActive,
-                ]}
-              >
-                Compete
-              </Text>
-              <Text
-                style={[
-                  styles.modeSub,
-                  playMode === "compete" && styles.modeSubActive,
-                ]}
-              >
-                Live leaderboard
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {playMode === "compete" && (
-            <View style={styles.competingNote}>
-              <Text style={styles.competingNoteText}>
-                {
-                  "🌍 Everyone generates their own unique hunt in whatever city they are in — scores combine on a live leaderboard. May the best explorer win!"
-                }
-              </Text>
-            </View>
-          )}
-        </Card>
+        </View>
 
-        {/* Group details */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="👥" title="About your group" />
-          <View style={styles.row}>
-            <View style={styles.halfField}>
-              <Text style={styles.fieldLabel}>Average age</Text>
-              <TextInput
-                style={styles.input}
-                value={ages}
-                onChangeText={setAges}
-                keyboardType="numeric"
-                maxLength={2}
-                placeholder="30"
-                placeholderTextColor={COLORS.midGray}
-              />
-            </View>
-          </View>
-        </Card>
+        {/* White card with all form content */}
+        <ScrollView
+          style={styles.card}
+          contentContainerStyle={styles.cardContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* City */}
+          <Card style={styles.section}>
+            <SectionHeader emoji="📍" title="Where are you?" />
+            <CityPicker value={city} onChange={setCity} />
+          </Card>
 
-        {/* Stop Count */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🚩" title="How many stops?" />
-          <Text style={styles.hint}>More stops = longer adventure</Text>
-          <View style={styles.stopCountRow}>
-            <TouchableOpacity
-              style={styles.stopCountBtn}
-              onPress={() => setStopCount((prev) => Math.max(6, prev - 1))}
-            >
-              <Text style={styles.stopCountBtnText}>−</Text>
-            </TouchableOpacity>
-            <View style={styles.stopCountDisplay}>
-              <Text style={styles.stopCountValue}>{stopCount}</Text>
-              <Text style={styles.stopCountLabel}>stops</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.stopCountBtn}
-              onPress={() => setStopCount((prev) => Math.min(12, prev + 1))}
-            >
-              <Text style={styles.stopCountBtnText}>+</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.stopDots}>
-            {Array.from({ length: 7 }, (_, i) => i + 6).map((n) => (
+          {/* Play mode */}
+          <Card style={styles.section}>
+            <SectionHeader emoji="🏁" title="How are you playing?" />
+            <Text style={styles.hint}>
+              Solo hunts include a shareable code. Competing hunts join a live
+              leaderboard.
+            </Text>
+            <View style={styles.modeRow}>
               <TouchableOpacity
-                key={n}
-                onPress={() => setStopCount(n)}
                 style={[
-                  styles.stopDot,
-                  n <= stopCount && styles.stopDotFilled,
-                  n === stopCount && styles.stopDotActive,
+                  styles.modeBtn,
+                  playMode === "solo" && styles.modeBtnActive,
                 ]}
+                onPress={() => setPlayMode("solo")}
               >
-                {n === stopCount && (
-                  <Text style={styles.stopDotNumber}>{n}</Text>
-                )}
+                <Text style={styles.modeEmoji}>🧍</Text>
+                <Text
+                  style={[
+                    styles.modeLabel,
+                    playMode === "solo" && styles.modeLabelActive,
+                  ]}
+                >
+                  Solo / Group
+                </Text>
+                <Text
+                  style={[
+                    styles.modeSub,
+                    playMode === "solo" && styles.modeSubActive,
+                  ]}
+                >
+                  Share hunt with a friend
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modeBtn,
+                  playMode === "compete" && styles.modeBtnActive,
+                ]}
+                onPress={() => setPlayMode("compete")}
+              >
+                <Text style={styles.modeEmoji}>🏆</Text>
+                <Text
+                  style={[
+                    styles.modeLabel,
+                    playMode === "compete" && styles.modeLabelActive,
+                  ]}
+                >
+                  Compete
+                </Text>
+                <Text
+                  style={[
+                    styles.modeSub,
+                    playMode === "compete" && styles.modeSubActive,
+                  ]}
+                >
+                  Live leaderboard
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {playMode === "compete" && (
+              <View style={styles.competingNote}>
+                <Text style={styles.competingNoteText}>
+                  {
+                    "🌍 Everyone generates their own unique hunt wherever they are — scores combine on a live leaderboard."
+                  }
+                </Text>
+              </View>
+            )}
+          </Card>
+
+          {/* Group details */}
+          <Card style={styles.section}>
+            <SectionHeader emoji="👥" title="About your group" />
+            <Text style={styles.fieldLabel}>Average age</Text>
+            <TextInput
+              style={styles.input}
+              value={ages}
+              onChangeText={setAges}
+              keyboardType="numeric"
+              maxLength={2}
+              placeholder="30"
+              placeholderTextColor={COLORS.midGray}
+            />
+          </Card>
+
+          {/* Stop Count */}
+          <Card style={styles.section}>
+            <SectionHeader emoji="🚩" title="How many stops?" />
+            <Text style={styles.hint}>More stops = longer adventure</Text>
+            <View style={styles.stopCountRow}>
+              <TouchableOpacity
+                style={styles.stopCountBtn}
+                onPress={() => setStopCount((p) => Math.max(6, p - 1))}
+              >
+                <Text style={styles.stopCountBtnText}>−</Text>
+              </TouchableOpacity>
+              <View style={styles.stopCountDisplay}>
+                <Text style={styles.stopCountValue}>{stopCount}</Text>
+                <Text style={styles.stopCountLabel}>stops</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.stopCountBtn}
+                onPress={() => setStopCount((p) => Math.min(12, p + 1))}
+              >
+                <Text style={styles.stopCountBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.stopCountEstimate}>
+              ⏱ Estimated time: {Math.round(stopCount * 12)}–
+              {Math.round(stopCount * 18)} minutes
+            </Text>
+          </Card>
+
+          {/* Interests — personalized only */}
+          {!isSpecialty && (
+            <Card style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <SectionHeader emoji="❤️" title="What do you love?" />
+                <View style={styles.optionalRow}>
+                  <Text style={styles.optionalLabel}>Optional</Text>
+                  <TouchableOpacity
+                    style={styles.randomBtn}
+                    onPress={handleRandomize}
+                  >
+                    <Text style={styles.randomBtnText}>🎲 Randomize</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <Text style={styles.hint}>
+                Pick what fits — or tap Randomize to let us choose
+              </Text>
+              {interests.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearBtn}
+                  onPress={() => setInterests([])}
+                >
+                  <Text style={styles.clearBtnText}>✕ Clear selections</Text>
+                </TouchableOpacity>
+              )}
+              <View style={styles.chipGrid}>
+                {INTERESTS.map(({ label, emoji }) => {
+                  const selected = interests.includes(label);
+                  return (
+                    <TouchableOpacity
+                      key={label}
+                      style={[styles.chip, selected && styles.chipSelected]}
+                      onPress={() => toggleInterest(label)}
+                    >
+                      <Text style={styles.chipEmoji}>{emoji}</Text>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          selected && styles.chipTextSelected,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </Card>
+          )}
+
+          {/* Specialty selector — only if specialty style but no key pre-selected */}
+          {isSpecialty && !incomingSpecialtyKey && (
+            <Card style={styles.section}>
+              <SectionHeader emoji="⭐" title="Choose Specialty" />
+              <View style={styles.specialtyGrid}>
+                {Object.entries(SPECIALTY_HUNTS).map(([key, s]) => {
+                  const selected = specialtyHunt === key;
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      style={[
+                        styles.specialtyCard,
+                        selected && {
+                          backgroundColor: s.color,
+                          borderColor: s.color,
+                        },
+                      ]}
+                      onPress={() => setSpecialtyHunt(selected ? "" : key)}
+                    >
+                      <Text style={styles.specialtyEmoji}>{s.emoji}</Text>
+                      <View style={styles.specialtyContent}>
+                        <Text
+                          style={[
+                            styles.specialtyLabel,
+                            selected && styles.specialtyLabelSelected,
+                          ]}
+                        >
+                          {s.label}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.specialtyDesc,
+                            selected && styles.specialtyDescSelected,
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {s.description}
+                        </Text>
+                      </View>
+                      {selected && <Text style={styles.checkmark}>✓</Text>}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </Card>
+          )}
+
+          {/* Mobility */}
+          <Card style={styles.section}>
+            <SectionHeader emoji="♿" title="Mobility?" />
+            {MOBILITY.map(({ label, emoji }) => (
+              <TouchableOpacity
+                key={label}
+                style={[
+                  styles.optionRow,
+                  mobility === label && styles.optionSelected,
+                ]}
+                onPress={() => setMobility(label)}
+              >
+                <Text style={styles.optionEmoji}>{emoji}</Text>
+                <Text
+                  style={[
+                    styles.optionText,
+                    mobility === label && styles.optionTextSelected,
+                  ]}
+                >
+                  {label}
+                </Text>
+                {mobility === label && <Text style={styles.checkmark}>✓</Text>}
               </TouchableOpacity>
             ))}
-          </View>
-          <Text style={styles.stopCountEstimate}>
-            ⏱ Estimated time: {Math.round(stopCount * 12)}–
-            {Math.round(stopCount * 18)} minutes
-          </Text>
-        </Card>
+          </Card>
 
-        {/* Interests — personalized only */}
-        {!isSpecialty && (
+          {/* Difficulty */}
           <Card style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <SectionHeader emoji="❤️" title="What do you love?" />
-              <View style={styles.optionalRow}>
-                <Text style={styles.optionalLabel}>Optional</Text>
-                <TouchableOpacity
-                  style={styles.randomBtn}
-                  onPress={handleRandomize}
-                >
-                  <Text style={styles.randomBtnText}>🎲 Randomize</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+            <SectionHeader emoji="🎯" title="Difficulty" />
             <Text style={styles.hint}>
-              Pick what fits — or tap Randomize to let us choose
+              Affects clue complexity and timer length
             </Text>
-            {interests.length > 0 && (
-              <TouchableOpacity
-                style={styles.clearBtn}
-                onPress={() => setInterests([])}
-              >
-                <Text style={styles.clearBtnText}>✕ Clear selections</Text>
-              </TouchableOpacity>
-            )}
-            <View style={styles.chipGrid}>
-              {INTERESTS.map(({ label, emoji }) => {
-                const selected = interests.includes(label);
+            <View style={styles.difficultyRow}>
+              {(["easy", "medium", "hard"] as const).map((level) => {
+                const d = DIFFICULTY[level];
+                const selected = difficulty === level;
                 return (
                   <TouchableOpacity
-                    key={label}
-                    style={[styles.chip, selected && styles.chipSelected]}
-                    onPress={() => toggleInterest(label)}
+                    key={level}
+                    style={[
+                      styles.diffBtn,
+                      selected && {
+                        backgroundColor: d.color,
+                        borderColor: d.color,
+                      },
+                    ]}
+                    onPress={() => setDifficulty(level)}
                   >
-                    <Text style={styles.chipEmoji}>{emoji}</Text>
+                    <Text style={styles.diffEmoji}>{d.emoji}</Text>
                     <Text
                       style={[
-                        styles.chipText,
-                        selected && styles.chipTextSelected,
+                        styles.diffLabel,
+                        selected && styles.diffLabelSelected,
                       ]}
                     >
-                      {label}
+                      {d.label}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.diffSub,
+                        selected && styles.diffLabelSelected,
+                      ]}
+                    >
+                      {d.description}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
           </Card>
-        )}
 
-        {/* Specialty selector — only if specialty style but no key pre-selected */}
-        {isSpecialty && !incomingSpecialtyKey && (
-          <Card style={styles.section}>
-            <SectionHeader emoji="⭐" title="Choose Specialty" />
-            <View style={styles.specialtyGrid}>
-              {Object.entries(SPECIALTY_HUNTS).map(([key, s]) => {
-                const selected = specialtyHunt === key;
-                return (
-                  <TouchableOpacity
-                    key={key}
-                    style={[
-                      styles.specialtyCard,
-                      selected && {
-                        backgroundColor: s.color,
-                        borderColor: s.color,
-                      },
-                    ]}
-                    onPress={() => setSpecialtyHunt(selected ? "" : key)}
-                  >
-                    <Text style={styles.specialtyEmoji}>{s.emoji}</Text>
-                    <View style={styles.specialtyContent}>
-                      <Text
-                        style={[
-                          styles.specialtyLabel,
-                          selected && styles.specialtyLabelSelected,
-                        ]}
-                      >
-                        {s.label}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.specialtyDesc,
-                          selected && styles.specialtyDescSelected,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {s.description}
-                      </Text>
-                    </View>
-                    {selected && <Text style={styles.checkmark}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </Card>
-        )}
-
-        {/* Mobility */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="♿" title="Mobility?" />
-          {MOBILITY.map(({ label, emoji }) => (
-            <TouchableOpacity
-              key={label}
-              style={[
-                styles.optionRow,
-                mobility === label && styles.optionSelected,
-              ]}
-              onPress={() => setMobility(label)}
-            >
-              <Text style={styles.optionEmoji}>{emoji}</Text>
-              <Text
-                style={[
-                  styles.optionText,
-                  mobility === label && styles.optionTextSelected,
-                ]}
-              >
-                {label}
-              </Text>
-              {mobility === label && <Text style={styles.checkmark}>✓</Text>}
-            </TouchableOpacity>
-          ))}
-        </Card>
-
-        {/* Difficulty */}
-        <Card style={styles.section}>
-          <SectionHeader emoji="🎯" title="Difficulty" />
-          <Text style={styles.hint}>
-            Affects clue complexity and timer length
-          </Text>
-          <View style={styles.difficultyRow}>
-            {(["easy", "medium", "hard"] as const).map((level) => {
-              const d = DIFFICULTY[level];
-              const selected = difficulty === level;
-              return (
-                <TouchableOpacity
-                  key={level}
-                  style={[
-                    styles.diffBtn,
-                    selected && {
-                      backgroundColor: d.color,
-                      borderColor: d.color,
-                    },
-                  ]}
-                  onPress={() => setDifficulty(level)}
-                >
-                  <Text style={styles.diffEmoji}>{d.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.diffLabel,
-                      selected && styles.diffLabelSelected,
-                    ]}
-                  >
-                    {d.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.diffSub,
-                      selected && styles.diffLabelSelected,
-                    ]}
-                  >
-                    {d.description}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </Card>
-
-        <Button
-          label="Build My Hunt"
-          onPress={handleGenerate}
-          variant="accent"
-          size="lg"
-          emoji="⚙️"
-          style={styles.generateBtn}
-        />
-      </ScrollView>
-    </SafeAreaView>
+          <Button
+            label="Build My Hunt"
+            onPress={handleGenerate}
+            variant="accent"
+            size="lg"
+            emoji="⚙️"
+            style={styles.generateBtn}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
-  scroll: { padding: SPACING.md, paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: COLORS.primary },
+  heroBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.72)",
+  },
+  safeArea: { flex: 1 },
+  heroSection: { padding: SPACING.lg, paddingBottom: SPACING.xl },
   backRow: { marginBottom: SPACING.sm },
   backText: {
-    color: COLORS.primary,
+    color: "rgba(255,255,255,0.75)",
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
   },
-  pageTitle: {
+  heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    color: COLORS.white,
     marginBottom: 4,
   },
-  pageSubtitle: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
-    marginBottom: SPACING.lg,
+  heroSub: { fontSize: FONTS.sizes.md, color: "rgba(255,255,255,0.75)" },
+  card: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
   },
+  cardContent: { padding: SPACING.md, paddingBottom: 60 },
   section: { marginBottom: SPACING.md },
   sectionHeader: {
     flexDirection: "row",
@@ -574,8 +587,6 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     marginBottom: SPACING.sm,
   },
-  row: { flexDirection: "row", gap: SPACING.md },
-  halfField: { flex: 1 },
   fieldLabel: {
     fontSize: FONTS.sizes.sm,
     color: COLORS.darkGray,
@@ -693,7 +704,7 @@ const styles = StyleSheet.create({
   optionText: { flex: 1, fontSize: FONTS.sizes.md, color: COLORS.black },
   optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
   checkmark: { fontSize: 18, color: COLORS.white },
-  generateBtn: { marginTop: SPACING.md, marginBottom: 40 },
+  generateBtn: { marginTop: SPACING.md, marginBottom: 20 },
   difficultyRow: { flexDirection: "row", gap: 8 },
   diffBtn: {
     flex: 1,
@@ -786,38 +797,6 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     color: COLORS.darkGray,
     marginTop: 2,
-  },
-  stopDots: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-    marginBottom: SPACING.sm,
-  },
-  stopDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: COLORS.midGray,
-    backgroundColor: COLORS.offWhite,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  stopDotFilled: {
-    backgroundColor: COLORS.accentPale,
-    borderColor: COLORS.accent,
-  },
-  stopDotActive: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-  },
-  stopDotNumber: {
-    color: COLORS.white,
-    fontSize: FONTS.sizes.xs,
-    fontWeight: FONTS.weights.heavy,
   },
   stopCountEstimate: {
     fontSize: FONTS.sizes.sm,

@@ -1,10 +1,8 @@
 // src/screens/HuntStyleScreen.tsx
-// Shown after selecting City Hunt or Micro Hunt from HuntTypeScreen.
-// User chooses between a Personalized hunt (interest categories) or a Specialty hunt.
-
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,9 +12,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING, SPECIALTY_HUNTS } from "../theme";
 
+const HERO_BG = require("../../assets/images/hunt_bg_5_explorer_greece.jpg");
+
 export default function HuntStyleScreen() {
   const params = useLocalSearchParams();
-  const huntType = (params.huntType as string) || "city"; // "city" or "micro"
+  const huntType = (params.huntType as string) || "city";
 
   const handlePersonalized = () => {
     const destination = huntType === "micro" ? "/micro-hunt" : "/group-profile";
@@ -37,112 +37,151 @@ export default function HuntStyleScreen() {
   const specialtyEntries = Object.entries(SPECIALTY_HUNTS);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+      <View style={styles.overlay} />
 
-        <Text style={styles.title}>What kind of hunt?</Text>
-        <Text style={styles.subtitle}>
-          Choose a personalized hunt based on your interests, or pick a
-          specialty experience with a unified theme from start to finish.
-        </Text>
-
-        {/* Personalized option */}
-        <TouchableOpacity
-          style={[styles.card, styles.cardPersonalized]}
-          onPress={handlePersonalized}
-          activeOpacity={0.85}
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardEmoji}>🎯</Text>
-            <View style={styles.cardHeaderText}>
-              <Text style={styles.cardTitle}>Personalized Hunt</Text>
-              <Text style={styles.cardSubtitle}>
-                Built around your interests
+          {/* Hero header */}
+          <View style={styles.heroSection}>
+            <TouchableOpacity
+              style={styles.backBtn}
+              onPress={() => router.back()}
+            >
+              <Text style={styles.backText}>‹ Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>What kind of hunt?</Text>
+            <Text style={styles.subtitle}>
+              Choose a personalized hunt based on your interests, or pick a
+              specialty experience with a unified theme from start to finish.
+            </Text>
+          </View>
+
+          {/* Content card */}
+          <View style={styles.contentCard}>
+            {/* Personalized option */}
+            <TouchableOpacity
+              style={styles.personalizedCard}
+              onPress={handlePersonalized}
+              activeOpacity={0.85}
+            >
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardEmoji}>🎯</Text>
+                <View style={styles.cardHeaderText}>
+                  <Text style={styles.cardTitle}>Personalized Hunt</Text>
+                  <Text style={styles.cardSub}>
+                    Built around your interests
+                  </Text>
+                </View>
+                <Text style={styles.cardArrow}>›</Text>
+              </View>
+              <Text style={styles.cardDesc}>
+                Select interest categories like History, Art, True Crime, or
+                Nature. Your hunt will mix stops from all the topics you love.
+              </Text>
+              <View style={styles.exampleRow}>
+                {["🏛️ History", "🎨 Art", "🔪 True Crime", "🌿 Nature"].map(
+                  (ex) => (
+                    <View key={ex} style={styles.exampleTag}>
+                      <Text style={styles.exampleTagText}>{ex}</Text>
+                    </View>
+                  ),
+                )}
+              </View>
+            </TouchableOpacity>
+
+            {/* Specialty hunts */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>⭐ Specialty Hunts</Text>
+              <Text style={styles.sectionSub}>
+                A fully themed experience — every stop, clue, and fun fact
+                matches the theme from first stop to last.
               </Text>
             </View>
-            <Text style={styles.cardArrow}>›</Text>
-          </View>
-          <Text style={styles.cardDesc}>
-            Select interest categories like History, Art, True Crime, or Nature.
-            Your hunt will mix stops from all the topics you love.
-          </Text>
-          <View style={styles.exampleRow}>
-            {["🏛️ History", "🎨 Art", "🔪 True Crime", "🌿 Nature"].map(
-              (ex) => (
-                <View key={ex} style={styles.exampleTag}>
-                  <Text style={styles.exampleTagText}>{ex}</Text>
+
+            {specialtyEntries.map(([key, s]) => (
+              <TouchableOpacity
+                key={key}
+                style={styles.specialtyCard}
+                onPress={() => handleSpecialty(key)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.specialtyEmoji}>{s.emoji}</Text>
+                <View style={styles.specialtyContent}>
+                  <Text style={styles.specialtyLabel}>{s.label}</Text>
+                  <Text style={styles.specialtyDesc}>{s.description}</Text>
                 </View>
-              ),
-            )}
+                <Text style={styles.cardArrow}>›</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </TouchableOpacity>
-
-        {/* Specialty hunts */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>⭐ Specialty Hunts</Text>
-          <Text style={styles.sectionSub}>
-            A fully themed experience — every stop, clue, and fun fact matches
-            the theme from first stop to last.
-          </Text>
-        </View>
-
-        {specialtyEntries.map(([key, s]) => (
-          <TouchableOpacity
-            key={key}
-            style={styles.specialtyCard}
-            onPress={() => handleSpecialty(key)}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.specialtyEmoji}>{s.emoji}</Text>
-            <View style={styles.specialtyContent}>
-              <Text style={styles.specialtyLabel}>{s.label}</Text>
-              <Text style={styles.specialtyDesc}>{s.description}</Text>
-            </View>
-            <Text style={styles.cardArrow}>›</Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
-  scroll: { padding: SPACING.md, paddingBottom: 40 },
+  container: { flex: 1, backgroundColor: COLORS.primary },
+  heroBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.72)",
+  },
+  safeArea: { flex: 1 },
+  scroll: { paddingBottom: 40 },
+  heroSection: {
+    padding: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xl,
+  },
   backBtn: { marginBottom: SPACING.md },
   backText: {
-    color: COLORS.primary,
+    color: "rgba(255,255,255,0.75)",
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
   },
   title: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    color: COLORS.white,
     marginBottom: SPACING.sm,
   },
   subtitle: {
     fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
+    color: "rgba(255,255,255,0.75)",
     lineHeight: 22,
-    marginBottom: SPACING.lg,
   },
-  card: {
+  contentCard: {
     backgroundColor: COLORS.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: SPACING.lg,
+    paddingBottom: 40,
+    minHeight: 500,
+  },
+  personalizedCard: {
+    backgroundColor: COLORS.offWhite,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
     borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
-  cardPersonalized: {
     borderColor: COLORS.primary,
   },
   cardHeader: {
@@ -158,26 +197,15 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
     color: COLORS.primary,
   },
-  cardSubtitle: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.darkGray,
-    marginTop: 2,
-  },
-  cardArrow: {
-    fontSize: FONTS.sizes.xxl,
-    color: COLORS.midGray,
-  },
+  cardSub: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
+  cardArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
   cardDesc: {
     fontSize: FONTS.sizes.sm,
     color: COLORS.darkGray,
     lineHeight: 20,
     marginBottom: SPACING.sm,
   },
-  exampleRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
+  exampleRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   exampleTag: {
     backgroundColor: COLORS.accentPale,
     borderRadius: RADIUS.round,
@@ -189,9 +217,7 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontWeight: FONTS.weights.medium,
   },
-  sectionHeader: {
-    marginBottom: SPACING.md,
-  },
+  sectionHeader: { marginBottom: SPACING.md },
   sectionTitle: {
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
@@ -206,7 +232,7 @@ const styles = StyleSheet.create({
   specialtyCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.offWhite,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
@@ -222,8 +248,5 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     marginBottom: 2,
   },
-  specialtyDesc: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.darkGray,
-  },
+  specialtyDesc: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray },
 });
