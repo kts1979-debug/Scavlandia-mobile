@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(30, 60, 100, 0.55)",
+    backgroundColor: "rgba(30, 60, 100, 0.45)",
   },
   safeArea: { flex: 1, justifyContent: "space-between" },
   heroContent: {
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   contentCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255, 255, 255, 0.65)",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: SPACING.lg,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   pointsCard: {
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: "rgba(232, 248, 247, 0.6)",
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   nextCard: {
-    backgroundColor: COLORS.accentPale,
+    backgroundColor: "rgba(232, 248, 247, 0.6)",
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.md,

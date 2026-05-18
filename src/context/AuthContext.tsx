@@ -5,6 +5,10 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   updateProfile,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithCredential,
+  sendPasswordResetEmail,
   User,
 } from "firebase/auth";
 import React, { createContext, useContext, useEffect, useState } from "react";
@@ -12,8 +16,8 @@ import { saveUserProfile } from "../services/apiService";
 import { initializePurchases } from "../services/purchaseService";
 import { auth } from "../utils/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
-// ── Define what the context provides to every screen ─────────────
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -23,6 +27,9 @@ interface AuthContextType {
     displayName: string,
   ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -36,9 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
-
       if (firebaseUser) {
-        // Save/update profile in backend
         try {
           await saveUserProfile(
             firebaseUser.displayName || firebaseUser.email || "User",
@@ -46,9 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (err) {
           console.log("Profile save failed (non-critical):", err);
         }
-
-        // Initialize RevenueCat with the user's ID
-        // This links purchases to the correct user account
         try {
           initializePurchases(firebaseUser.uid);
           console.log("💰 RevenueCat initialized for user:", firebaseUser.uid);
@@ -56,7 +58,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("RevenueCat init failed (non-critical):", err);
         }
       } else {
-        // User logged out — initialize RevenueCat without a user ID
         try {
           initializePurchases();
         } catch (err) {
@@ -64,7 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     });
-
     return unsubscribe;
   }, []);
 
@@ -80,7 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
     await updateProfile(userCredential.user, { displayName });
     await saveUserProfile(displayName);
-    // Mark that this user needs onboarding — will be cleared after they complete it
     await AsyncStorage.removeItem("scavlandia_onboarding_complete");
   };
 
@@ -88,12 +87,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
+  const signInWithGoogle = async () => {
+    GoogleSignin.configure({
+      webClientId:
+        "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
+    });
+
+    await GoogleSignin.hasPlayServices();
+    await GoogleSignin.signIn();
+
+    // Get tokens
+    const tokens = await GoogleSignin.getTokens();
+    const googleCredential = GoogleAuthProvider.credential(tokens.idToken);
+    await signInWithCredential(auth, googleCredential);
+  };
+
+  const signInWithApple = async () => {
+    const AppleAuthentication = await import("expo-apple-authentication");
+
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    const { identityToken } = credential;
+    if (!identityToken)
+      throw new Error("Apple Sign In failed — no identity token");
+
+    const provider = new OAuthProvider("apple.com");
+    const appleCredential = provider.credential({
+      idToken: identityToken,
+      rawNonce: undefined,
+    });
+
+    const result = await signInWithCredential(auth, appleCredential);
+
+    // Apple only provides name on first sign-in
+    if (credential.fullName?.givenName && result.user.displayName === null) {
+      const displayName = [
+        credential.fullName.givenName,
+        credential.fullName.familyName,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      await updateProfile(result.user, { displayName });
+      await saveUserProfile(displayName);
+    }
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
   const signOut = async () => {
     await firebaseSignOut(auth);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signUp,
+        signIn,
+        signInWithGoogle,
+        signInWithApple,
+        sendPasswordReset,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -101,8 +165,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used inside an AuthProvider");
   return context;
 }

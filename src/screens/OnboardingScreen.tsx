@@ -245,10 +245,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(25, 50, 85, 0.78)",
+    backgroundColor: "rgba(25, 50, 85, 0.7)",
   },
   overlayFirst: {
-    backgroundColor: "rgba(25, 50, 85, 0.65)",
+    backgroundColor: "rgba(25, 50, 85, 0.7)",
   },
   safeArea: { flex: 1 },
   logoContainer: {

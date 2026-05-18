@@ -22,11 +22,12 @@ const BG_IMAGE = require("../../assets/images/hunt_bg_3_friends_nyc.jpg");
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 
 export default function LoginScreen() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle, signInWithApple } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPass, setShowPass] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
 
   const handleSignIn = async () => {
     if (!email.trim())
@@ -53,6 +54,40 @@ export default function LoginScreen() {
       Alert.alert("Sign In Failed", message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      if (error.code !== "SIGN_IN_CANCELLED") {
+        Alert.alert(
+          "Google Sign In Failed",
+          "Could not sign in with Google. Please try again.",
+        );
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    try {
+      await signInWithApple();
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      if (error.code !== "ERR_REQUEST_CANCELED") {
+        Alert.alert(
+          "Apple Sign In Failed",
+          "Could not sign in with Apple. Please try again.",
+        );
+      }
+    } finally {
+      setAppleLoading(false);
     }
   };
 
@@ -103,25 +138,23 @@ export default function LoginScreen() {
               />
 
               <Text style={styles.label}>Password</Text>
-              <View style={styles.passwordRow}>
-                <TextInput
-                  style={[styles.input, styles.passwordInput]}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Your password"
-                  placeholderTextColor={COLORS.midGray}
-                  secureTextEntry={!showPass}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.showPassBtn}
-                  onPress={() => setShowPass(!showPass)}
-                >
-                  <Text style={styles.showPassText}>
-                    {showPass ? "🙈" : "👁️"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              <TextInput
+                style={styles.input}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Your password"
+                placeholderTextColor={COLORS.midGray}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+
+              {/* Forgot password */}
+              <TouchableOpacity
+                style={styles.forgotBtn}
+                onPress={() => router.push("/forgot-password")}
+              >
+                <Text style={styles.forgotText}>Forgot your password?</Text>
+              </TouchableOpacity>
 
               <Button
                 label="Sign In"
@@ -129,9 +162,46 @@ export default function LoginScreen() {
                 variant="accent"
                 size="lg"
                 loading={loading}
-                emoji="🚀"
                 style={styles.signInBtn}
               />
+
+              {/* Divider */}
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or continue with</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              {/* SSO buttons */}
+              <View style={styles.ssoRow}>
+                {/* Google */}
+                <TouchableOpacity
+                  style={styles.ssoBtn}
+                  onPress={handleGoogleSignIn}
+                  disabled={googleLoading}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.ssoIcon}>G</Text>
+                  <Text style={styles.ssoBtnText}>
+                    {googleLoading ? "Signing in..." : "Google"}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Apple — iOS only */}
+                {Platform.OS === "ios" && (
+                  <TouchableOpacity
+                    style={[styles.ssoBtn, styles.ssoBtnApple]}
+                    onPress={handleAppleSignIn}
+                    disabled={appleLoading}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.ssoIcon, styles.ssoIconApple]}></Text>
+                    <Text style={[styles.ssoBtnText, styles.ssoBtnTextApple]}>
+                      {appleLoading ? "Signing in..." : "Apple"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {/* Footer */}
@@ -181,7 +251,7 @@ const styles = StyleSheet.create({
   },
   tagline: { fontSize: FONTS.sizes.md, color: "rgba(255,255,255,0.7)" },
   formCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255,255,255,0.92)",
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
@@ -212,13 +282,53 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: FONTS.sizes.md,
     color: COLORS.black,
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: "rgba(232,248,247,0.75)",
   },
-  passwordRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
-  passwordInput: { flex: 1 },
-  showPassBtn: { padding: 8 },
-  showPassText: { fontSize: 20 },
-  signInBtn: { marginTop: SPACING.lg },
+  forgotBtn: { alignSelf: "flex-end", marginTop: 8, marginBottom: 4 },
+  forgotText: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.primary,
+    fontWeight: FONTS.weights.medium,
+  },
+  signInBtn: { marginTop: SPACING.md },
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.lightGray },
+  dividerText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    fontWeight: FONTS.weights.medium,
+  },
+  ssoRow: { flexDirection: "row", gap: SPACING.sm },
+  ssoBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    borderRadius: RADIUS.lg,
+    paddingVertical: 12,
+    backgroundColor: COLORS.white,
+  },
+  ssoBtnApple: { backgroundColor: COLORS.black, borderColor: COLORS.black },
+  ssoIcon: {
+    fontSize: 16,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+  },
+  ssoIconApple: { color: COLORS.white },
+  ssoBtnText: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
+  },
+  ssoBtnTextApple: { color: COLORS.white },
   footer: {
     flexDirection: "row",
     justifyContent: "center",

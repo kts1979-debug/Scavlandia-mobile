@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "659464658532",
+    "firebase_url": "https://daytripper-prod-default-rtdb.firebaseio.com",
+    "project_id": "daytripper-prod",
+    "storage_bucket": "daytripper-prod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:659464658532:android:f27346b052fa68e5a1c971",
+        "android_client_info": {
+          "package_name": "com.katesauls.scavlandia"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqcGA1P2PWJLBjnMvyC6jlJaUJha7cNQE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "659464658532-vhcv9ce140jd4s41t86ri99ecvl6elj8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.katesauls.scavlandia"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

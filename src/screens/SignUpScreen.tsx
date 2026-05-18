@@ -203,7 +203,6 @@ export default function SignUpScreen() {
                 variant="accent"
                 size="lg"
                 loading={loading}
-                emoji="✨"
                 style={styles.signUpBtn}
               />
 
@@ -278,7 +277,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(25, 50, 85, 0.72)",
+    backgroundColor: "rgba(25, 50, 85, 0.45)",
   },
   safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
@@ -302,7 +301,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   formCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
@@ -356,7 +355,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: COLORS.midGray,
+    borderColor: COLORS.primary,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,

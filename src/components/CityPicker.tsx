@@ -21,7 +21,7 @@ interface CityPickerProps {
 }
 
 // Well-known cities to suggest when GPS is used
-const NEARBY_RADIUS_KM = 200;
+//const NEARBY_RADIUS_KM = 200;
 
 export default function CityPicker({ value, onChange }: CityPickerProps) {
   const [detecting, setDetecting] = useState(false);
@@ -76,7 +76,7 @@ export default function CityPicker({ value, onChange }: CityPickerProps) {
           );
         }
       }
-    } catch (err) {
+    } catch {
       Alert.alert(
         "GPS Error",
         "Could not detect your location. Please type your city manually.",
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
   },
   nearbyContainer: {
-    backgroundColor: COLORS.lgray,
+    backgroundColor: COLORS.lightGray,
     borderRadius: RADIUS.md,
     padding: SPACING.sm,
   },

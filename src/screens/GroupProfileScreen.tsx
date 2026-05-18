@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(25, 50, 85, 0.72)",
+    backgroundColor: "rgba(25, 50, 85, 0.55)",
   },
   safeArea: { flex: 1 },
   heroSection: { padding: SPACING.lg, paddingBottom: SPACING.xl },
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   heroSub: { fontSize: FONTS.sizes.md, color: "rgba(255,255,255,0.75)" },
   card: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255, 255, 255, 0.65)",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },

@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   heroSub: { fontSize: FONTS.sizes.md, color: "rgba(255,255,255,0.75)" },
   card: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255, 255, 255, 0.65)",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },

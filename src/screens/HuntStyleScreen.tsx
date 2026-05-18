@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   contentCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: SPACING.lg,
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     minHeight: 500,
   },
   personalizedCard: {
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   specialtyCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.sm,

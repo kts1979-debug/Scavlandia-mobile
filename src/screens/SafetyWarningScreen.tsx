@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(25, 50, 85, 0.68)",
+    backgroundColor: "rgba(25, 50, 85, 0.55)",
   },
   heroContent: {
     flex: 1,

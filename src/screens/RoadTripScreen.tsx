@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
+    color: "rgba(255,255,255,0.75)",
     lineHeight: 22,
   },
   section: { marginBottom: SPACING.lg },
@@ -760,7 +760,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   generateBtn: {
-    backgroundColor: "#27AE60",
+    backgroundColor: COLORS.accent,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     alignItems: "center",
@@ -898,13 +898,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(25, 50, 85, 0.72)",
+    backgroundColor: "rgba(25, 50, 85, 0.55)",
   },
   safeArea: { flex: 1 },
   heroSection: { padding: SPACING.lg, paddingBottom: SPACING.xl },
   card: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },

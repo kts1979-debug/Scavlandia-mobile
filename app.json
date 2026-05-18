@@ -14,7 +14,9 @@
     },
     "ios": {
       "supportsTablet": false,
+      "googleServicesFile": "./GoogleService-Info.plist",
       "bundleIdentifier": "com.katesauls.scavlandia",
+      "usesAppleSignIn": true,
       "config": {
         "googleMapsApiKey": "AIzaSyAWOLSMvDOKwiQ122nNfWszwk90SYAJVLg"
       },
@@ -32,6 +34,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.katesauls.scavlandia",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 21,
       "config": {
         "googleMaps": {
@@ -59,6 +62,7 @@
     },
     "plugins": [
       "./app.plugin.js",
+      "expo-apple-authentication",
       [
         "expo-location",
         {
@@ -73,7 +77,8 @@
         }
       ],
       "expo-camera",
-      "expo-media-library"
+      "expo-media-library",
+      "@react-native-google-signin/google-signin"
     ],
     "extra": {
       "eas": {
