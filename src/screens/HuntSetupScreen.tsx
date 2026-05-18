@@ -211,7 +211,6 @@ export default function HuntSetupScreen() {
                 onPress={() => handleStartHunt()}
                 variant="accent"
                 size="lg"
-                emoji="🚀"
                 style={styles.startBtn}
               />
             </>
@@ -389,12 +388,16 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.65)",
+    backgroundColor: "transparent",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
   cardContent: { padding: SPACING.lg, paddingBottom: 40 },
-  section: { marginBottom: SPACING.md },
+  section: {
+    marginBottom: SPACING.md,
+    backgroundColor: "rgba(232, 248, 247, 0.75)", // ← Card component needs override
+    borderRadius: RADIUS.lg,
+  },
   sectionTitle: {
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
@@ -403,7 +406,7 @@ const styles = StyleSheet.create({
   },
   sectionDesc: {
     fontSize: FONTS.sizes.sm,
-    color: COLORS.darkGray,
+    color: COLORS.black,
     lineHeight: 20,
     marginBottom: SPACING.md,
   },
@@ -442,7 +445,7 @@ const styles = StyleSheet.create({
   shareCodeBtn: { marginBottom: SPACING.sm },
   shareNote: {
     fontSize: FONTS.sizes.xs,
-    color: COLORS.midGray,
+    color: COLORS.black,
     fontStyle: "italic",
     textAlign: "center",
   },
@@ -492,6 +495,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 6,
   },
-  startBtn: { marginTop: SPACING.md },
+  startBtn: {
+    marginTop: SPACING.md,
+    backgroundColor: "rgba(232, 248, 247, 0.75)", // ← just the wrapper
+    borderRadius: RADIUS.lg,
+    padding: SPACING.sm,
+  },
   skipBtn: { marginTop: SPACING.sm },
 });

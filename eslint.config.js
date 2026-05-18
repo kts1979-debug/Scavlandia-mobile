@@ -11,7 +11,10 @@ module.exports = defineConfig([
       "import/no-unresolved": [
         "error",
         {
-          ignore: ["@react-native-google-signin/google-signin"],
+          ignore: [
+            "@react-native-google-signin/google-signin",
+            "expo-store-review",
+          ],
         },
       ],
       "@typescript-eslint/no-require-imports": "off",

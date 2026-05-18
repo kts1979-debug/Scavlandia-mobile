@@ -6,6 +6,7 @@ import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   StyleSheet,
   Text,
   TextInput,
@@ -15,6 +16,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { joinHunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+
+const HERO_BG = require("../../assets/images/hunt_bg_3_friends_nyc.jpg");
 
 export default function JoinHuntScreen() {
   const [code, setCode] = useState("");
@@ -61,7 +64,6 @@ export default function JoinHuntScreen() {
   };
 
   const handleCodeChange = (text: string) => {
-    // Only allow alphanumeric, auto-uppercase, max 6 chars
     const clean = text
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, "")
@@ -70,112 +72,169 @@ export default function JoinHuntScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>‹ Back</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.container}>
+      {/* Full screen background */}
+      <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+      <View style={styles.overlay} />
 
-      <View style={styles.content}>
-        <Text style={styles.emoji}>🤝</Text>
-        <Text style={styles.title}>Join a Hunt</Text>
-        <Text style={styles.subtitle}>
-          Enter the 6-character code your friend shared with you to get a copy
-          of their hunt on your device.
-        </Text>
+      <SafeAreaView style={styles.safeArea}>
+        {/* Hero section */}
+        <View style={styles.heroSection}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.heroEmoji}>🤝</Text>
+          <Text style={styles.heroTitle}>Join a Hunt</Text>
+          <Text style={styles.heroSubtitle}>
+            Enter the 6-character code your friend shared with you
+          </Text>
+        </View>
 
-        {/* Code input */}
-        <TouchableOpacity
-          style={styles.codeInputContainer}
-          onPress={() => inputRef.current?.focus()}
-          activeOpacity={1}
-        >
-          {Array.from({ length: 6 }).map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.codeBox,
-                i < code.length && styles.codeBoxFilled,
-                i === code.length && styles.codeBoxActive,
-              ]}
+        {/* White content card */}
+        <View style={styles.contentCard}>
+          <View style={styles.codeCard}>
+            <Text style={styles.cardLabel}>Enter your share code</Text>
+
+            {/* Code boxes */}
+            <TouchableOpacity
+              style={styles.codeInputContainer}
+              onPress={() => inputRef.current?.focus()}
+              activeOpacity={1}
             >
-              <Text style={styles.codeChar}>{code[i] || ""}</Text>
-            </View>
-          ))}
-        </TouchableOpacity>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.codeBox,
+                    i < code.length && styles.codeBoxFilled,
+                    i === code.length && styles.codeBoxActive,
+                  ]}
+                >
+                  <Text style={styles.codeChar}>{code[i] || ""}</Text>
+                </View>
+              ))}
+            </TouchableOpacity>
 
-        {/* Hidden actual input */}
-        <TextInput
-          ref={inputRef}
-          value={code}
-          onChangeText={handleCodeChange}
-          autoCapitalize="characters"
-          autoCorrect={false}
-          maxLength={6}
-          style={styles.hiddenInput}
-          autoFocus
-        />
+            {/* Hidden input */}
+            <TextInput
+              ref={inputRef}
+              value={code}
+              onChangeText={handleCodeChange}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              maxLength={6}
+              style={styles.hiddenInput}
+              autoFocus
+            />
 
-        <TouchableOpacity
-          style={[
-            styles.joinBtn,
-            (code.length !== 6 || loading) && styles.joinBtnDisabled,
-          ]}
-          onPress={handleJoin}
-          disabled={code.length !== 6 || loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color={COLORS.white} />
-          ) : (
-            <Text style={styles.joinBtnText}>Join Hunt →</Text>
-          )}
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.joinBtn,
+                (code.length !== 6 || loading) && styles.joinBtnDisabled,
+              ]}
+              onPress={handleJoin}
+              disabled={code.length !== 6 || loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={COLORS.white} />
+              ) : (
+                <Text style={styles.joinBtnText}>Join Hunt →</Text>
+              )}
+            </TouchableOpacity>
 
-        <Text style={styles.note}>
-          {
-            "Each share code can only be used once. You'll get your own copy of the hunt to complete independently."
-          }
-        </Text>
-      </View>
-    </SafeAreaView>
+            <Text style={styles.note}>
+              {
+                "Each share code can only be used once. You'll get your own copy of the hunt to complete independently."
+              }
+            </Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
-  header: {
-    padding: SPACING.md,
-    paddingBottom: 0,
+  container: { flex: 1, backgroundColor: COLORS.primary },
+  bgImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
   },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.35)",
+  },
+  safeArea: { flex: 1 },
+
+  // ── Hero ──────────────────────────────────────────────────────
+  heroSection: {
+    padding: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xl,
+    alignItems: "center",
+  },
+  backBtn: { alignSelf: "flex-start", marginBottom: SPACING.md },
   backText: {
-    color: COLORS.primary,
+    color: "rgba(255,255,255,0.75)",
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
   },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: SPACING.xl,
-    paddingBottom: 80,
-  },
-  emoji: { fontSize: 64, marginBottom: SPACING.md },
-  title: {
+  heroEmoji: { fontSize: 56, marginBottom: SPACING.sm },
+  heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
-    marginBottom: SPACING.sm,
+    color: COLORS.white,
+    marginBottom: 6,
     textAlign: "center",
   },
-  subtitle: {
+  heroSubtitle: {
     fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
+    color: "rgba(255,255,255,0.8)",
     textAlign: "center",
     lineHeight: 22,
-    marginBottom: SPACING.xl,
   },
+
+  // ── Content card ──────────────────────────────────────────────
+  contentCard: {
+    flex: 1,
+    backgroundColor: "transparent",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: SPACING.xl,
+    paddingTop: SPACING.xl,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardLabel: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+    marginBottom: SPACING.lg,
+    textAlign: "center",
+  },
+  // Add this new style:
+  codeCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    width: "100%",
+    alignItems: "center",
+    gap: SPACING.lg,
+  },
+
+  // ── Code input ────────────────────────────────────────────────
   codeInputContainer: {
     flexDirection: "row",
     gap: 10,
@@ -187,13 +246,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderWidth: 2,
     borderColor: COLORS.midGray,
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255,255,255,0.85)",
     justifyContent: "center",
     alignItems: "center",
   },
   codeBoxFilled: {
     borderColor: COLORS.primary,
-    backgroundColor: "#e8f4fd",
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
   },
   codeBoxActive: {
     borderColor: COLORS.accent,
@@ -211,6 +270,8 @@ const styles = StyleSheet.create({
     height: 0,
     width: 0,
   },
+
+  // ── Buttons ───────────────────────────────────────────────────
   joinBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.lg,
@@ -220,17 +281,18 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: SPACING.md,
   },
-  joinBtnDisabled: { backgroundColor: COLORS.midGray },
+  joinBtnDisabled: { backgroundColor: "rgba(255, 255, 255, 0.75)" },
   joinBtnText: {
-    color: COLORS.white,
+    color: COLORS.primary,
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
   },
   note: {
     fontSize: FONTS.sizes.xs,
-    color: COLORS.midGray,
+    color: COLORS.darkGray,
     textAlign: "center",
     fontStyle: "italic",
     lineHeight: 18,
+    paddingHorizontal: SPACING.md,
   },
 });

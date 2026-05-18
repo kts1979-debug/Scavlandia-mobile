@@ -1,6 +1,5 @@
 // src/screens/HuntCompleteScreen.tsx
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
 import {
   Image,
   ScrollView,
@@ -13,6 +12,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+// @ts-ignore
+import * as StoreReview from "expo-store-review";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useState, useEffect } from "react";
 
 const HERO_IMAGES = [
   require("../../assets/images/hunt_bg_4_friends_mountains.jpg"),
@@ -79,6 +82,25 @@ export default function HuntCompleteScreen() {
     skippedStops.length > 0,
   );
 
+  useEffect(() => {
+    const maybeRequestReview = async () => {
+      try {
+        const key = "scavlandia_review_requested";
+        const already = await AsyncStorage.getItem(key);
+        if (already) return;
+        const isAvailable = await StoreReview.isAvailableAsync();
+        if (!isAvailable) return;
+        setTimeout(async () => {
+          await StoreReview.requestReview();
+          await AsyncStorage.setItem(key, "true");
+        }, 2000);
+      } catch {
+        // Non-critical, ignore errors
+      }
+    };
+    maybeRequestReview();
+  }, []);
+
   const stars = getStarRating(hintsUsed, answerRevealed);
   const heroImage = getHeroImage(hunt.huntId || hunt.huntTitle || "default");
   const percentage = Math.round(
@@ -139,7 +161,7 @@ export default function HuntCompleteScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Hero image */}
+      {/* Full-screen hero image — was only 320px tall */}
       <Image source={heroImage} style={styles.heroImage} resizeMode="cover" />
       <View style={styles.heroOverlay} />
 
@@ -225,50 +247,52 @@ export default function HuntCompleteScreen() {
               </View>
             )}
 
-            <Button
-              label="Share Your Results"
-              onPress={handleShare}
-              variant="accent"
-              size="lg"
-              emoji="📤"
-              style={styles.btn}
-            />
-            <Button
-              label="View Photo Album"
-              onPress={() =>
-                router.push({
-                  pathname: "/photo-album",
-                  params: { hunt: JSON.stringify(hunt), stopPhotos },
-                })
-              }
-              variant="secondary"
-              size="lg"
-              emoji="📸"
-              style={styles.btn}
-            />
-            <Button
-              label="Start Another Hunt"
-              onPress={() => router.replace("/(tabs)")}
-              variant="secondary"
-              size="lg"
-              emoji="🗺️"
-              style={styles.btn}
-            />
-            {sessionCode ? (
+            <View style={styles.buttonsContainer}>
               <Button
-                label="View Final Leaderboard"
-                onPress={() =>
-                  router.push({
-                    pathname: "/final-leaderboard",
-                    params: { sessionCode, myPoints: String(totalPoints) },
-                  })
-                }
-                variant="primary"
+                label="Share Your Results"
+                onPress={handleShare}
+                variant="accent"
                 size="lg"
-                emoji="🏆"
+                emoji="📤"
                 style={styles.btn}
               />
-            ) : null}
+              <Button
+                label="View Photo Album"
+                onPress={() =>
+                  router.push({
+                    pathname: "/photo-album",
+                    params: { hunt: JSON.stringify(hunt), stopPhotos },
+                  })
+                }
+                variant="secondary"
+                size="lg"
+                emoji="📸"
+                style={styles.btn}
+              />
+              <Button
+                label="Start Another Hunt"
+                onPress={() => router.replace("/(tabs)")}
+                variant="secondary"
+                size="lg"
+                emoji="🗺️"
+                style={styles.btn}
+              />
+              {sessionCode ? (
+                <Button
+                  label="View Final Leaderboard"
+                  onPress={() =>
+                    router.push({
+                      pathname: "/final-leaderboard",
+                      params: { sessionCode, myPoints: String(totalPoints) },
+                    })
+                  }
+                  variant="primary"
+                  size="lg"
+                  emoji="🏆"
+                  style={styles.btn}
+                />
+              ) : null}
+            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -277,12 +301,15 @@ export default function HuntCompleteScreen() {
 }
 
 const starStyles = StyleSheet.create({
+  // In starStyles:
   container: {
     alignItems: "center",
     marginBottom: SPACING.lg,
     paddingBottom: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
+    padding: SPACING.lg,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
+    borderRadius: RADIUS.lg,
+    borderBottomWidth: 0, // ← remove the divider line, card bg handles separation now
   },
   starsRow: { flexDirection: "row", gap: 8, marginBottom: SPACING.sm },
   star: { fontSize: 44, color: COLORS.lightGray },
@@ -302,29 +329,45 @@ const starStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
+
+  // ← Full screen image, was only 320px tall
   heroImage: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: 320,
+    bottom: 0,
     width: "100%",
+    height: "100%",
   },
   heroOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    height: 320,
-    backgroundColor: "rgba(30, 60, 100, 0.45)",
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.45)", // ← unified, was 30,60,100
   },
+
   safeArea: { flex: 1 },
   scroll: { paddingBottom: 40 },
+
+  buttonsContainer: {
+    gap: SPACING.sm,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+
+  // ── Hero section ──────────────────────────────────────────────
   heroSection: {
     alignItems: "center",
-    height: 260,
-    justifyContent: "center",
+    paddingVertical: SPACING.xl,
+    paddingTop: SPACING.xxl,
     paddingHorizontal: SPACING.lg,
+    minHeight: 260,
+    justifyContent: "center",
   },
   trophy: { fontSize: 56, marginBottom: SPACING.sm },
   title: {
@@ -352,14 +395,18 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     fontWeight: FONTS.weights.bold,
   },
+
+  // ── Content card ──────────────────────────────────────────────
   contentCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.65)",
+    backgroundColor: "transparent", // ← was 0.65
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: SPACING.lg,
     paddingTop: SPACING.xl,
     minHeight: 500,
   },
+
+  // ── Stats ─────────────────────────────────────────────────────
   statsGrid: {
     flexDirection: "row",
     gap: SPACING.sm,
@@ -369,7 +416,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     padding: SPACING.md,
-    backgroundColor: "rgba(232, 248, 247, 0.6)",
+    backgroundColor: "rgba(232, 248, 247, 0.75)", // ← was 0.6
     borderRadius: RADIUS.lg,
   },
   statEmoji: { fontSize: 24, marginBottom: 4 },
@@ -379,15 +426,22 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
+
+  // Change the message style:
   message: {
     fontSize: FONTS.sizes.md,
     color: COLORS.darkGray,
     textAlign: "center",
     marginBottom: SPACING.lg,
     lineHeight: 22,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
   },
+
+  // ── Finale card ───────────────────────────────────────────────
   finaleCard: {
-    backgroundColor: "rgba(232, 248, 247, 0.6)",
+    backgroundColor: "rgba(232, 248, 247, 0.75)", // ← was 0.6
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
@@ -408,8 +462,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontStyle: "italic",
   },
+
+  // ── Skipped card ──────────────────────────────────────────────
   skippedCard: {
-    backgroundColor: COLORS.offWhite,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     marginBottom: SPACING.md,

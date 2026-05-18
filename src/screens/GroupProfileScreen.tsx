@@ -221,7 +221,7 @@ export default function GroupProfileScreen() {
           </Text>
         </View>
 
-        {/* White card with all form content */}
+        {/* White card */}
         <ScrollView
           style={styles.card}
           contentContainerStyle={styles.cardContent}
@@ -346,7 +346,7 @@ export default function GroupProfileScreen() {
             </Text>
           </Card>
 
-          {/* Interests — personalized only */}
+          {/* Interests */}
           {!isSpecialty && (
             <Card style={styles.section}>
               <View style={styles.sectionHeaderRow}>
@@ -397,7 +397,7 @@ export default function GroupProfileScreen() {
             </Card>
           )}
 
-          {/* Specialty selector — only if specialty style but no key pre-selected */}
+          {/* Specialty selector */}
           {isSpecialty && !incomingSpecialtyKey && (
             <Card style={styles.section}>
               <SectionHeader emoji="⭐" title="Choose Specialty" />
@@ -549,6 +549,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(25, 50, 85, 0.55)",
   },
   safeArea: { flex: 1 },
+
+  // ── Hero ──────────────────────────────────────────────────────
   heroSection: { padding: SPACING.lg, paddingBottom: SPACING.xl },
   backRow: { marginBottom: SPACING.sm },
   backText: {
@@ -563,14 +565,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   heroSub: { fontSize: FONTS.sizes.md, color: "rgba(255,255,255,0.75)" },
+
+  // ── Card ──────────────────────────────────────────────────────
   card: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.65)",
+    backgroundColor: "transparent", // ← was 0.65
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
-  cardContent: { padding: SPACING.md, paddingBottom: 60 },
-  section: { marginBottom: SPACING.md },
+  cardContent: { padding: SPACING.md, paddingBottom: 60 }, // ← no paddingTop
+  section: {
+    marginBottom: SPACING.md,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    borderRadius: RADIUS.lg,
+  },
+
+  // ── Section headers ───────────────────────────────────────────
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -602,6 +612,8 @@ const styles = StyleSheet.create({
     color: COLORS.black,
     backgroundColor: COLORS.offWhite,
   },
+
+  // ── Play mode ─────────────────────────────────────────────────
   modeRow: { flexDirection: "row", gap: SPACING.sm },
   modeBtn: {
     flex: 1,
@@ -642,129 +654,8 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     lineHeight: 20,
   },
-  chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: RADIUS.round,
-    borderWidth: 1.5,
-    borderColor: COLORS.midGray,
-    backgroundColor: COLORS.offWhite,
-    gap: 4,
-  },
-  chipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  chipEmoji: { fontSize: 14 },
-  chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
-  chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  specialtyGrid: { gap: 8 },
-  specialtyCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.midGray,
-    backgroundColor: COLORS.offWhite,
-    gap: 10,
-  },
-  specialtyEmoji: { fontSize: 24 },
-  specialtyContent: { flex: 1 },
-  specialtyLabel: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
-    color: COLORS.black,
-  },
-  specialtyLabelSelected: { color: COLORS.white },
-  specialtyDesc: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.darkGray,
-    marginTop: 2,
-  },
-  specialtyDescSelected: { color: "rgba(255,255,255,0.85)" },
-  optionRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.midGray,
-    marginBottom: 8,
-    gap: 10,
-  },
-  optionSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  optionEmoji: { fontSize: 18 },
-  optionText: { flex: 1, fontSize: FONTS.sizes.md, color: COLORS.black },
-  optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
-  checkmark: { fontSize: 18, color: COLORS.white },
-  generateBtn: { marginTop: SPACING.md, marginBottom: 20 },
-  difficultyRow: { flexDirection: "row", gap: 8 },
-  diffBtn: {
-    flex: 1,
-    alignItems: "center",
-    padding: 12,
-    borderRadius: RADIUS.md,
-    borderWidth: 2,
-    borderColor: COLORS.midGray,
-    backgroundColor: COLORS.offWhite,
-  },
-  diffEmoji: { fontSize: 22, marginBottom: 4 },
-  diffLabel: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: FONTS.weights.bold,
-    color: COLORS.black,
-    marginBottom: 2,
-    textAlign: "center",
-  },
-  diffLabelSelected: { color: COLORS.white },
-  diffSub: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.darkGray,
-    textAlign: "center",
-  },
-  sectionHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.sm,
-    flexWrap: "wrap",
-    gap: SPACING.xs,
-  },
-  optionalRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    flexShrink: 1,
-  },
-  optionalLabel: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.midGray,
-    fontStyle: "italic",
-  },
-  randomBtn: {
-    backgroundColor: COLORS.accentPale,
-    borderRadius: RADIUS.round,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  randomBtnText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.accent,
-    fontWeight: FONTS.weights.bold,
-  },
-  clearBtn: { alignSelf: "flex-start", marginBottom: SPACING.sm },
-  clearBtnText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.danger,
-    fontWeight: FONTS.weights.medium,
-  },
+
+  // ── Stop count ────────────────────────────────────────────────
   stopCountRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -804,4 +695,137 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontStyle: "italic",
   },
+
+  // ── Interests ─────────────────────────────────────────────────
+  chipGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: RADIUS.round,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.offWhite,
+    gap: 4,
+  },
+  chipSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  chipEmoji: { fontSize: 14 },
+  chipText: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
+  chipTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SPACING.sm,
+    flexWrap: "wrap",
+    gap: SPACING.xs,
+  },
+  optionalRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+    flexShrink: 1,
+  },
+  optionalLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.midGray,
+    fontStyle: "italic",
+  },
+  randomBtn: {
+    backgroundColor: COLORS.accentPale,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  randomBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.accent,
+    fontWeight: FONTS.weights.bold,
+  },
+  clearBtn: { alignSelf: "flex-start", marginBottom: SPACING.sm },
+  clearBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.danger,
+    fontWeight: FONTS.weights.medium,
+  },
+
+  // ── Specialty ─────────────────────────────────────────────────
+  specialtyGrid: { gap: 8 },
+  specialtyCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.offWhite,
+    gap: 10,
+  },
+  specialtyEmoji: { fontSize: 24 },
+  specialtyContent: { flex: 1 },
+  specialtyLabel: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
+  },
+  specialtyLabelSelected: { color: COLORS.white },
+  specialtyDesc: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    marginTop: 2,
+  },
+  specialtyDescSelected: { color: "rgba(255,255,255,0.85)" },
+
+  // ── Mobility ──────────────────────────────────────────────────
+  optionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.darkGray,
+    marginBottom: 8,
+    gap: 10,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
+  },
+  optionSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  optionEmoji: { fontSize: 18 },
+  optionText: { flex: 1, fontSize: FONTS.sizes.md, color: COLORS.black },
+  optionTextSelected: { color: COLORS.white, fontWeight: FONTS.weights.bold },
+  checkmark: { fontSize: 18, color: COLORS.white },
+
+  // ── Difficulty ────────────────────────────────────────────────
+  difficultyRow: { flexDirection: "row", gap: 8 },
+  diffBtn: {
+    flex: 1,
+    alignItems: "center",
+    padding: 12,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.midGray,
+    backgroundColor: COLORS.offWhite,
+  },
+  diffEmoji: { fontSize: 22, marginBottom: 4 },
+  diffLabel: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.black,
+    marginBottom: 2,
+    textAlign: "center",
+  },
+  diffLabelSelected: { color: COLORS.white },
+  diffSub: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    textAlign: "center",
+  },
+
+  generateBtn: { marginTop: SPACING.md, marginBottom: 20 },
 });

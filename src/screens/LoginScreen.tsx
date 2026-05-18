@@ -28,6 +28,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignIn = async () => {
     if (!email.trim())
@@ -138,15 +139,25 @@ export default function LoginScreen() {
               />
 
               <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Your password"
-                placeholderTextColor={COLORS.midGray}
-                secureTextEntry
-                autoCapitalize="none"
-              />
+              <View style={styles.passwordRow}>
+                <TextInput
+                  style={[styles.input, styles.passwordInput]}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Your password"
+                  placeholderTextColor={COLORS.midGray}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.eyeBtn}
+                  onPress={() => setShowPassword((prev) => !prev)}
+                >
+                  <Text style={styles.eyeIcon}>
+                    {showPassword ? "🙈" : "👁️"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
               {/* Forgot password */}
               <TouchableOpacity
@@ -340,4 +351,27 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.heavy,
   },
+  passwordRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 0,
+  },
+  passwordInput: {
+    flex: 1,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    borderRightWidth: 0,
+  },
+  eyeBtn: {
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    borderLeftWidth: 0,
+    borderTopRightRadius: RADIUS.md,
+    borderBottomRightRadius: RADIUS.md,
+    padding: 14,
+    backgroundColor: "rgba(232,248,247,0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  eyeIcon: { fontSize: 18 },
 });

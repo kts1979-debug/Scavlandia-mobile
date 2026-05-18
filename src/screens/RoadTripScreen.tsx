@@ -89,7 +89,6 @@ function decodePolyline(
 }
 
 export default function RoadTripScreen() {
-  // ── Step 1 state ──────────────────────────────────────────────
   const [step, setStep] = useState<1 | 2>(1);
   const [startLocation, setStartLocation] = useState("");
   const [endLocation, setEndLocation] = useState("");
@@ -116,7 +115,6 @@ export default function RoadTripScreen() {
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [searching, setSearching] = useState(false);
 
-  // ── Step 2 state ──────────────────────────────────────────────
   const [candidates, setCandidates] = useState<any[]>([]);
   const [selectedStops, setSelectedStops] = useState<any[]>([]);
   const [markerDelay, setMarkerDelay] = useState(false);
@@ -241,8 +239,6 @@ export default function RoadTripScreen() {
     const sortedStops = [...selectedStops].sort(
       (a, b) => a.routeFraction - b.routeFraction,
     );
-
-    // Unselected candidates for Add Stop feature
     const unselectedCandidates = candidates.filter(
       (c) => !selectedStops.find((s) => s.placeId === c.placeId),
     );
@@ -267,8 +263,8 @@ export default function RoadTripScreen() {
           mobility: "walking",
           totalDurationMinutes: routeInfo?.totalDurationMinutes || 0,
           totalDistanceMiles: routeInfo?.totalDistanceMiles || 0,
-          unselectedCandidates, // ← pass remaining candidates
-          routePolyline: routePolylineRaw, // ← need to store this
+          unselectedCandidates,
+          routePolyline: routePolylineRaw,
         }),
       },
     });
@@ -297,6 +293,7 @@ export default function RoadTripScreen() {
         <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
         <View style={styles.heroOverlay} />
         <SafeAreaView style={styles.safeArea}>
+          {/* Hero section */}
           <View style={styles.heroSection}>
             <TouchableOpacity
               onPress={() => router.back()}
@@ -309,6 +306,8 @@ export default function RoadTripScreen() {
               Enter your route and interests to find stops along the way
             </Text>
           </View>
+
+          {/* White card */}
           <ScrollView
             style={styles.card}
             contentContainerStyle={styles.cardScroll}
@@ -468,7 +467,7 @@ export default function RoadTripScreen() {
     );
   }
 
-  // ── Searching for stops screen ─────────────────────────────────
+  // ── Searching screen ──────────────────────────────────────────
   if (searching) {
     return (
       <View style={styles.container}>
@@ -538,7 +537,7 @@ export default function RoadTripScreen() {
             setMarkerDelay(false);
           }}
         >
-          <Text style={styles.backBtnText}>‹ Back</Text>
+          <Text style={styles.step2BackText}>‹ Back</Text>
         </TouchableOpacity>
         <View style={styles.step2HeaderCenter}>
           <Text style={styles.step2Title}>Pick Your Stops</Text>
@@ -554,7 +553,6 @@ export default function RoadTripScreen() {
         </View>
       </View>
 
-      {/* Map */}
       <View style={styles.mapContainer}>
         {routePolyline.length > 0 ? (
           <MapView
@@ -606,7 +604,6 @@ export default function RoadTripScreen() {
         )}
       </View>
 
-      {/* Bottom panel */}
       <View style={styles.bottomPanel}>
         <Text style={styles.bottomPanelTitle}>
           {selectedStops.length === 0
@@ -659,18 +656,37 @@ export default function RoadTripScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.primary },
-  scroll: { padding: SPACING.md },
-  header: { marginBottom: SPACING.lg },
+  heroBg: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  heroOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.55)",
+  },
+  safeArea: { flex: 1 },
+
+  // ── Hero ──────────────────────────────────────────────────────
+  heroSection: { padding: SPACING.lg, paddingBottom: SPACING.xl },
   backBtn: { marginBottom: SPACING.sm },
   backBtnText: {
+    color: "rgba(255,255,255,0.75)", // ← fixed: was COLORS.primary (dark on dark)
     fontSize: FONTS.sizes.md,
-    color: COLORS.primary,
     fontWeight: FONTS.weights.bold,
   },
   title: {
-    fontSize: FONTS.sizes.hero,
+    fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    color: COLORS.white, // ← fixed: was COLORS.primary
     marginBottom: SPACING.xs,
   },
   subtitle: {
@@ -678,17 +694,38 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.75)",
     lineHeight: 22,
   },
-  section: { marginBottom: SPACING.lg },
+
+  // ── White card ────────────────────────────────────────────────
+  card: {
+    flex: 1,
+    backgroundColor: "transparent", // ← fixed: was accentPale tint
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  cardScroll: { padding: SPACING.md, paddingBottom: 40 },
+
+  section: {
+    marginBottom: SPACING.lg,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+  },
   sectionTitle: {
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.bold,
-    color: COLORS.primary,
+    color: COLORS.primary, // ← stays primary since it's now inside white cards
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: FONTS.sizes.sm,
     color: COLORS.darkGray,
     marginBottom: SPACING.sm,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
   },
   input: {
     backgroundColor: COLORS.white,
@@ -709,6 +746,17 @@ const styles = StyleSheet.create({
   locationBtnText: {
     color: COLORS.white,
     fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+  },
+  randomBtn: {
+    backgroundColor: COLORS.accentPale,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  randomBtnText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.accent,
     fontWeight: FONTS.weights.bold,
   },
   interestGrid: { flexDirection: "row", flexWrap: "wrap", gap: SPACING.sm },
@@ -734,7 +782,6 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.medium,
   },
   interestLabelActive: { color: COLORS.white },
-
   difficultyRow: { flexDirection: "row", gap: 8 },
   diffBtn: {
     flex: 1,
@@ -772,6 +819,8 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
   },
+
+  // ── Step 2 ────────────────────────────────────────────────────
   step2Header: {
     flexDirection: "row",
     alignItems: "center",
@@ -780,6 +829,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray,
+  },
+  step2BackText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.primary,
+    fontWeight: FONTS.weights.bold,
   },
   step2HeaderCenter: { flex: 1, alignItems: "center" },
   step2Title: {
@@ -866,47 +920,4 @@ const styles = StyleSheet.create({
     maxWidth: 80,
   },
   stopPillRemove: { fontSize: FONTS.sizes.xs, color: COLORS.midGray },
-  sectionTitleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  randomBtn: {
-    backgroundColor: COLORS.accentPale,
-    borderRadius: RADIUS.round,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  randomBtnText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.accent,
-    fontWeight: FONTS.weights.bold,
-  },
-  heroBg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: "100%",
-    height: "100%",
-  },
-  heroOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(25, 50, 85, 0.55)",
-  },
-  safeArea: { flex: 1 },
-  heroSection: { padding: SPACING.lg, paddingBottom: SPACING.xl },
-  card: {
-    flex: 1,
-    backgroundColor: "rgba(232, 248, 247, 0.75)",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-  },
-  cardScroll: { padding: SPACING.md, paddingBottom: 40 },
 });

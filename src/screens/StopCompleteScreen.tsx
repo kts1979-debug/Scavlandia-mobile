@@ -176,7 +176,6 @@ export default function StopCompleteScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Hero image */}
       <Image source={heroImage} style={styles.heroImage} resizeMode="cover" />
       <View style={styles.heroOverlay} />
 
@@ -214,7 +213,7 @@ export default function StopCompleteScreen() {
           </Animated.View>
         </View>
 
-        {/* Sliding white card */}
+        {/* Sliding card */}
         <Animated.View
           style={[
             styles.contentCard,
@@ -427,9 +426,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(30, 60, 100, 0.45)",
+    backgroundColor: "rgba(25, 50, 85, 0.45)", // ← unified with HomeScreen
   },
   safeArea: { flex: 1, justifyContent: "space-between" },
+
+  // ── Hero ──────────────────────────────────────────────────────
   heroContent: {
     flex: 1,
     alignItems: "center",
@@ -466,8 +467,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
+
+  // ── Content card ──────────────────────────────────────────────
   contentCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.65)",
+    backgroundColor: "transparent", // ← was 0.65
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: SPACING.lg,
@@ -486,8 +489,10 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     fontStyle: "italic",
   },
+
+  // ── Points card ───────────────────────────────────────────────
   pointsCard: {
-    backgroundColor: "rgba(232, 248, 247, 0.6)",
+    backgroundColor: "rgba(232, 248, 247, 0.75)", // ← was 0.6
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
@@ -510,8 +515,10 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     marginTop: 4,
   },
+
+  // ── Next card ─────────────────────────────────────────────────
   nextCard: {
-    backgroundColor: "rgba(232, 248, 247, 0.6)",
+    backgroundColor: "rgba(232, 248, 247, 0.75)", // ← was 0.6
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.md,
@@ -530,7 +537,14 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: FONTS.weights.medium,
   },
-  buttons: { gap: SPACING.sm },
+
+  // ── Buttons ───────────────────────────────────────────────────
+  buttons: {
+    gap: SPACING.sm,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+  },
   continueBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.lg,
@@ -553,7 +567,8 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: COLORS.lightGray,
+    borderColor: COLORS.midGray,
+    backgroundColor: "rgba(255,255,255,0.5)",
   },
   quitBtnText: { color: COLORS.darkGray, fontSize: FONTS.sizes.md },
   skippedPrompt: { gap: SPACING.sm },
@@ -569,6 +584,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: SPACING.sm,
   },
+
+  // ── Share modal ───────────────────────────────────────────────
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",

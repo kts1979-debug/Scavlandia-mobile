@@ -532,12 +532,16 @@ const styles = StyleSheet.create({
   heroSub: { fontSize: FONTS.sizes.md, color: "rgba(255,255,255,0.75)" },
   card: {
     flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.65)",
+    backgroundColor: "transparent",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
   cardContent: { padding: SPACING.md, paddingBottom: 60 },
-  section: { marginBottom: SPACING.md },
+  section: {
+    marginBottom: SPACING.md,
+    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    borderRadius: RADIUS.lg,
+  },
   sectionHeader: { flexDirection: "row", alignItems: "center" },
   sectionEmoji: { fontSize: 22, marginRight: 8 },
   sectionTitle: {

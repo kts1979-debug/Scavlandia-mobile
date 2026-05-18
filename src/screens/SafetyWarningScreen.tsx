@@ -23,7 +23,6 @@ export default function SafetyWarningScreen() {
     router.replace({ pathname: "/active-hunt", params });
   };
 
-  // Parse hunt introduction if present
   let huntIntroduction: string | null = null;
   try {
     if (params.hunt) {
@@ -35,127 +34,134 @@ export default function SafetyWarningScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Hero header */}
-      <View style={styles.heroContainer}>
-        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
-        <View style={styles.heroOverlay} />
-        <View style={styles.heroContent}>
+    <View style={styles.container}>
+      {/* Full screen background */}
+      <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+      <View style={styles.overlay} />
+
+      <SafeAreaView style={styles.safeArea}>
+        {/* Hero section floating over photo */}
+        <View style={styles.heroSection}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backText}>‹ Back</Text>
+          </TouchableOpacity>
           <Text style={styles.heroEmoji}>⚠️</Text>
           <Text style={styles.heroTitle}>Safety First</Text>
           <Text style={styles.heroSubtitle}>
             Please read before starting your adventure
           </Text>
         </View>
-      </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Hunt Introduction */}
-        {huntIntroduction && (
-          <View style={styles.introCard}>
-            <Text style={styles.introLabel}>🗺️ Your Adventure</Text>
-            <Text style={styles.introText}>{huntIntroduction}</Text>
-          </View>
-        )}
-
-        {/* Warning cards */}
-        {[
-          {
-            emoji: "🚦",
-            title: "Watch for traffic",
-            desc: "Always use designated crosswalks and obey traffic signals. Look up from your phone before crossing any road.",
-          },
-          {
-            emoji: "👀",
-            title: "Stay aware of your surroundings",
-            desc: "Keep your head up and stay alert. Avoid using your phone while walking near traffic or in crowded areas.",
-          },
-          {
-            emoji: "🛤️",
-            title: "Adjust your path for safety",
-            desc: "If a suggested route feels unsafe, take an alternative path. Your safety is more important than any clue.",
-          },
-          {
-            emoji: "👥",
-            title: "Stay with your group",
-            desc: "Keep your group together, especially in unfamiliar areas. Let someone know your planned route.",
-          },
-          {
-            emoji: "🌙",
-            title: "Be mindful of the time",
-            desc: "Avoid isolated areas after dark. Plan to complete your hunt during daylight hours when possible.",
-          },
-          {
-            emoji: "📱",
-            title: "Keep your phone charged",
-            desc: "Make sure you have enough battery to complete the hunt. Bring a portable charger if needed.",
-          },
-          {
-            emoji: "🏛️",
-            title: "Respect private property",
-            desc: "Stay on public property. Never trespass or enter restricted areas to complete a stop.",
-          },
-        ].map((item) => (
-          <View key={item.title} style={styles.warningCard}>
-            <Text style={styles.warningEmoji}>{item.emoji}</Text>
-            <View style={styles.warningText}>
-              <Text style={styles.warningTitle}>{item.title}</Text>
-              <Text style={styles.warningDesc}>{item.desc}</Text>
+        {/* White card sliding up from bottom */}
+        <ScrollView
+          style={styles.contentCard}
+          contentContainerStyle={styles.cardContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Hunt Introduction */}
+          {huntIntroduction && (
+            <View style={styles.introCard}>
+              <Text style={styles.introLabel}>🗺️ Your Adventure</Text>
+              <Text style={styles.introText}>{huntIntroduction}</Text>
             </View>
-          </View>
-        ))}
+          )}
 
-        {/* Agreement checkbox */}
-        <TouchableOpacity
-          style={[styles.checkRow, agreed && styles.checkRowChecked]}
-          onPress={() => setAgreed((prev) => !prev)}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
-            {agreed && <Text style={styles.checkmark}>✓</Text>}
-          </View>
-          <Text style={styles.checkLabel}>
-            I have read and understand these safety guidelines and agree to hunt
-            responsibly
-          </Text>
-        </TouchableOpacity>
+          {/* Warning cards */}
+          {[
+            {
+              emoji: "🚦",
+              title: "Watch for traffic",
+              desc: "Always use designated crosswalks and obey traffic signals. Look up from your phone before crossing any road.",
+            },
+            {
+              emoji: "👀",
+              title: "Stay aware of your surroundings",
+              desc: "Keep your head up and stay alert. Avoid using your phone while walking near traffic or in crowded areas.",
+            },
+            {
+              emoji: "🛤️",
+              title: "Adjust your path for safety",
+              desc: "If a suggested route feels unsafe, take an alternative path. Your safety is more important than any clue.",
+            },
+            {
+              emoji: "👥",
+              title: "Stay with your group",
+              desc: "Keep your group together, especially in unfamiliar areas. Let someone know your planned route.",
+            },
+            {
+              emoji: "🌙",
+              title: "Be mindful of the time",
+              desc: "Avoid isolated areas after dark. Plan to complete your hunt during daylight hours when possible.",
+            },
+            {
+              emoji: "📱",
+              title: "Keep your phone charged",
+              desc: "Make sure you have enough battery to complete the hunt. Bring a portable charger if needed.",
+            },
+            {
+              emoji: "🏛️",
+              title: "Respect private property",
+              desc: "Stay on public property. Never trespass or enter restricted areas to complete a stop.",
+            },
+          ].map((item) => (
+            <View key={item.title} style={styles.warningCard}>
+              <Text style={styles.warningEmoji}>{item.emoji}</Text>
+              <View style={styles.warningText}>
+                <Text style={styles.warningTitle}>{item.title}</Text>
+                <Text style={styles.warningDesc}>{item.desc}</Text>
+              </View>
+            </View>
+          ))}
 
-        {/* Continue button */}
-        <TouchableOpacity
-          style={[styles.continueBtn, !agreed && styles.continueBtnDisabled]}
-          onPress={handleContinue}
-          disabled={!agreed}
-        >
-          <Text
-            style={[
-              styles.continueBtnText,
-              !agreed && styles.continueBtnTextDisabled,
-            ]}
+          {/* Agreement checkbox */}
+          <TouchableOpacity
+            style={[styles.checkRow, agreed && styles.checkRowChecked]}
+            onPress={() => setAgreed((prev) => !prev)}
+            activeOpacity={0.7}
           >
-            I Understand — Start My Hunt 🚀
-          </Text>
-        </TouchableOpacity>
+            <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
+              {agreed && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.checkLabel}>
+              I have read and understand these safety guidelines and agree to
+              hunt responsibly
+            </Text>
+          </TouchableOpacity>
 
-        {/* Back option */}
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>← Go Back</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+          {/* Continue button */}
+          <TouchableOpacity
+            style={[styles.continueBtn, !agreed && styles.continueBtnDisabled]}
+            onPress={handleContinue}
+            disabled={!agreed}
+          >
+            <Text
+              style={[
+                styles.continueBtnText,
+                !agreed && styles.continueBtnTextDisabled,
+              ]}
+            >
+              I Understand — Start My Hunt 🚀
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.backLinkBtn}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backLinkText}>← Go Back</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
-  // ── Hero header ───────────────────────────────────────────────
-  heroContainer: {
-    height: 180,
-    position: "relative",
-  },
-  heroBg: {
+  container: { flex: 1, backgroundColor: COLORS.primary },
+  bgImage: {
     position: "absolute",
     top: 0,
     left: 0,
@@ -164,7 +170,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  heroOverlay: {
+  overlay: {
     position: "absolute",
     top: 0,
     left: 0,
@@ -172,29 +178,46 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "rgba(25, 50, 85, 0.55)",
   },
-  heroContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  safeArea: { flex: 1 },
+
+  // ── Hero ──────────────────────────────────────────────────────
+  heroSection: {
     padding: SPACING.lg,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xl,
+    alignItems: "center",
   },
-  heroEmoji: { fontSize: 44, marginBottom: 8 },
+  backBtn: { alignSelf: "flex-start", marginBottom: SPACING.md },
+  backText: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+  },
+  heroEmoji: { fontSize: 52, marginBottom: SPACING.sm },
   heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   heroSubtitle: {
     fontSize: FONTS.sizes.sm,
     color: "rgba(255,255,255,0.8)",
     textAlign: "center",
   },
-  // ── Scroll content ────────────────────────────────────────────
-  scroll: { padding: SPACING.lg, paddingBottom: 40 },
-  // ── Hunt introduction card ────────────────────────────────────
+
+  // ── Content card ──────────────────────────────────────────────
+  contentCard: {
+    flex: 1,
+    backgroundColor: "transparent",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  cardContent: { padding: SPACING.lg, paddingBottom: 48 },
+
+  // ── Hunt intro ────────────────────────────────────────────────
   introCard: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: "rgba(60, 137, 214, 0.75)", // ← was COLORS.primary (solid)
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
@@ -213,12 +236,13 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     fontStyle: "italic",
   },
+
   // ── Warning cards ─────────────────────────────────────────────
   warningCard: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: SPACING.md,
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255, 255, 255, 0.75)", // ← was rgba(255,255,255,0.85)
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
@@ -238,12 +262,13 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     lineHeight: 20,
   },
-  // ── Agreement row ─────────────────────────────────────────────
+
+  // ── Agreement ─────────────────────────────────────────────────
   checkRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: SPACING.md,
-    backgroundColor: COLORS.white,
+    backgroundColor: "rgba(255, 255, 255, 0.75)", // ← was rgba(255,255,255,0.85)
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginTop: SPACING.lg,
@@ -281,6 +306,7 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     lineHeight: 20,
   },
+
   // ── Buttons ───────────────────────────────────────────────────
   continueBtn: {
     backgroundColor: COLORS.accent,
@@ -296,8 +322,8 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
   },
   continueBtnTextDisabled: { color: COLORS.midGray },
-  backBtn: { alignItems: "center", padding: SPACING.md },
-  backBtnText: {
+  backLinkBtn: { alignItems: "center", padding: SPACING.md },
+  backLinkText: {
     color: COLORS.accent,
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.medium,

@@ -44,7 +44,7 @@ export default function Button({
   const textColor = {
     primary: COLORS.white,
     secondary: COLORS.primary,
-    accent: COLORS.white,
+    accent: COLORS.primary,
     ghost: COLORS.primary,
     danger: COLORS.white,
   }[variant];

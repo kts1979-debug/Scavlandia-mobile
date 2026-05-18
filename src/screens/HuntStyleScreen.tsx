@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(25, 50, 85, 0.72)",
   },
   safeArea: { flex: 1 },
-  scroll: { paddingBottom: 40 },
+  scroll: { paddingBottom: 40 }, // ← remove any paddingTop, let hero sit flush
   heroSection: {
     padding: SPACING.lg,
     paddingTop: SPACING.md,
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   contentCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.75)",
+    backgroundColor: "transparent",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: SPACING.lg,
@@ -221,12 +221,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    color: COLORS.white, // ← was COLORS.primary, needs to be white since it's over the photo now
     marginBottom: 4,
   },
   sectionSub: {
     fontSize: FONTS.sizes.sm,
-    color: COLORS.darkGray,
+    color: "rgba(255,255,255,0.85)", // ← was COLORS.darkGray
     lineHeight: 20,
   },
   specialtyCard: {

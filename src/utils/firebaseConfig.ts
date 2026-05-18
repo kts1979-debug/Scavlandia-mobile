@@ -1,6 +1,5 @@
-import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import { getApps, initializeApp } from "firebase/app";
-import { initializeAuth } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA-890Xv2_6a-UH3ddhlcnyZ-43fq5_dQs",
@@ -16,10 +15,4 @@ const firebaseConfig = {
 const app =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// getReactNativePersistence exists at runtime but isn't in the web type defs
-
-const { getReactNativePersistence } = require("firebase/auth/react-native");
-
-export const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(ReactNativeAsyncStorage),
-});
+export const auth = getAuth(app);

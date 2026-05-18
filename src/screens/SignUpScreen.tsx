@@ -32,6 +32,7 @@ interface InputFieldProps {
   placeholder: string;
   secure?: boolean;
   keyboardType?: any;
+  showToggle?: boolean;
 }
 
 const InputField = ({
@@ -41,24 +42,38 @@ const InputField = ({
   placeholder,
   secure = false,
   keyboardType = "default",
-}: InputFieldProps) => (
-  <View style={styles.fieldGroup}>
-    <Text style={styles.label}>{label}</Text>
-    <TextInput
-      style={styles.input}
-      value={value}
-      onChangeText={onChange}
-      placeholder={placeholder}
-      placeholderTextColor={COLORS.midGray}
-      secureTextEntry={secure}
-      autoCapitalize={
-        secure || keyboardType === "email-address" ? "none" : "words"
-      }
-      autoCorrect={false}
-      keyboardType={keyboardType}
-    />
-  </View>
-);
+  showToggle = false,
+}: InputFieldProps) => {
+  const [show, setShow] = useState(false);
+  return (
+    <View style={styles.fieldGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.passwordRow}>
+        <TextInput
+          style={[styles.input, showToggle && styles.passwordInput]}
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor={COLORS.midGray}
+          secureTextEntry={secure && !show}
+          autoCapitalize={
+            secure || keyboardType === "email-address" ? "none" : "words"
+          }
+          autoCorrect={false}
+          keyboardType={keyboardType}
+        />
+        {showToggle && (
+          <TouchableOpacity
+            style={styles.eyeBtn}
+            onPress={() => setShow((prev) => !prev)}
+          >
+            <Text style={styles.eyeIcon}>{show ? "🙈" : "👁️"}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
 
 export default function SignUpScreen() {
   const { signUp } = useAuth();
@@ -162,6 +177,7 @@ export default function SignUpScreen() {
                 onChange={setPassword}
                 placeholder="At least 6 characters"
                 secure
+                showToggle // ← add this
               />
               <InputField
                 label="Confirm Password"
@@ -169,6 +185,7 @@ export default function SignUpScreen() {
                 onChange={setConfirmPassword}
                 placeholder="Type your password again"
                 secure
+                showToggle // ← add this
               />
 
               {/* Password strength */}
@@ -381,4 +398,23 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.bold,
     textDecorationLine: "underline",
   },
+  passwordRow: { flexDirection: "row", alignItems: "center" },
+  passwordInput: {
+    flex: 1,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    borderRightWidth: 0,
+  },
+  eyeBtn: {
+    borderWidth: 1.5,
+    borderColor: COLORS.midGray,
+    borderLeftWidth: 0,
+    borderTopRightRadius: RADIUS.md,
+    borderBottomRightRadius: RADIUS.md,
+    padding: 14,
+    backgroundColor: COLORS.offWhite,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  eyeIcon: { fontSize: 18 },
 });

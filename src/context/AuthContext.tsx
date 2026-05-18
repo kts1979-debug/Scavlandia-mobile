@@ -16,7 +16,6 @@ import { saveUserProfile } from "../services/apiService";
 import { initializePurchases } from "../services/purchaseService";
 import { auth } from "../utils/firebaseConfig";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 interface AuthContextType {
   user: User | null;
@@ -88,18 +87,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    GoogleSignin.configure({
-      webClientId:
-        "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
-    });
+    try {
+      const { GoogleSignin } =
+        await import("@react-native-google-signin/google-signin");
 
-    await GoogleSignin.hasPlayServices();
-    await GoogleSignin.signIn();
+      GoogleSignin.configure({
+        webClientId:
+          "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
+      });
 
-    // Get tokens
-    const tokens = await GoogleSignin.getTokens();
-    const googleCredential = GoogleAuthProvider.credential(tokens.idToken);
-    await signInWithCredential(auth, googleCredential);
+      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.signIn();
+      const tokens = await GoogleSignin.getTokens();
+      const googleCredential = GoogleAuthProvider.credential(tokens.idToken);
+      await signInWithCredential(auth, googleCredential);
+    } catch (e) {
+      console.log("Google Sign In not available in Expo Go:", e);
+      throw e;
+    }
   };
 
   const signInWithApple = async () => {

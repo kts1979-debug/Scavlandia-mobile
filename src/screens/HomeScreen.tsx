@@ -3,7 +3,6 @@ import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
   Image,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -54,7 +53,7 @@ export default function HomeScreen() {
       <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
       <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
@@ -251,7 +250,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   scroll: {
     padding: SPACING.md,
-    paddingBottom: Platform.OS === "android" ? 140 : 40,
+    paddingBottom: 70,
   },
 
   // ── Header ────────────────────────────────────────────────────
