@@ -25,6 +25,7 @@ export const PRODUCT_IDS = {
   cityHunt: "com.katesauls.scavlandia.city_hunt",
   museumHunt: "com.katesauls.scavlandia.museum_hunt",
   microHunt: "com.katesauls.scavlandia.micro_hunt",
+  roadTripHunt: "com.katesauls.scavlandia.road_trip_hunt",
   monthly: "com.katesauls.scavlandia.monthly",
 };
 
@@ -33,6 +34,7 @@ export const ENTITLEMENTS = {
   cityHunt: "city_hunt",
   museumHunt: "museum_hunt",
   microHunt: "micro_hunt",
+  roadTripHunt: "roadtrip_hunt",
   premium: "premium",
 };
 
@@ -64,11 +66,26 @@ export const hasEntitlement = async (
 
 // ── Check entitlement for hunt type ───────────────────────────────
 // TEMPORARY: Allow all hunts for closed testing
-// TODO: Remove return true before public launch and uncomment below
+
 export const canGenerateHunt = async (
-  huntType: "city" | "museum" | "micro",
+  huntType: "city" | "museum" | "micro" | "road-trip",
 ): Promise<boolean> => {
-  return true; // ← REMOVE THIS LINE BEFORE PUBLIC LAUNCH
+  if (isExpoGo) return true;
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    const active = customerInfo.entitlements.active;
+    if ("premium" in active) return true;
+    const entitlementMap: Record<string, string> = {
+      city: ENTITLEMENTS.cityHunt,
+      museum: ENTITLEMENTS.museumHunt,
+      micro: ENTITLEMENTS.microHunt,
+      "road-trip": ENTITLEMENTS.roadTripHunt,
+    };
+    return entitlementMap[huntType] in active;
+  } catch (err) {
+    console.warn("Could not check purchase status:", err);
+    return false;
+  }
 };
 
 // ── Get current offering ───────────────────────────────────────────

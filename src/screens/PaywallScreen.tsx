@@ -23,7 +23,7 @@ import {
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 import Purchases from "react-native-purchases";
 
-type HuntType = "city" | "museum" | "micro";
+type HuntType = "city" | "museum" | "micro" | "road-trip";
 
 const isExpoGo = Constants.appOwnership === "expo";
 
@@ -51,6 +51,15 @@ const HUNT_INFO = {
     price: "$1.99",
     productId: PRODUCT_IDS.microHunt,
     packageId: "micro_hunt",
+  },
+  "road-trip": {
+    // ← add
+    emoji: "🚗",
+    title: "Road Trip Hunt",
+    desc: "Discover stops along any road trip route",
+    price: "$7.99",
+    productId: PRODUCT_IDS.roadTripHunt,
+    packageId: "road_trip_hunt",
   },
 };
 
@@ -163,6 +172,7 @@ export default function PaywallScreen() {
         city: "city_hunt",
         museum: "museum_hunt",
         micro: "micro_hunt",
+        "road-trip": "roadtrip_hunt",
       };
 
       if (

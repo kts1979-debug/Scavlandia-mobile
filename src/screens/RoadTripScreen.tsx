@@ -23,6 +23,7 @@ import MapView, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getRoadTripCandidates } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+import { canGenerateHunt } from "../services/purchaseService";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍽️" },
@@ -227,12 +228,31 @@ export default function RoadTripScreen() {
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (selectedStops.length < 2) {
       Alert.alert(
         "Select stops",
         "Please select at least 2 stops for your hunt.",
       );
+      return;
+    }
+
+    // ← Add paywall check
+    const canGenerate = await canGenerateHunt("road-trip");
+    if (!canGenerate) {
+      router.push({
+        pathname: "/paywall",
+        params: {
+          huntType: "road-trip",
+          nextRoute: "/generating",
+          nextParams: JSON.stringify({
+            city: `${routeInfo?.startName} to ${routeInfo?.endName}`,
+            groupProfile: JSON.stringify({
+              /* your existing groupProfile object */
+            }),
+          }),
+        },
+      });
       return;
     }
 

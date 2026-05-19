@@ -193,9 +193,6 @@ export default function LoginScreen() {
                   activeOpacity={0.8}
                 >
                   <Text style={styles.ssoIcon}>G</Text>
-                  <Text style={styles.ssoBtnText}>
-                    {googleLoading ? "Signing in..." : "Google"}
-                  </Text>
                 </TouchableOpacity>
 
                 {/* Apple — iOS only */}
@@ -206,9 +203,8 @@ export default function LoginScreen() {
                     disabled={appleLoading}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.ssoIcon, styles.ssoIconApple]}></Text>
-                    <Text style={[styles.ssoBtnText, styles.ssoBtnTextApple]}>
-                      {appleLoading ? "Signing in..." : "Apple"}
+                    <Text style={[styles.ssoIcon, styles.ssoIconApple]}>
+                      🍎
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -314,22 +310,28 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     fontWeight: FONTS.weights.medium,
   },
-  ssoRow: { flexDirection: "row", gap: SPACING.sm },
-  ssoBtn: {
-    flex: 1,
+  ssoRow: {
     flexDirection: "row",
-    alignItems: "center",
+    gap: SPACING.sm,
     justifyContent: "center",
-    gap: 8,
+    marginTop: SPACING.sm,
+  },
+  ssoBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 1.5,
     borderColor: COLORS.midGray,
-    borderRadius: RADIUS.lg,
-    paddingVertical: 12,
     backgroundColor: COLORS.white,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  ssoBtnApple: { backgroundColor: COLORS.black, borderColor: COLORS.black },
+  ssoBtnApple: {
+    backgroundColor: COLORS.black,
+    borderColor: COLORS.black,
+  },
   ssoIcon: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.primary,
   },
