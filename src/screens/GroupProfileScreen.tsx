@@ -206,7 +206,7 @@ export default function GroupProfileScreen() {
       <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
       <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         {/* Hero header */}
         <View style={styles.heroSection}>
           <TouchableOpacity
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
-  cardContent: { padding: SPACING.md, paddingBottom: 60 }, // ← no paddingTop
+  cardContent: { padding: SPACING.md, paddingBottom: 100 }, // ← no paddingTop
   section: {
     marginBottom: SPACING.md,
     backgroundColor: "rgba(255, 255, 255, 0.75)",

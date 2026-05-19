@@ -3,7 +3,7 @@
     "name": "Scavlandia",
     "slug": "scavlandia",
     "scheme": "scavlandia",
-    "version": "1.0.17",
+    "version": "1.0.19",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
@@ -35,7 +35,7 @@
       },
       "package": "com.katesauls.scavlandia",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 21,
+      "versionCode": 23,
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyAWOLSMvDOKwiQ122nNfWszwk90SYAJVLg"
@@ -78,7 +78,12 @@
       ],
       "expo-camera",
       "expo-media-library",
-      "@react-native-google-signin/google-signin"
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h"
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -4,7 +4,15 @@ import { COLORS } from "../../src/theme";
 
 function TabIcon({ emoji, color }: { emoji: string; color: string }) {
   return (
-    <Text style={{ fontSize: 22, opacity: color === COLORS.accent ? 1 : 0.5 }}>
+    <Text
+      style={{
+        fontSize: 22,
+        opacity: color === COLORS.accent ? 1 : 0.75,
+        textShadowColor: "rgba(0,0,0,0.3)",
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
+      }}
+    >
       {emoji}
     </Text>
   );
@@ -16,7 +24,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: COLORS.accent,
-        tabBarInactiveTintColor: COLORS.midGray,
+        tabBarInactiveTintColor: COLORS.darkGray,
         tabBarStyle: {
           backgroundColor: COLORS.white,
           borderTopColor: COLORS.lightGray,
@@ -24,13 +32,23 @@ export default function TabLayout() {
           paddingBottom: Platform.OS === "android" ? 30 : 24,
           paddingTop: Platform.OS === "android" ? 8 : 0,
         },
+        // ← Add this:
+        tabBarHideOnKeyboard: true,
       }}
     >
+      {/* ── Visible tabs ── */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => <TabIcon emoji="🏠" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="active-hunt"
+        options={{
+          title: "Active",
+          tabBarIcon: ({ color }) => <TabIcon emoji="▶️" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -47,6 +65,22 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabIcon emoji="👤" color={color} />,
         }}
       />
+
+      {/* ── Hidden tabs (show tab bar but not in tab bar UI) ── */}
+      <Tabs.Screen name="hunt-complete" options={{ href: null }} />
+      <Tabs.Screen name="stop-complete" options={{ href: null }} />
+      <Tabs.Screen name="hunt-setup" options={{ href: null }} />
+      <Tabs.Screen name="safety-warning" options={{ href: null }} />
+      <Tabs.Screen name="hunt-detail" options={{ href: null }} />
+      <Tabs.Screen name="join-hunt" options={{ href: null }} />
+      <Tabs.Screen name="hunt-type" options={{ href: null }} />
+      <Tabs.Screen name="hunt-style" options={{ href: null }} />
+      <Tabs.Screen name="group-profile" options={{ href: null }} />
+      <Tabs.Screen name="road-trip" options={{ href: null }} />
+      <Tabs.Screen name="micro-hunt" options={{ href: null }} />
+      <Tabs.Screen name="paywall" options={{ href: null }} />
+      <Tabs.Screen name="photo-album" options={{ href: null }} />
+      <Tabs.Screen name="add-stop" options={{ href: null }} />
     </Tabs>
   );
 }

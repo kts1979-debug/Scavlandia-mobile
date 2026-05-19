@@ -77,7 +77,7 @@ export default function JoinHuntScreen() {
       <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
       <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         {/* Hero section */}
         <View style={styles.heroSection}>
           <TouchableOpacity

@@ -1,6 +1,6 @@
 // src/screens/HomeScreen.tsx
-import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { router } from "expo-router";
+import React, { useState, useEffect } from "react";
 import {
   Image,
   ScrollView,
@@ -12,8 +12,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
-import { getActiveHunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as StoreReview from "expo-store-review";
+import { Platform, Linking } from "react-native";
 
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 const HERO_BG = require("../../assets/images/hunt_bg_5_explorer_greece.jpg");
@@ -21,31 +23,30 @@ const HERO_BG = require("../../assets/images/hunt_bg_5_explorer_greece.jpg");
 export default function HomeScreen() {
   const { user } = useAuth();
   const [activeHunt, setActiveHunt] = useState<any>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (user) {
-        getActiveHunt()
-          .then((data) => {
-            const hunt = data.activeHunt;
-            if (hunt && hunt.status === "in_progress" && hunt.activeState) {
-              setActiveHunt(hunt);
-            } else {
-              setActiveHunt(null);
-            }
-          })
-          .catch(() => setActiveHunt(null));
-      } else {
-        setActiveHunt(null);
-      }
-    }, [user]),
-  );
+  const [showReviewPrompt, setShowReviewPrompt] = useState(false);
 
   const stats = [
     { emoji: "🗺️", label: "Cities", value: "500+" },
     { emoji: "🎯", label: "Stops", value: "6–12" },
     { emoji: "⚡", label: "Ready in", value: "30s" },
   ];
+
+  useEffect(() => {
+    const checkReviewPrompt = async () => {
+      try {
+        const reviewed = await AsyncStorage.getItem(
+          "scavlandia_review_completed",
+        );
+        if (reviewed) return;
+        const countStr = await AsyncStorage.getItem(
+          "scavlandia_hunts_since_review",
+        );
+        const count = countStr ? parseInt(countStr) : 0;
+        if (count >= 1) setShowReviewPrompt(true);
+      } catch {}
+    };
+    checkReviewPrompt();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -64,7 +65,7 @@ export default function HomeScreen() {
               <Text style={styles.appName}>Scavlandia</Text>
               {user ? (
                 <Text style={styles.greeting}>
-                  Hey {user.displayName?.split(" ")[0] || "Explorer"} 👋
+                  Hey {user.displayName?.split(" ")[0] || "Explorer"}
                 </Text>
               ) : (
                 <Text style={styles.tagline}>
@@ -81,38 +82,6 @@ export default function HomeScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Resume Hunt Banner */}
-          {activeHunt && (
-            <TouchableOpacity
-              style={styles.resumeBanner}
-              onPress={() => {
-                const state = activeHunt.activeState;
-                router.push({
-                  pathname: "/active-hunt",
-                  params: {
-                    hunt: JSON.stringify(activeHunt),
-                    resumeAtStop: String((state?.activeStopIndex || 0) + 1),
-                    totalPoints: String(state?.totalPoints || 0),
-                    stopPhotos: JSON.stringify(state?.stopPhotos || {}),
-                    skippedStops: JSON.stringify(state?.skippedStops || []),
-                    swapsUsed: String(state?.swapsUsed || 0),
-                  },
-                });
-              }}
-            >
-              <View style={styles.resumeBannerLeft}>
-                <Text style={styles.resumeBannerEmoji}>▶️</Text>
-                <View>
-                  <Text style={styles.resumeBannerTitle}>Resume Your Hunt</Text>
-                  <Text style={styles.resumeBannerSub} numberOfLines={1}>
-                    {activeHunt.huntTitle}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.resumeBannerArrow}>›</Text>
-            </TouchableOpacity>
-          )}
 
           {/* Hero section — replaces heroBanner card */}
           <View style={styles.heroSection}>
@@ -164,7 +133,7 @@ export default function HomeScreen() {
             {
               emoji: "⚡",
               title: "Micro Hunt",
-              desc: "A quick 1–2 stop adventure within half a mile of you. Perfect for a short break.",
+              desc: "A quick 1–3 stop adventure within half a mile of you. Perfect for a short break.",
               onPress: () => router.push("/hunt-type"),
             },
           ].map((item) => (
@@ -203,6 +172,53 @@ export default function HomeScreen() {
             </Card>
           </TouchableOpacity>
 
+          {/* Review prompt */}
+          {showReviewPrompt && (
+            <TouchableOpacity
+              style={styles.reviewCard}
+              onPress={async () => {
+                try {
+                  const isAvailable = await StoreReview.isAvailableAsync();
+                  if (isAvailable) {
+                    await StoreReview.requestReview();
+                  } else {
+                    const url =
+                      Platform.OS === "ios"
+                        ? "https://apps.apple.com/app/idYOUR_APP_ID/action=write-review"
+                        : "https://play.google.com/store/apps/details?id=com.katesauls.scavlandia";
+                    await Linking.openURL(url);
+                  }
+                  await AsyncStorage.setItem(
+                    "scavlandia_review_completed",
+                    "true",
+                  );
+                  setShowReviewPrompt(false);
+                } catch {}
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.reviewEmoji}>⭐</Text>
+              <View style={styles.reviewContent}>
+                <Text style={styles.reviewTitle}>Enjoying Scavlandia?</Text>
+                <Text style={styles.reviewDesc}>
+                  Tap to leave a review — it helps us a lot!
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={async () => {
+                  await AsyncStorage.setItem(
+                    "scavlandia_review_completed",
+                    "true",
+                  );
+                  setShowReviewPrompt(false);
+                }}
+                style={styles.reviewDismiss}
+              >
+                <Text style={styles.reviewDismissText}>✕</Text>
+              </TouchableOpacity>
+            </TouchableOpacity>
+          )}
+
           {/* Onboarding link */}
           <TouchableOpacity
             style={styles.onboardingLink}
@@ -216,9 +232,7 @@ export default function HomeScreen() {
             <Text style={styles.onboardingLinkEmoji}>📖</Text>
             <View style={styles.onboardingLinkContent}>
               <Text style={styles.onboardingLinkTitle}>New to Scavlandia?</Text>
-              <Text style={styles.onboardingLinkDesc}>
-                See how it works — takes 30 seconds
-              </Text>
+              <Text style={styles.onboardingLinkDesc}>See how it works.</Text>
             </View>
             <Text style={styles.onboardingLinkArrow}>›</Text>
           </TouchableOpacity>
@@ -263,11 +277,11 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.white,
+    color: COLORS.primary,
   },
   greeting: {
     fontSize: FONTS.sizes.md,
-    color: COLORS.accent,
+    color: COLORS.white,
     fontWeight: FONTS.weights.medium,
     marginTop: 2,
   },
@@ -280,14 +294,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(232, 248, 247,0.75)",
     borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: {
-    color: COLORS.white,
+    color: COLORS.primary,
     fontSize: FONTS.sizes.lg,
     fontWeight: FONTS.weights.bold,
   },
@@ -440,4 +454,27 @@ const styles = StyleSheet.create({
   },
   onboardingLinkDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
   onboardingLinkArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
+  reviewCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.sm,
+    gap: SPACING.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.gold,
+  },
+  reviewEmoji: { fontSize: 28, flexShrink: 0 },
+  reviewContent: { flex: 1 },
+  reviewTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+    marginBottom: 2,
+  },
+  reviewDesc: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray },
+  reviewDismiss: { padding: 4 },
+  reviewDismissText: { fontSize: FONTS.sizes.md, color: COLORS.midGray },
 });

@@ -215,8 +215,12 @@ export default function RoadTripScreen() {
       });
 
       setStep(2);
-      setTimeout(() => setMarkerDelay(true), 1000);
+      setTimeout(() => {
+        setSearching(false); // ← move here, hide AFTER step 2 is set
+        setMarkerDelay(true);
+      }, 1000);
     } catch (error: any) {
+      setSearching(false);
       Alert.alert(
         "Could not find route",
         error.response?.data?.error ||
@@ -224,7 +228,6 @@ export default function RoadTripScreen() {
       );
     } finally {
       setLoadingCandidates(false);
-      setSearching(false);
     }
   };
 
@@ -306,13 +309,72 @@ export default function RoadTripScreen() {
     };
   };
 
+  // ── Searching screen ──────────────────────────────────────────
+  if (searching) {
+    return (
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+        <View style={styles.heroOverlay} />
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <View
+            style={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              padding: SPACING.xl,
+            }}
+          >
+            <Text style={{ fontSize: 72, marginBottom: SPACING.md }}>🛣️</Text>
+            <ActivityIndicator
+              size="large"
+              color={COLORS.accent}
+              style={{ marginBottom: SPACING.lg }}
+            />
+            <Text
+              style={{
+                fontSize: FONTS.sizes.xxl,
+                fontWeight: FONTS.weights.heavy,
+                color: COLORS.white,
+                textAlign: "center",
+                marginBottom: SPACING.sm,
+              }}
+            >
+              Mapping Your Route
+            </Text>
+            <Text
+              style={{
+                fontSize: FONTS.sizes.md,
+                color: "rgba(255,255,255,0.75)",
+                textAlign: "center",
+                marginBottom: SPACING.xl,
+                lineHeight: 24,
+              }}
+            >
+              {`Searching for great stops between\n${startLocation} and ${endLocation}...`}
+            </Text>
+            <Text
+              style={{
+                fontSize: FONTS.sizes.sm,
+                color: "rgba(255,255,255,0.5)",
+                textAlign: "center",
+                fontStyle: "italic",
+              }}
+            >
+              This can take up to a minute ✨
+            </Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
   // ── STEP 1 ────────────────────────────────────────────────────
   if (step === 1) {
     return (
       <View style={styles.container}>
         <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
         <View style={styles.heroOverlay} />
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
           {/* Hero section */}
           <View style={styles.heroSection}>
             <TouchableOpacity
@@ -482,65 +544,6 @@ export default function RoadTripScreen() {
 
             <View style={{ height: 40 }} />
           </ScrollView>
-        </SafeAreaView>
-      </View>
-    );
-  }
-
-  // ── Searching screen ──────────────────────────────────────────
-  if (searching) {
-    return (
-      <View style={styles.container}>
-        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
-        <View style={styles.heroOverlay} />
-        <SafeAreaView style={styles.safeArea}>
-          <View
-            style={{
-              flex: 1,
-              alignItems: "center",
-              justifyContent: "center",
-              padding: SPACING.xl,
-            }}
-          >
-            <Text style={{ fontSize: 72, marginBottom: SPACING.md }}>🛣️</Text>
-            <ActivityIndicator
-              size="large"
-              color={COLORS.accent}
-              style={{ marginBottom: SPACING.lg }}
-            />
-            <Text
-              style={{
-                fontSize: FONTS.sizes.xxl,
-                fontWeight: FONTS.weights.heavy,
-                color: COLORS.white,
-                textAlign: "center",
-                marginBottom: SPACING.sm,
-              }}
-            >
-              Mapping Your Route
-            </Text>
-            <Text
-              style={{
-                fontSize: FONTS.sizes.md,
-                color: "rgba(255,255,255,0.75)",
-                textAlign: "center",
-                marginBottom: SPACING.xl,
-                lineHeight: 24,
-              }}
-            >
-              {`Searching for great stops between\n${startLocation} and ${endLocation}...`}
-            </Text>
-            <Text
-              style={{
-                fontSize: FONTS.sizes.sm,
-                color: "rgba(255,255,255,0.5)",
-                textAlign: "center",
-                fontStyle: "italic",
-              }}
-            >
-              This can take up to 30 seconds ✨
-            </Text>
-          </View>
         </SafeAreaView>
       </View>
     );

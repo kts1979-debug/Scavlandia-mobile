@@ -41,7 +41,7 @@ export default function HuntStyleScreen() {
       <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
       <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(25, 50, 85, 0.72)",
   },
   safeArea: { flex: 1 },
-  scroll: { paddingBottom: 40 }, // ← remove any paddingTop, let hero sit flush
+  scroll: { paddingBottom: 100 }, // ← remove any paddingTop, let hero sit flush
   heroSection: {
     padding: SPACING.lg,
     paddingTop: SPACING.md,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: SPACING.lg,
-    paddingBottom: 40,
+    paddingBottom: 100,
     minHeight: 500,
   },
   personalizedCard: {

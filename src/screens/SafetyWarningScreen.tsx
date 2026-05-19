@@ -39,7 +39,7 @@ export default function SafetyWarningScreen() {
       <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
       <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         {/* Hero section floating over photo */}
         <View style={styles.heroSection}>
           <TouchableOpacity
@@ -90,16 +90,6 @@ export default function SafetyWarningScreen() {
               emoji: "👥",
               title: "Stay with your group",
               desc: "Keep your group together, especially in unfamiliar areas. Let someone know your planned route.",
-            },
-            {
-              emoji: "🌙",
-              title: "Be mindful of the time",
-              desc: "Avoid isolated areas after dark. Plan to complete your hunt during daylight hours when possible.",
-            },
-            {
-              emoji: "📱",
-              title: "Keep your phone charged",
-              desc: "Make sure you have enough battery to complete the hunt. Bring a portable charger if needed.",
             },
             {
               emoji: "🏛️",

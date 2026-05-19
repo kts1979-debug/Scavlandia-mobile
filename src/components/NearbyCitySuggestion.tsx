@@ -33,11 +33,9 @@ export default function NearbyCitySuggestion({
   }, []);
 
   const fetchSuggestions = async () => {
-    console.log("Fetching suggestions for:", currentCity);
     try {
       // Try to get current location for better suggestions
       const { status } = await Location.getForegroundPermissionsAsync();
-      console.log("Location permission status:", status);
       let lat = 0;
       let lng = 0;
 

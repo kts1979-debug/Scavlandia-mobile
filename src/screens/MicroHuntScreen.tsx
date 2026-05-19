@@ -205,25 +205,60 @@ export default function MicroHuntScreen() {
       <View style={styles.container}>
         <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
         <View style={styles.overlay} />
-        <SafeAreaView style={[styles.safeArea, styles.centeredSafeArea]}>
-          <Text style={styles.loadingEmoji}>
-            {phase === "locating" ? "📍" : "⚡"}
-          </Text>
-          <ActivityIndicator
-            size="large"
-            color={COLORS.accent}
-            style={{ marginVertical: SPACING.lg }}
-          />
-          <Text style={styles.loadingTitle}>
-            {phase === "locating"
-              ? "Finding your location..."
-              : "Building your micro hunt..."}
-          </Text>
-          <Text style={styles.loadingSubtitle}>
-            {phase === "locating"
-              ? "We need your location to find nearby spots"
-              : "Crafting clues for spots near you"}
-          </Text>
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <View
+            style={{
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              padding: SPACING.xl,
+            }}
+          >
+            <Text style={{ fontSize: 72, marginBottom: SPACING.md }}>
+              {phase === "locating" ? "📍" : "⚡"}
+            </Text>
+            <ActivityIndicator
+              size="large"
+              color={COLORS.accent}
+              style={{ marginBottom: SPACING.lg }}
+            />
+            <Text
+              style={{
+                fontSize: FONTS.sizes.xxl,
+                fontWeight: FONTS.weights.heavy,
+                color: COLORS.white,
+                textAlign: "center",
+                marginBottom: SPACING.sm,
+              }}
+            >
+              {phase === "locating"
+                ? "Finding Your Location"
+                : "Building Your Hunt"}
+            </Text>
+            <Text
+              style={{
+                fontSize: FONTS.sizes.md,
+                color: "rgba(255,255,255,0.75)",
+                textAlign: "center",
+                marginBottom: SPACING.xl,
+                lineHeight: 24,
+              }}
+            >
+              {phase === "locating"
+                ? "We need your location to find nearby spots..."
+                : "Crafting personalized clues for spots near you..."}
+            </Text>
+            <Text
+              style={{
+                fontSize: FONTS.sizes.sm,
+                color: "rgba(255,255,255,0.5)",
+                textAlign: "center",
+                fontStyle: "italic",
+              }}
+            >
+              This can take up to a minute ✨
+            </Text>
+          </View>
         </SafeAreaView>
       </View>
     );
@@ -264,7 +299,7 @@ export default function MicroHuntScreen() {
       <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
       <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         {/* Hero header */}
         <View style={styles.heroSection}>
           <TouchableOpacity
@@ -306,7 +341,7 @@ export default function MicroHuntScreen() {
               </View>
               <TouchableOpacity
                 style={styles.stopCountBtn}
-                onPress={() => setStopCount((p) => Math.min(2, p + 1))}
+                onPress={() => setStopCount((p) => Math.min(3, p + 1))}
               >
                 <Text style={styles.stopCountBtnText}>+</Text>
               </TouchableOpacity>
@@ -536,7 +571,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
-  cardContent: { padding: SPACING.md, paddingBottom: 60 },
+  cardContent: { padding: SPACING.md, paddingBottom: 100 },
   section: {
     marginBottom: SPACING.md,
     backgroundColor: "rgba(255, 255, 255, 0.75)",

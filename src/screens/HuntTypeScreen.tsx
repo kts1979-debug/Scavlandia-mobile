@@ -20,7 +20,7 @@ export default function HuntTypeScreen() {
       <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
       <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
@@ -55,17 +55,15 @@ export default function HuntTypeScreen() {
                 <Text style={styles.cardArrow}>›</Text>
               </View>
               <Text style={styles.cardDesc}>
-                Explore a city with personalized clues at real locations.
-                Perfect for any group in any city worldwide.
+                Personlaized hunts for any city worldwide- no two hunts are
+                alike. Perfect for a single group or competitive teams.
               </Text>
               <View style={styles.tagRow}>
-                {["Outdoors", "GPS tracking", "Any city", "6–12 stops"].map(
-                  (tag) => (
-                    <View key={tag} style={styles.tag}>
-                      <Text style={styles.tagText}>{tag}</Text>
-                    </View>
-                  ),
-                )}
+                {["GPS tracking", "Any city", "6–12 stops"].map((tag) => (
+                  <View key={tag} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </View>
+                ))}
               </View>
             </TouchableOpacity>
 
@@ -87,16 +85,11 @@ export default function HuntTypeScreen() {
               </View>
               <Text style={styles.cardDesc}>
                 {
-                  "Enter your start and end points and we'll find roadside attractions, scenic overlooks, and hidden gems along the way."
+                  "Enter your destination and we'll find attractions and hidden gems along the way."
                 }
               </Text>
               <View style={styles.tagRow}>
-                {[
-                  "Driving route",
-                  "2–12 stops",
-                  "Google Maps",
-                  "Roadside gems",
-                ].map((tag) => (
+                {["Driving route", "2–12 stops", "Google Maps"].map((tag) => (
                   <View key={tag} style={[styles.tag, styles.tagRoadTrip]}>
                     <Text style={[styles.tagText, styles.tagTextRoadTrip]}>
                       {tag}
@@ -126,20 +119,42 @@ export default function HuntTypeScreen() {
                 <Text style={styles.cardArrow}>›</Text>
               </View>
               <Text style={styles.cardDesc}>
-                A quick 1–2 stop adventure built around where you are right now.
-                No setup needed — just go!
+                {
+                  "Discover nearby spots with a 1–3 stop adventure built around you're location!"
+                }
               </Text>
               <View style={styles.tagRow}>
-                {["Nearby spots", "10–20 min", "No setup", "Quick fun"].map(
-                  (tag) => (
-                    <View key={tag} style={[styles.tag, styles.tagMicro]}>
-                      <Text style={[styles.tagText, styles.tagTextMicro]}>
-                        {tag}
-                      </Text>
-                    </View>
-                  ),
-                )}
+                {["Nearby spots", "10–30 min", "Quick fun"].map((tag) => (
+                  <View key={tag} style={[styles.tag, styles.tagMicro]}>
+                    <Text style={[styles.tagText, styles.tagTextMicro]}>
+                      {tag}
+                    </Text>
+                  </View>
+                ))}
               </View>
+            </TouchableOpacity>
+
+            {/* Subscription banner */}
+            <TouchableOpacity
+              style={styles.subscriptionBanner}
+              onPress={() =>
+                router.push({
+                  pathname: "/paywall",
+                  params: { huntType: "city" },
+                })
+              }
+              activeOpacity={0.85}
+            >
+              <Text style={styles.subscriptionBannerEmoji}>⭐</Text>
+              <View style={styles.subscriptionBannerText}>
+                <Text style={styles.subscriptionBannerTitle}>
+                  Scavlandia Premium
+                </Text>
+                <Text style={styles.subscriptionBannerDesc}>
+                  Unlimited hunts for $19.99/mo.
+                </Text>
+              </View>
+              <Text style={styles.cardArrow}>›</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -175,7 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(25, 50, 85, 0.55)",
   },
   safeArea: { flex: 1 },
-  scroll: { padding: SPACING.lg, paddingBottom: 40 },
+  scroll: { padding: SPACING.lg, paddingBottom: 100 },
   heroSection: { marginBottom: SPACING.xl, paddingTop: SPACING.lg },
   title: {
     fontSize: FONTS.sizes.hero,
@@ -251,4 +266,27 @@ const styles = StyleSheet.create({
   tagTextMicro: { color: COLORS.purple },
   backBtn: { alignItems: "center", padding: SPACING.md },
   backBtnText: { color: "rgba(255,255,255,0.7)", fontSize: FONTS.sizes.md },
+  subscriptionBanner: {
+    backgroundColor: "rgba(255,255,255,0.65)",
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.md,
+    borderWidth: 2,
+    borderColor: COLORS.gold,
+  },
+  subscriptionBannerEmoji: { fontSize: 32, flexShrink: 0 },
+  subscriptionBannerText: { flex: 1 },
+  subscriptionBannerTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: 2,
+  },
+  subscriptionBannerDesc: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    lineHeight: 18,
+  },
 });

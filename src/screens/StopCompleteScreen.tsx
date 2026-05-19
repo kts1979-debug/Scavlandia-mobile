@@ -179,7 +179,7 @@ export default function StopCompleteScreen() {
       <Image source={heroImage} style={styles.heroImage} resizeMode="cover" />
       <View style={styles.heroOverlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         {/* Hero section with badge */}
         <View style={styles.heroContent}>
           <Animated.View

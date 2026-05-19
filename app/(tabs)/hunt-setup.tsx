@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import HuntSetupScreen from "../src/screens/HuntSetupScreen";
+import HuntSetupScreen from "../../src/screens/HuntSetupScreen";
 
 export default function HuntSetupRoute() {
   return (

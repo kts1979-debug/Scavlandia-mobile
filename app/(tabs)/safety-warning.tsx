@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import SafetyWarningScreen from "../src/screens/SafetyWarningScreen";
+import SafetyWarningScreen from "../../src/screens/SafetyWarningScreen";
 
 export default function SafetyWarningRoute() {
   return (

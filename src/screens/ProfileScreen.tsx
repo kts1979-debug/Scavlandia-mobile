@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React, { useState, useEffect } from "react";
 import {
   Alert,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -17,10 +18,11 @@ import { useAuth } from "../context/AuthContext";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 import { deleteAccount, getUserHunts } from "../services/apiService";
 
+const HERO_BG = require("../../assets/images/hunt_bg_12_sagrada_familia_bw.jpg");
+
 export default function ProfileScreen() {
   const { user, signOut, loading } = useAuth();
   const [deleting, setDeleting] = useState(false);
-
   const [stats, setStats] = useState({ hunts: 0, points: 0, best: 0 });
 
   useEffect(() => {
@@ -73,7 +75,6 @@ export default function ProfileScreen() {
   };
 
   const confirmDelete = () => {
-    // Second confirmation
     Alert.alert(
       "Are you absolutely sure?",
       "All your hunts, photos, and progress will be permanently deleted.",
@@ -108,43 +109,58 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <Text style={styles.loadingEmoji}>⏳</Text>
-          <Text style={styles.loadingText}>Loading your profile...</Text>
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+        <View style={styles.overlay} />
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <View style={styles.centered}>
+            <Text style={styles.loadingEmoji}>⏳</Text>
+            <Text style={styles.loadingText}>Loading your profile...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
   // Not logged in
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.centeredScroll}>
-          <Text style={styles.guestEmoji}>🗺️</Text>
-          <Text style={styles.guestTitle}>Join the Adventure</Text>
-          <Text style={styles.guestSubtitle}>
-            Sign in to save your hunts, track your points, and see your history.
-          </Text>
-          <Button
-            label="Sign In"
-            onPress={() => router.push("/login")}
-            variant="accent"
-            size="lg"
-            emoji="🚀"
-            style={styles.authBtn}
-          />
-          <Button
-            label="Create Free Account"
-            onPress={() => router.push("/signup")}
-            variant="secondary"
-            size="lg"
-            emoji="✨"
-            style={styles.authBtn}
-          />
-        </ScrollView>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+        <View style={styles.overlay} />
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <View style={styles.heroSection}>
+            <Text style={styles.heroTitle}>Profile</Text>
+            <Text style={styles.heroSubtitle}>Your adventure awaits</Text>
+          </View>
+          <View style={styles.contentCard}>
+            <View style={styles.centered}>
+              <Text style={styles.guestEmoji}>🗺️</Text>
+              <Text style={styles.guestTitle}>Join the Adventure</Text>
+              <Text style={styles.guestSubtitle}>
+                Sign in to save your hunts, track your points, and see your
+                history.
+              </Text>
+              <Button
+                label="Sign In"
+                onPress={() => router.push("/login")}
+                variant="accent"
+                size="lg"
+                emoji="🚀"
+                style={styles.authBtn}
+              />
+              <Button
+                label="Create Free Account"
+                onPress={() => router.push("/signup")}
+                variant="secondary"
+                size="lg"
+                emoji="✨"
+                style={styles.authBtn}
+              />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
@@ -157,193 +173,187 @@ export default function ProfileScreen() {
     : "Unknown";
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Profile Header */}
-        <Card variant="primary" style={styles.profileHeader}>
+    <View style={styles.container}>
+      <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+      <View style={styles.overlay} />
+
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        {/* Hero section */}
+        <View style={styles.heroSection}>
           <View style={styles.avatarRing}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{initial}</Text>
             </View>
           </View>
-          <Text style={styles.displayName}>
-            {user.displayName || "Explorer"}
-          </Text>
-          <Text style={styles.email}>{user.email}</Text>
+          <Text style={styles.heroTitle}>{user.displayName || "Explorer"}</Text>
+          <Text style={styles.heroEmail}>{user.email}</Text>
           <Badge
             label={`Member since ${memberSince}`}
             emoji="📅"
             color="rgba(255,255,255,0.2)"
             style={styles.memberBadge}
           />
-        </Card>
-
-        {/* Stats Row */}
-        <View style={styles.statsRow}>
-          {[
-            {
-              emoji: "🗺️",
-              label: "Hunts",
-              value: stats.hunts > 0 ? String(stats.hunts) : "—",
-            },
-            {
-              emoji: "⭐",
-              label: "Points",
-              value: stats.points > 0 ? String(stats.points) : "—",
-            },
-            {
-              emoji: "🏆",
-              label: "Best",
-              value: stats.best > 0 ? String(stats.best) : "—",
-            },
-          ].map((s, i) => (
-            <Card key={i} style={styles.statCard}>
-              <Text style={styles.statEmoji}>{s.emoji}</Text>
-              <Text style={styles.statValue}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
-            </Card>
-          ))}
         </View>
 
-        {/* Account Details */}
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>⚙️ Account Details</Text>
-          {[
-            { label: "Name", value: user.displayName || "—" },
-            { label: "Email", value: user.email || "—" },
-            { label: "Member since", value: memberSince },
-            { label: "Plan", value: "Free tier" },
-          ].map((row, i) => (
-            <View key={i} style={[styles.row, i > 0 && styles.rowBorder]}>
-              <Text style={styles.rowLabel}>{row.label}</Text>
-              <Text style={styles.rowValue} numberOfLines={1}>
-                {row.value}
-              </Text>
-            </View>
-          ))}
-        </Card>
-
-        {/* Community leaderboard link */}
-        <Card style={styles.section}>
-          <TouchableOpacity
-            style={styles.leaderboardLink}
-            onPress={() => router.push("/community-leaderboard")}
-          >
-            <Text style={styles.leaderboardLinkEmoji}>🌍</Text>
-            <View style={styles.leaderboardLinkText}>
-              <Text style={styles.leaderboardLinkTitle}>
-                Community Leaderboard
-              </Text>
-              <Text style={styles.leaderboardLinkSub}>
-                See how you rank globally
-              </Text>
-            </View>
-            <Text style={styles.leaderboardLinkArrow}>›</Text>
-          </TouchableOpacity>
-        </Card>
-
-        {/* Upgrade Banner */}
-        <Card variant="accent" style={styles.upgradeBanner}>
-          <Text style={styles.upgradeEmoji}>♾️</Text>
-          <View style={styles.upgradeText}>
-            <Text style={styles.upgradeTitle}>Go Unlimited</Text>
-            <Text style={styles.upgradeSub}>
-              Unlimited hunts for $19.99/month
-            </Text>
+        {/* Content card */}
+        <ScrollView
+          style={styles.contentCard}
+          contentContainerStyle={styles.cardContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            {[
+              {
+                emoji: "🗺️",
+                label: "Hunts",
+                value: stats.hunts > 0 ? String(stats.hunts) : "—",
+              },
+              {
+                emoji: "⭐",
+                label: "Points",
+                value: stats.points > 0 ? String(stats.points) : "—",
+              },
+              {
+                emoji: "🏆",
+                label: "Best",
+                value: stats.best > 0 ? String(stats.best) : "—",
+              },
+            ].map((s, i) => (
+              <View key={i} style={styles.statCard}>
+                <Text style={styles.statEmoji}>{s.emoji}</Text>
+                <Text style={styles.statValue}>{s.value}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+              </View>
+            ))}
           </View>
-          <TouchableOpacity
-            style={styles.upgradeBtn}
-            onPress={() => router.push("/paywall")}
-          >
-            <Text style={styles.upgradeBtnText}>Upgrade</Text>
-          </TouchableOpacity>
-        </Card>
 
-        {/* Sign Out */}
-        <Button
-          label="Sign Out"
-          onPress={handleSignOut}
-          variant="ghost"
-          size="md"
-          emoji="👋"
-          style={styles.signOutBtn}
-        />
+          {/* Account Details */}
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>⚙️ Account Details</Text>
+            {[
+              { label: "Name", value: user.displayName || "—" },
+              { label: "Email", value: user.email || "—" },
+              { label: "Member since", value: memberSince },
+              { label: "Plan", value: "Free tier" },
+            ].map((row, i) => (
+              <View key={i} style={[styles.row, i > 0 && styles.rowBorder]}>
+                <Text style={styles.rowLabel}>{row.label}</Text>
+                <Text style={styles.rowValue} numberOfLines={1}>
+                  {row.value}
+                </Text>
+              </View>
+            ))}
+          </Card>
 
-        {/* Danger Zone */}
-        <View style={styles.dangerZone}>
-          <Text style={styles.dangerZoneTitle}>⚠️ Danger Zone</Text>
-          <Text style={styles.dangerZoneDesc}>
-            Permanently delete your account and all associated data including
-            hunt history and photos. This cannot be undone.
-          </Text>
-          <TouchableOpacity
-            style={[styles.deleteBtn, deleting && styles.deleteBtnDisabled]}
-            onPress={handleDeleteAccount}
-            disabled={deleting}
-          >
-            <Text style={styles.deleteBtnText}>
-              {deleting ? "Deleting..." : "🗑️ Delete My Account"}
+          {/* Community leaderboard link */}
+          <Card style={styles.section}>
+            <TouchableOpacity
+              style={styles.leaderboardLink}
+              onPress={() => router.push("/community-leaderboard")}
+            >
+              <Text style={styles.leaderboardLinkEmoji}>🌍</Text>
+              <View style={styles.leaderboardLinkText}>
+                <Text style={styles.leaderboardLinkTitle}>
+                  Community Leaderboard
+                </Text>
+                <Text style={styles.leaderboardLinkSub}>
+                  See how you rank globally
+                </Text>
+              </View>
+              <Text style={styles.leaderboardLinkArrow}>›</Text>
+            </TouchableOpacity>
+          </Card>
+
+          {/* Upgrade Banner */}
+          <Card variant="accent" style={styles.upgradeBanner}>
+            <Text style={styles.upgradeEmoji}>♾️</Text>
+            <View style={styles.upgradeText}>
+              <Text style={styles.upgradeTitle}>Go Unlimited</Text>
+              <Text style={styles.upgradeSub}>
+                Unlimited hunts for $19.99/month
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.upgradeBtn}
+              onPress={() => router.push("/paywall")}
+            >
+              <Text style={styles.upgradeBtnText}>Upgrade</Text>
+            </TouchableOpacity>
+          </Card>
+
+          {/* Sign Out */}
+          <Button
+            label="Sign Out"
+            onPress={handleSignOut}
+            variant="ghost"
+            size="md"
+            emoji="👋"
+            style={styles.signOutBtn}
+          />
+
+          {/* Danger Zone */}
+          <View style={styles.dangerZone}>
+            <Text style={styles.dangerZoneTitle}>⚠️ Danger Zone</Text>
+            <Text style={styles.dangerZoneDesc}>
+              Permanently delete your account and all associated data including
+              hunt history and photos. This cannot be undone.
             </Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity
+              style={[styles.deleteBtn, deleting && styles.deleteBtnDisabled]}
+              onPress={handleDeleteAccount}
+              disabled={deleting}
+            >
+              <Text style={styles.deleteBtnText}>
+                {deleting ? "Deleting..." : "🗑️ Delete My Account"}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        {/* Privacy Policy & Data links */}
-        <View style={styles.legalLinks}>
-          <TouchableOpacity
-            onPress={() => router.push("/community-leaderboard")}
-          >
-            <Text style={styles.legalLink}>Privacy Policy</Text>
-          </TouchableOpacity>
-          <Text style={styles.legalDot}>·</Text>
-          <TouchableOpacity>
-            <Text style={styles.legalLink}>Data Deletion</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+          {/* Legal links */}
+          <View style={styles.legalLinks}>
+            <TouchableOpacity
+              onPress={() => router.push("/community-leaderboard")}
+            >
+              <Text style={styles.legalLink}>Privacy Policy</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalDot}>·</Text>
+            <TouchableOpacity>
+              <Text style={styles.legalLink}>Data Deletion</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
-  centered: {
-    flex: 1,
+  container: { flex: 1, backgroundColor: COLORS.primary },
+  bgImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.55)",
+  },
+  safeArea: { flex: 1 },
+
+  // ── Hero ──────────────────────────────────────────────────────
+  heroSection: {
     alignItems: "center",
-    justifyContent: "center",
-    padding: SPACING.xl,
-  },
-  centeredScroll: {
-    flexGrow: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: SPACING.xl,
-  },
-  loadingEmoji: { fontSize: 48, marginBottom: SPACING.md },
-  loadingText: { fontSize: FONTS.sizes.md, color: COLORS.darkGray },
-  guestEmoji: { fontSize: 72, marginBottom: SPACING.md },
-  guestTitle: {
-    fontSize: FONTS.sizes.xxl,
-    fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
-    marginBottom: SPACING.sm,
-    textAlign: "center",
-  },
-  guestSubtitle: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: SPACING.xl,
-  },
-  authBtn: { width: "100%", marginBottom: SPACING.sm },
-  scroll: { padding: SPACING.md, paddingBottom: 40 },
-  profileHeader: {
-    alignItems: "center",
-    paddingVertical: SPACING.xl,
-    marginBottom: SPACING.md,
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl,
   },
   avatarRing: {
     width: 96,
@@ -368,20 +378,77 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
   },
-  displayName: {
+  heroTitle: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
     marginBottom: 4,
+    textAlign: "center",
   },
-  email: {
+  heroSubtitle: {
+    fontSize: FONTS.sizes.md,
+    color: "rgba(255,255,255,0.75)",
+    textAlign: "center",
+  },
+  heroEmail: {
     fontSize: FONTS.sizes.sm,
-    color: "#b3d9f5",
-    marginBottom: SPACING.md,
+    color: "rgba(255,255,255,0.75)",
+    marginBottom: SPACING.sm,
   },
   memberBadge: {},
-  statsRow: { flexDirection: "row", gap: SPACING.sm, marginBottom: SPACING.md },
-  statCard: { flex: 1, alignItems: "center", paddingVertical: SPACING.md },
+
+  // ── Content card ──────────────────────────────────────────────
+  contentCard: {
+    flex: 1,
+    backgroundColor: "transparent",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  cardContent: { padding: SPACING.md, paddingBottom: 100 },
+
+  // ── Centered states ───────────────────────────────────────────
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: SPACING.xl,
+  },
+  loadingEmoji: { fontSize: 48, marginBottom: SPACING.md },
+  loadingText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.white,
+    marginTop: SPACING.md,
+  },
+  guestEmoji: { fontSize: 72, marginBottom: SPACING.md },
+  guestTitle: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: SPACING.sm,
+    textAlign: "center",
+  },
+  guestSubtitle: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.darkGray,
+    textAlign: "center",
+    lineHeight: 22,
+    marginBottom: SPACING.xl,
+  },
+  authBtn: { width: "100%", marginBottom: SPACING.sm },
+
+  // ── Stats ─────────────────────────────────────────────────────
+  statsRow: {
+    flexDirection: "row",
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: SPACING.md,
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
+    borderRadius: RADIUS.lg,
+  },
   statEmoji: { fontSize: 24, marginBottom: 4 },
   statValue: {
     fontSize: FONTS.sizes.xl,
@@ -389,6 +456,8 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
+
+  // ── Sections ──────────────────────────────────────────────────
   section: { marginBottom: SPACING.md },
   sectionTitle: {
     fontSize: FONTS.sizes.md,
@@ -411,6 +480,28 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
   },
+
+  // ── Leaderboard ───────────────────────────────────────────────
+  leaderboardLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.md,
+  },
+  leaderboardLinkEmoji: { fontSize: 32 },
+  leaderboardLinkText: { flex: 1 },
+  leaderboardLinkTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.primary,
+  },
+  leaderboardLinkSub: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    marginTop: 2,
+  },
+  leaderboardLinkArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
+
+  // ── Upgrade ───────────────────────────────────────────────────
   upgradeBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -436,7 +527,11 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     fontWeight: FONTS.weights.bold,
   },
+
+  // ── Buttons ───────────────────────────────────────────────────
   signOutBtn: { marginTop: SPACING.sm, marginBottom: SPACING.lg },
+
+  // ── Danger zone ───────────────────────────────────────────────
   dangerZone: {
     backgroundColor: COLORS.lred,
     borderRadius: RADIUS.lg,
@@ -469,6 +564,8 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
   },
+
+  // ── Legal ─────────────────────────────────────────────────────
   legalLinks: {
     flexDirection: "row",
     justifyContent: "center",
@@ -478,22 +575,4 @@ const styles = StyleSheet.create({
   },
   legalLink: { fontSize: FONTS.sizes.xs, color: COLORS.accent },
   legalDot: { fontSize: FONTS.sizes.xs, color: COLORS.midGray },
-  leaderboardLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.md,
-  },
-  leaderboardLinkEmoji: { fontSize: 32 },
-  leaderboardLinkText: { flex: 1 },
-  leaderboardLinkTitle: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: FONTS.weights.bold,
-    color: COLORS.primary,
-  },
-  leaderboardLinkSub: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.darkGray,
-    marginTop: 2,
-  },
-  leaderboardLinkArrow: { fontSize: FONTS.sizes.xxl, color: COLORS.midGray },
 });

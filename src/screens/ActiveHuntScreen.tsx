@@ -97,14 +97,6 @@ export default function ActiveHuntScreen() {
 
   // ── Debug log on mount only ────────────────────────────────────────
   useEffect(() => {
-    console.log("🔍 ActiveHunt mounted with:");
-    console.log("  resumeAtStop param:", params.resumeAtStop);
-    console.log("  resumeAtStop calculated:", resumeAtStop);
-    console.log("  completedIndices param:", params.completedIndices);
-    console.log("  restoredCompleted:", restoredCompleted);
-    console.log("  skippedStops param:", params.skippedStops);
-    console.log("  restoredSkipped:", restoredSkipped);
-    console.log("  totalStops:", hunt.stops.length);
     console.log(
       "  stop orders:",
       hunt.stops.map((s: any) => s.order),

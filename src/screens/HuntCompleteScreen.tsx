@@ -85,17 +85,30 @@ export default function HuntCompleteScreen() {
   useEffect(() => {
     const maybeRequestReview = async () => {
       try {
-        const key = "scavlandia_review_requested";
-        const already = await AsyncStorage.getItem(key);
-        if (already) return;
+        const reviewedKey = "scavlandia_review_completed";
+        const countKey = "scavlandia_hunts_since_review";
+
+        // If user already reviewed, stop entirely
+        const alreadyReviewed = await AsyncStorage.getItem(reviewedKey);
+        if (alreadyReviewed) return;
+
+        // Increment hunt count
+        const countStr = await AsyncStorage.getItem(countKey);
+        const count = countStr ? parseInt(countStr) : 0;
+        const newCount = count + 1;
+        await AsyncStorage.setItem(countKey, String(newCount));
+
+        // Show review prompt every 2 hunts until reviewed
+        if (newCount % 2 !== 0) return;
+
         const isAvailable = await StoreReview.isAvailableAsync();
         if (!isAvailable) return;
+
         setTimeout(async () => {
           await StoreReview.requestReview();
-          await AsyncStorage.setItem(key, "true");
         }, 2000);
       } catch {
-        // Non-critical, ignore errors
+        // Non-critical, ignore
       }
     };
     maybeRequestReview();
@@ -165,7 +178,7 @@ export default function HuntCompleteScreen() {
       <Image source={heroImage} style={styles.heroImage} resizeMode="cover" />
       <View style={styles.heroOverlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
@@ -350,7 +363,7 @@ const styles = StyleSheet.create({
   },
 
   safeArea: { flex: 1 },
-  scroll: { paddingBottom: 40 },
+  scroll: { paddingBottom: 100 },
 
   buttonsContainer: {
     gap: SPACING.sm,

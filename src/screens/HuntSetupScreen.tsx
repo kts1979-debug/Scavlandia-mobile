@@ -143,7 +143,7 @@ export default function HuntSetupScreen() {
       <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
       <View style={styles.overlay} />
 
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
         {/* Hero section */}
         <View style={styles.heroSection}>
           <Text style={styles.heroEmoji}>🏁</Text>
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
-  cardContent: { padding: SPACING.lg, paddingBottom: 40 },
+  cardContent: { padding: SPACING.lg, paddingBottom: 100 },
   section: {
     marginBottom: SPACING.md,
     backgroundColor: "rgba(232, 248, 247, 0.75)", // ← Card component needs override

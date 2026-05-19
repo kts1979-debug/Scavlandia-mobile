@@ -14,25 +14,20 @@ function RootStack() {
 
   useEffect(() => {
     if (loading) return;
-
     if (hasNavigated.current) return;
 
     const handleNavigation = async () => {
       hasNavigated.current = true;
 
       if (!user) {
-        // Not logged in — go to login
         router.replace("/login");
       } else {
-        // Logged in — check if they need onboarding
         const hasOnboarded = await AsyncStorage.getItem(
           "scavlandia_onboarding_complete",
         );
         if (!hasOnboarded) {
-          // First time user — show onboarding
           router.replace("/onboarding");
         } else {
-          // Existing user — go straight to home
           router.replace("/(tabs)");
         }
       }
@@ -59,32 +54,22 @@ function RootStack() {
 
   return (
     <Stack>
+      {/* Tab group — contains most screens now */}
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="museum-profile" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="group-profile"
-        options={{ headerShown: true, title: "Your Group" }}
-      />
+
+      {/* Screens that stay outside tabs (no tab bar) */}
       <Stack.Screen name="generating" options={{ headerShown: false }} />
       <Stack.Screen name="active-hunt" options={{ headerShown: false }} />
-      <Stack.Screen name="hunt-complete" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="signup" options={{ headerShown: false }} />
-      <Stack.Screen name="paywall" options={{ headerShown: false }} />
-      <Stack.Screen name="hunt-setup" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+      <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+      <Stack.Screen name="museum-profile" options={{ headerShown: false }} />
       <Stack.Screen name="final-leaderboard" options={{ headerShown: false }} />
       <Stack.Screen
         name="community-leaderboard"
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="hunt-detail" options={{ headerShown: false }} />
-      <Stack.Screen name="hunt-type" options={{ headerShown: false }} />
-      <Stack.Screen name="safety-warning" options={{ headerShown: false }} />
-      <Stack.Screen name="stop-complete" options={{ headerShown: false }} />
-      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-      <Stack.Screen name="micro-hunt" options={{ headerShown: false }} />
-      <Stack.Screen name="photo-album" options={{ headerShown: false }} />
-      <Stack.Screen name="road-trip" options={{ headerShown: false }} />
       <Stack.Screen options={{ headerShown: false }} />
     </Stack>
   );

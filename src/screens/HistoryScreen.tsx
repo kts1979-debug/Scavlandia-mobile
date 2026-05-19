@@ -1,9 +1,10 @@
-// src/screens/HistoryScreen.tsx — Playful redesign
+// src/screens/HistoryScreen.tsx
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   RefreshControl,
   Share,
   StyleSheet,
@@ -18,6 +19,8 @@ import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
 import { getUserHunts } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
+
+const HERO_BG = require("../../assets/images/hunt_bg_12_sagrada_familia_bw.jpg");
 
 interface HuntSummary {
   huntId: string;
@@ -78,7 +81,7 @@ export default function HistoryScreen() {
   const formatDate = (timestamp: any) => {
     if (!timestamp) return "Date unknown";
     try {
-      const date = new Date(timestamp); // now just a number in ms
+      const date = new Date(timestamp);
       if (isNaN(date.getTime())) return "Date unknown";
       return date.toLocaleDateString("en-US", {
         month: "short",
@@ -90,169 +93,260 @@ export default function HistoryScreen() {
     }
   };
 
-  // Not logged in
+  // ── Not logged in ─────────────────────────────────────────────
   if (!authLoading && !user) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <Text style={styles.stateEmoji}>🔐</Text>
-          <Text style={styles.stateTitle}>Sign In to See Your Hunts</Text>
-          <Text style={styles.stateSubtitle}>
-            Your completed adventures will appear here.
-          </Text>
-          <Button
-            label="Sign In"
-            onPress={() => router.push("/login")}
-            variant="accent"
-            size="lg"
-            emoji="🚀"
-            style={styles.stateBtn}
-          />
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+        <View style={styles.overlay} />
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <View style={styles.heroSection}>
+            <Text style={styles.heroTitle}>Your Adventures</Text>
+            <Text style={styles.heroSubtitle}>Hunt history & memories</Text>
+          </View>
+          <View style={styles.contentCard}>
+            <View style={styles.centered}>
+              <Text style={styles.stateEmoji}>🔐</Text>
+              <Text style={styles.stateTitleDark}>
+                Sign In to See Your Hunts
+              </Text>
+              <Text style={styles.stateSubtitleDark}>
+                Your completed adventures will appear here.
+              </Text>
+              <Button
+                label="Sign In"
+                onPress={() => router.push("/login")}
+                variant="accent"
+                size="lg"
+                emoji="🚀"
+                style={styles.stateBtn}
+              />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
-  // Loading
+  // ── Loading ───────────────────────────────────────────────────
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={COLORS.accent} />
-          <Text style={styles.loadingText}>Loading your adventures...</Text>
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+        <View style={styles.overlay} />
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <View style={styles.heroSection}>
+            <Text style={styles.heroTitle}>Your Adventures</Text>
+            <Text style={styles.heroSubtitle}>Hunt history & memories</Text>
+          </View>
+          <View style={styles.contentCard}>
+            <View style={styles.centered}>
+              <ActivityIndicator size="large" color={COLORS.accent} />
+              <Text style={styles.loadingText}>Loading your adventures...</Text>
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
-  // Error
+  // ── Error ─────────────────────────────────────────────────────
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <Text style={styles.stateEmoji}>⚠️</Text>
-          <Text style={styles.stateTitle}>Something went wrong</Text>
-          <Text style={styles.stateSubtitle}>{error}</Text>
-          <Button
-            label="Try Again"
-            onPress={loadHunts}
-            variant="accent"
-            size="md"
-            style={styles.stateBtn}
-          />
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+        <View style={styles.overlay} />
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <View style={styles.heroSection}>
+            <Text style={styles.heroTitle}>Your Adventures</Text>
+            <Text style={styles.heroSubtitle}>Hunt history & memories</Text>
+          </View>
+          <View style={styles.contentCard}>
+            <View style={styles.centered}>
+              <Text style={styles.stateEmoji}>⚠️</Text>
+              <Text style={styles.stateTitleDark}>Something went wrong</Text>
+              <Text style={styles.stateSubtitleDark}>{error}</Text>
+              <Button
+                label="Try Again"
+                onPress={loadHunts}
+                variant="accent"
+                size="md"
+                style={styles.stateBtn}
+              />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
-  // Empty
+  // ── Empty ─────────────────────────────────────────────────────
   if (hunts.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <Text style={styles.stateEmoji}>🗺️</Text>
-          <Text style={styles.stateTitle}>No adventures yet!</Text>
-          <Text style={styles.stateSubtitle}>
-            Build your first hunt and it will show up here.
-          </Text>
-          <Button
-            label="Start a Hunt"
-            onPress={() => router.push("/(tabs)")}
-            variant="accent"
-            size="lg"
-            emoji="🚀"
-            style={styles.stateBtn}
-          />
-        </View>
-      </SafeAreaView>
+      <View style={styles.container}>
+        <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+        <View style={styles.overlay} />
+        <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+          <View style={styles.heroSection}>
+            <Text style={styles.heroTitle}>Your Adventures</Text>
+            <Text style={styles.heroSubtitle}>Hunt history & memories</Text>
+          </View>
+          <View style={styles.contentCard}>
+            <View style={styles.centered}>
+              <Text style={styles.stateEmoji}>🗺️</Text>
+              <Text style={styles.stateTitleDark}>No adventures yet!</Text>
+              <Text style={styles.stateSubtitleDark}>
+                Build your first hunt and it will show up here.
+              </Text>
+              <Button
+                label="Start a Hunt"
+                onPress={() => router.push("/(tabs)")}
+                variant="accent"
+                size="lg"
+                emoji="🚀"
+                style={styles.stateBtn}
+              />
+            </View>
+          </View>
+        </SafeAreaView>
+      </View>
     );
   }
 
-  // Hunt list
+  // ── Hunt list ─────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Your Adventures</Text>
-          <Text style={styles.headerSub}>
+    <View style={styles.container}>
+      <Image source={HERO_BG} style={styles.bgImage} resizeMode="cover" />
+      <View style={styles.overlay} />
+
+      <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+        {/* Hero header */}
+        <View style={styles.heroSection}>
+          <Text style={styles.heroTitle}>Your Adventures</Text>
+          <Text style={styles.heroSubtitle}>
             {hunts.length} hunt{hunts.length !== 1 ? "s" : ""} completed
           </Text>
         </View>
-        <Badge label="History" emoji="📋" color={COLORS.accent} />
-      </View>
 
-      <FlatList
-        data={hunts}
-        keyExtractor={(item) => item.huntId}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={COLORS.accent}
-          />
-        }
-        renderItem={({ item, index }) => (
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() =>
-              router.push({
-                pathname: "/hunt-detail",
-                params: { huntId: item.huntId },
-              })
-            }
-          >
-            <Card style={styles.huntCard}>
-              {/* Top row */}
-              <View style={styles.cardTop}>
-                <Badge
-                  label={item.city?.split(",")[0] || item.city}
-                  emoji="📍"
-                  color={COLORS.accentPale}
-                  textColor={COLORS.accent}
-                />
-                <Text style={styles.cardDate}>
-                  {formatDate(item.createdAt)}
+        {/* Hunt list in white card */}
+        <FlatList
+          data={hunts}
+          keyExtractor={(item) => item.huntId}
+          style={styles.contentCard}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={COLORS.accent}
+            />
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() =>
+                router.push({
+                  pathname: "/hunt-detail",
+                  params: { huntId: item.huntId },
+                })
+              }
+            >
+              <Card style={styles.huntCard}>
+                {/* Top row */}
+                <View style={styles.cardTop}>
+                  <Badge
+                    label={item.city?.split(",")[0] || item.city}
+                    emoji="📍"
+                    color={COLORS.accentPale}
+                    textColor={COLORS.accent}
+                  />
+                  <Text style={styles.cardDate}>
+                    {formatDate(item.createdAt)}
+                  </Text>
+                </View>
+
+                {/* Hunt title */}
+                <Text style={styles.cardTitle} numberOfLines={2}>
+                  {item.huntTitle}
                 </Text>
-              </View>
 
-              {/* Hunt title */}
-              <Text style={styles.cardTitle} numberOfLines={2}>
-                {item.huntTitle}
-              </Text>
-
-              {/* Bottom stats */}
-              <View style={styles.cardBottom}>
-                <View style={styles.statPill}>
-                  <Text style={styles.statPillText}>
-                    🚩 {item.stopCount} stops
-                  </Text>
+                {/* Bottom stats */}
+                <View style={styles.cardBottom}>
+                  <View style={styles.statPill}>
+                    <Text style={styles.statPillText}>
+                      🚩 {item.stopCount} stops
+                    </Text>
+                  </View>
+                  <View style={styles.statPill}>
+                    <Text style={styles.statPillText}>
+                      ⭐ {item.totalPoints} pts
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.shareHuntBtn}
+                    onPress={() => handleShareHunt(item)}
+                  >
+                    <Text style={styles.shareHuntBtnText}>📤</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.cardArrow}>›</Text>
                 </View>
-                <View style={styles.statPill}>
-                  <Text style={styles.statPillText}>
-                    ⭐ {item.totalPoints} pts
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.shareHuntBtn}
-                  onPress={() => handleShareHunt(item)}
-                >
-                  <Text style={styles.shareHuntBtnText}>📤</Text>
-                </TouchableOpacity>
-                <Text style={styles.cardArrow}>›</Text>
-              </View>
-            </Card>
-          </TouchableOpacity>
-        )}
-      />
-    </SafeAreaView>
+              </Card>
+            </TouchableOpacity>
+          )}
+        />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.offWhite },
+  container: { flex: 1, backgroundColor: COLORS.primary },
+  bgImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+  },
+  overlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(25, 50, 85, 0.55)",
+  },
+  safeArea: { flex: 1 },
+
+  // ── Hero ──────────────────────────────────────────────────────
+  heroSection: {
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  heroTitle: {
+    fontSize: FONTS.sizes.xxl,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.white,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontSize: FONTS.sizes.md,
+    color: "rgba(255,255,255,0.75)",
+  },
+
+  // ── Content card ──────────────────────────────────────────────
+  contentCard: {
+    flex: 1,
+    backgroundColor: "transparent",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+  },
+  list: { padding: SPACING.md, gap: SPACING.sm, paddingBottom: 100 },
+
+  // ── States ────────────────────────────────────────────────────
   centered: {
     flex: 1,
     alignItems: "center",
@@ -260,14 +354,14 @@ const styles = StyleSheet.create({
     padding: SPACING.xl,
   },
   stateEmoji: { fontSize: 64, marginBottom: SPACING.md },
-  stateTitle: {
+  stateTitleDark: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.primary,
     textAlign: "center",
     marginBottom: SPACING.sm,
   },
-  stateSubtitle: {
+  stateSubtitleDark: {
     fontSize: FONTS.sizes.md,
     color: COLORS.darkGray,
     textAlign: "center",
@@ -280,22 +374,8 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     marginTop: SPACING.md,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
-    backgroundColor: COLORS.white,
-  },
-  headerTitle: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
-  },
-  headerSub: { fontSize: FONTS.sizes.sm, color: COLORS.darkGray, marginTop: 2 },
-  list: { padding: SPACING.md, gap: SPACING.sm, paddingBottom: 40 },
+
+  // ── Hunt cards ────────────────────────────────────────────────
   huntCard: { ...SHADOW.sm },
   cardTop: {
     flexDirection: "row",

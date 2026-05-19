@@ -43,8 +43,6 @@ export default function PhotoAlbumScreen() {
   const getPhoto = (order: number): string | undefined =>
     stopPhotos[String(order)];
 
-  console.log("Stop photos received:", JSON.stringify(stopPhotos));
-  console.log("Number of photos:", Object.keys(stopPhotos).length);
   console.log(
     "Hunt stops:",
     hunt.stops.map((s) => s.order),

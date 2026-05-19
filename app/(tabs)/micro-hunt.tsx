@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import MicroHuntScreen from "../src/screens/MicroHuntScreen";
+import MicroHuntScreen from "../../src/screens/MicroHuntScreen";
 
 export default function MicroHuntRoute() {
   return (
