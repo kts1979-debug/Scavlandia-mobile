@@ -45,7 +45,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="active-hunt"
+        name="current-hunt"
         options={{
           title: "Active",
           tabBarIcon: ({ color }) => <TabIcon emoji="▶️" color={color} />,

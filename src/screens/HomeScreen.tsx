@@ -184,7 +184,7 @@ export default function HomeScreen() {
                   } else {
                     const url =
                       Platform.OS === "ios"
-                        ? "https://apps.apple.com/app/idYOUR_APP_ID/action=write-review"
+                        ? "https://apps.apple.com/app/id6763187578/action=write-review"
                         : "https://play.google.com/store/apps/details?id=com.katesauls.scavlandia";
                     await Linking.openURL(url);
                   }

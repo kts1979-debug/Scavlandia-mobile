@@ -27,17 +27,26 @@ export default function ActiveTabScreen() {
     useCallback(() => {
       if (user) {
         setLoading(true);
-        getActiveHunt()
-          .then((data) => {
-            const hunt = data.activeHunt;
-            if (hunt && hunt.status === "in_progress" && hunt.activeState) {
-              setActiveHunt(hunt);
-            } else {
-              setActiveHunt(null);
-            }
-          })
-          .catch(() => setActiveHunt(null))
-          .finally(() => setLoading(false));
+        const timer = setTimeout(() => {
+          getActiveHunt()
+            .then((data) => {
+              const hunt = data.activeHunt;
+              const hasActiveState =
+                hunt &&
+                hunt.activeState &&
+                typeof hunt.activeState === "object" &&
+                hunt.activeState.expiresAt !== undefined;
+
+              if (hunt && hunt.status === "in_progress" && hasActiveState) {
+                setActiveHunt(hunt);
+              } else {
+                setActiveHunt(null);
+              }
+            })
+            .catch(() => setActiveHunt(null))
+            .finally(() => setLoading(false));
+        }, 1500);
+        return () => clearTimeout(timer);
       } else {
         setActiveHunt(null);
         setLoading(false);

@@ -255,9 +255,11 @@ export default function ActiveHuntScreen() {
 
       if (isLastStop) {
         timer.stop();
-        clearActiveHuntState(hunt.huntId).catch((err: any) =>
-          console.warn("Clear state failed:", err.message),
-        );
+        try {
+          await clearActiveHuntState(hunt.huntId);
+        } catch (err: any) {
+          console.warn("Clear state failed:", err.message);
+        }
         updateAllTimeStats(newTotalPoints, hunt.city, hunt.huntTitle).catch(
           (err: any) =>
             console.warn("All-time stats update failed:", err.message),
@@ -415,9 +417,11 @@ export default function ActiveHuntScreen() {
 
       if (isLastStop) {
         timer.stop();
-        clearActiveHuntState(hunt.huntId).catch((err: any) =>
-          console.warn("Clear state failed:", err.message),
-        );
+        try {
+          await clearActiveHuntState(hunt.huntId);
+        } catch (err: any) {
+          console.warn("Clear state failed:", err.message);
+        }
         updateAllTimeStats(newTotalPoints, hunt.city, hunt.huntTitle).catch(
           (err: any) =>
             console.warn("All-time stats update failed:", err.message),
@@ -508,7 +512,7 @@ export default function ActiveHuntScreen() {
             if (huntComplete) {
               timer.stop();
               try {
-                clearActiveHuntState(hunt.huntId);
+                await clearActiveHuntState(hunt.huntId);
               } catch (err: any) {
                 console.warn("Clear state failed:", err.message);
               }
@@ -693,10 +697,14 @@ export default function ActiveHuntScreen() {
 
   // ── Manual arrival ─────────────────────────────────────────────────
   const handleManualArrival = () => {
-    Alert.alert("Confirm arrival", `Are you at ${activeStop.locationName}?`, [
-      { text: "Not yet", style: "cancel" },
-      { text: "Yes, I am here!", onPress: () => setAtLocation(true) },
-    ]);
+    Alert.alert(
+      "Confirm arrival",
+      "Are you at the location described in the clue?",
+      [
+        { text: "Not yet", style: "cancel" },
+        { text: "Yes, I am here!", onPress: () => setAtLocation(true) },
+      ],
+    );
   };
 
   // ── Render ─────────────────────────────────────────────────────────
