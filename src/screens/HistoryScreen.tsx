@@ -29,6 +29,8 @@ interface HuntSummary {
   stopCount: number;
   totalPoints: number;
   createdAt: any;
+  huntType?: string;
+  endLocation?: string | null;
 }
 
 export default function HistoryScreen() {
@@ -213,6 +215,18 @@ export default function HistoryScreen() {
     );
   }
 
+  const getHuntLocationBadge = (item: HuntSummary) => {
+    if (item.huntType === "road-trip") {
+      const destination = item.endLocation?.split(",")[0] || "Road Trip";
+      return { emoji: "🚗", label: destination };
+    }
+    if (item.huntType === "micro") {
+      const city = item.city?.split(",")[0] || "Nearby";
+      return { emoji: "⚡", label: `Micro · ${city}` };
+    }
+    return { emoji: "📍", label: item.city?.split(",")[0] || item.city };
+  };
+
   // ── Hunt list ─────────────────────────────────────────────────
   return (
     <View style={styles.container}>
@@ -256,8 +270,8 @@ export default function HistoryScreen() {
                 {/* Top row */}
                 <View style={styles.cardTop}>
                   <Badge
-                    label={item.city?.split(",")[0] || item.city}
-                    emoji="📍"
+                    label={getHuntLocationBadge(item).label}
+                    emoji={getHuntLocationBadge(item).emoji}
                     color={COLORS.accentPale}
                     textColor={COLORS.accent}
                   />

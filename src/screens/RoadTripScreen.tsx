@@ -26,8 +26,7 @@ import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍽️" },
-  { label: "Foodie", emoji: "🍕" },
-  { label: "Bar Crawl", emoji: "🍺" },
+  { label: "Bars & Pubs", emoji: "🍺" },
   { label: "History", emoji: "🏛️" },
   { label: "Art", emoji: "🎨" },
   { label: "Nature", emoji: "🌿" },
@@ -531,7 +530,7 @@ export default function RoadTripScreen() {
 
   // ── STEP 2 ────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: COLORS.white }]}>
       <View style={styles.step2Header}>
         <TouchableOpacity
           onPress={() => {

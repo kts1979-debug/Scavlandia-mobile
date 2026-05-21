@@ -19,6 +19,7 @@ import {
   purchasePackage,
   restorePurchases,
   PRODUCT_IDS,
+  ENTITLEMENTS,
 } from "../services/purchaseService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 import Purchases from "react-native-purchases";
@@ -227,7 +228,7 @@ export default function PaywallScreen() {
       setPurchasing(true);
       const customerInfo = await purchasePackage(pkg);
 
-      if ("premium" in customerInfo.entitlements.active) {
+      if (ENTITLEMENTS.premium in customerInfo.entitlements.active) {
         Alert.alert(
           "✅ Welcome to Scavlandia Premium!",
           "You now have unlimited hunts. Let the adventure begin!",
@@ -262,7 +263,16 @@ export default function PaywallScreen() {
       const customerInfo = await restorePurchases();
       const active = customerInfo.entitlements.active;
 
-      if (Object.keys(active).length > 0) {
+      if (ENTITLEMENTS.premium in active) {
+        // Subscription restored — hasPremium() will now return true,
+        // so generate flows will bypass consumeHunt automatically
+        Alert.alert(
+          "✅ Subscription Restored",
+          "Your Scavlandia Premium subscription has been restored. Enjoy unlimited hunts!",
+          [{ text: "Let's Hunt!", onPress: proceedAfterPurchase }],
+        );
+      } else if (Object.keys(active).length > 0) {
+        // Something restored but not the subscription (edge case)
         Alert.alert(
           "✅ Purchases Restored",
           "Your previous purchases have been restored.",

@@ -16,7 +16,9 @@ import {
   generateHunt,
   generateRoadTripHunt,
   consumeHunt,
+  getPendingHunts,
 } from "../services/apiService";
+import { hasPremium } from "../services/purchaseService";
 import { COLORS, FONTS, SPACING } from "../theme";
 
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
@@ -111,29 +113,36 @@ export default function GeneratingScreen() {
 
   const runGeneration = async (huntCity: string, profile: any) => {
     try {
-      // Consume the hunt credit before generating
       const grantTypeMap: Record<string, "city" | "micro" | "roadTrip"> = {
         city: "city",
         micro: "micro",
         "road-trip": "roadTrip",
       };
       const grantType = grantTypeMap[profile.huntType] || "city";
-      try {
-        await consumeHunt(grantType);
-      } catch (consumeErr: any) {
-        // 403 means no credits — send back to paywall
-        if (consumeErr.response?.status === 403) {
-          Alert.alert(
-            "No Hunt Credits",
-            "You don't have any hunts remaining. Purchase one to continue.",
-            [{ text: "OK", onPress: () => router.back() }],
-          );
-          return;
-        }
-        // For other errors, log but don't block — avoids locking out the user
-        console.warn("consumeHunt failed (non-blocking):", consumeErr);
-      }
 
+      // Pre-flight: check credits before burning API time
+      const isPremium = await hasPremium();
+      if (!isPremium) {
+        try {
+          const pending = await getPendingHunts();
+          const creditKey: Record<string, keyof typeof pending> = {
+            city: "city",
+            micro: "micro",
+            roadTrip: "roadTrip",
+          };
+          if ((pending[creditKey[grantType]] ?? 0) < 1) {
+            Alert.alert(
+              "No Hunt Credits",
+              "You don't have any hunts remaining. Purchase one to continue.",
+              [{ text: "OK", onPress: () => router.back() }],
+            );
+            return;
+          }
+        } catch (preflightErr) {
+          // If we can't check, proceed — consume will catch it on the back end
+          console.warn("Pre-flight credit check failed:", preflightErr);
+        }
+      }
       let result;
       if (profile.huntType === "road-trip") {
         result = await generateRoadTripHunt(
@@ -156,6 +165,23 @@ export default function GeneratingScreen() {
         result = await generateHunt(huntCity, profile);
       }
 
+      // Consume credit only after successful generation
+      if (!isPremium) {
+        try {
+          await consumeHunt(grantType);
+        } catch (consumeErr: any) {
+          if (consumeErr.response?.status === 403) {
+            // Shouldn't happen here — generation succeeded — but handle gracefully
+            console.warn(
+              "consumeHunt 403 after successful generation:",
+              consumeErr,
+            );
+          } else {
+            console.warn("consumeHunt failed (non-blocking):", consumeErr);
+          }
+        }
+      }
+
       router.replace({
         pathname: "/hunt-setup",
         params: {
@@ -174,8 +200,9 @@ export default function GeneratingScreen() {
       } else {
         Alert.alert(
           "Hunt Generation Failed",
-          errorMsg || "Something went wrong. Please try again.",
-          [{ text: "OK", onPress: () => router.back() }],
+          (errorMsg || "Something went wrong.") +
+            "\n\nIf this keeps happening, wait 1–2 minutes and try again — our AI occasionally needs a moment to recover.",
+          [{ text: "Try Again", onPress: () => router.back() }],
         );
       }
     }

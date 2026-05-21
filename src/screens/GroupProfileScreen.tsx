@@ -28,8 +28,7 @@ const HERO_BG = require("../../assets/images/hunt_bg_3_friends_nyc.jpg");
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍽️" },
-  { label: "Foodie", emoji: "🍕" },
-  { label: "Bar Crawl", emoji: "🍺" },
+  { label: "Bars & Pubs", emoji: "🍺" },
   { label: "History", emoji: "🏛️" },
   { label: "Art", emoji: "🎨" },
   { label: "Nature", emoji: "🌿" },

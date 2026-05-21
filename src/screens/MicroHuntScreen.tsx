@@ -14,7 +14,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/ui/Card";
-import { generateMicroHunt, consumeHunt } from "../services/apiService";
+import {
+  generateMicroHunt,
+  consumeHunt,
+  getPendingHunts,
+} from "../services/apiService";
+import { hasPremium } from "../services/purchaseService";
 import {
   COLORS,
   DIFFICULTY,
@@ -30,8 +35,7 @@ type Phase = "intro" | "locating" | "generating" | "error";
 
 const INTERESTS = [
   { label: "Food & Drink", emoji: "🍽️" },
-  { label: "Foodie", emoji: "🍕" },
-  { label: "Bar Crawl", emoji: "🍺" },
+  { label: "Bars & Pubs", emoji: "🍺" },
   { label: "History", emoji: "🏛️" },
   { label: "Art", emoji: "🎨" },
   { label: "Nature", emoji: "🌿" },
@@ -104,6 +108,29 @@ export default function MicroHuntScreen() {
       });
       setPhase("generating");
 
+      // Pre-flight: check credits before burning API time
+      const isPremium = await hasPremium();
+      if (!isPremium) {
+        try {
+          const pending = await getPendingHunts();
+          if ((pending.micro ?? 0) < 1) {
+            setPhase("intro");
+            router.push({
+              pathname: "/paywall",
+              params: {
+                huntType: "micro",
+                nextRoute: "/micro-hunt",
+                nextParams: JSON.stringify({}),
+              },
+            });
+            return;
+          }
+        } catch (preflightErr) {
+          // If we can't check, proceed — consume will catch it on the back end
+          console.warn("Pre-flight credit check failed:", preflightErr);
+        }
+      }
+
       const finalInterests = isSpecialty
         ? []
         : interests.length > 0
@@ -114,25 +141,7 @@ export default function MicroHuntScreen() {
         ? SPECIALTY_HUNTS[incomingSpecialtyKey as keyof typeof SPECIALTY_HUNTS]
         : null;
 
-      try {
-        await consumeHunt("micro");
-      } catch (consumeErr: any) {
-        if (consumeErr.response?.status === 403) {
-          setPhase("intro");
-          router.push({
-            pathname: "/paywall",
-            params: {
-              huntType: "micro",
-              nextRoute: "/micro-hunt",
-              nextParams: JSON.stringify({}),
-            },
-          });
-          return;
-        }
-        console.warn("consumeHunt failed (non-blocking):", consumeErr);
-      }
-
-      // Niche interest warning
+      // Niche interest warning — user decision before we touch credits
       if (!isSpecialty && interests.length > 0 && interests.length <= 2) {
         const nicheInterests = [
           "True Crime",
@@ -176,14 +185,30 @@ export default function MicroHuntScreen() {
         finalInterests,
       );
 
+      // Consume credit only after successful generation
+      if (!isPremium) {
+        try {
+          await consumeHunt("micro");
+        } catch (consumeErr: any) {
+          if (consumeErr.response?.status === 403) {
+            console.warn(
+              "consumeHunt 403 after successful generation:",
+              consumeErr,
+            );
+          } else {
+            console.warn("consumeHunt failed (non-blocking):", consumeErr);
+          }
+        }
+      }
+
       router.replace({
         pathname: "/hunt-setup",
         params: { hunt: JSON.stringify(hunt), playMode },
       });
     } catch (err: any) {
       setError(
-        err.response?.data?.error ||
-          "Could not generate a micro hunt. Please try again.",
+        (err.response?.data?.error || "Could not generate a micro hunt.") +
+          "\n\nIf this keeps happening, wait 1–2 minutes and try again — our AI occasionally needs a moment to recover.",
       );
       setPhase("error");
     }

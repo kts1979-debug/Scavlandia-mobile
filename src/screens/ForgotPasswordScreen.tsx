@@ -1,4 +1,3 @@
-// src/screens/ForgotPasswordScreen.tsx
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -6,6 +5,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -26,9 +26,9 @@ export default function ForgotPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const handleReset = async () => {
+  const handleSend = async () => {
     if (!email.trim())
-      return Alert.alert("Missing info", "Please enter your email address");
+      return Alert.alert("Missing info", "Please enter your email address.");
 
     setLoading(true);
     try {
@@ -56,8 +56,11 @@ export default function ForgotPasswordScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
         >
-          <View style={styles.content}>
-            {/* Logo */}
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.logoSection}>
               <Image
                 source={LOGO_ICON}
@@ -67,34 +70,39 @@ export default function ForgotPasswordScreen() {
               <Text style={styles.appName}>Scavlandia</Text>
             </View>
 
-            {/* Card */}
             <View style={styles.formCard}>
               {sent ? (
-                /* Success state */
-                <View style={styles.successContainer}>
-                  <Text style={styles.successEmoji}>📧</Text>
-                  <Text style={styles.successTitle}>Check your email</Text>
-                  <Text style={styles.successDesc}>
+                // ── Success state ───────────────────────────────
+                <View style={styles.successSection}>
+                  <Text style={styles.successEmoji}>📬</Text>
+                  <Text style={styles.formTitle}>Check your inbox</Text>
+                  <Text style={styles.formSubtitle}>
                     We sent a password reset link to{" "}
-                    <Text style={styles.successEmail}>{email}</Text>. Check your
-                    inbox and follow the link to reset your password.
+                    <Text style={styles.emailHighlight}>{email}</Text>. Check
+                    your spam folder if you don't see it.
                   </Text>
                   <Button
                     label="Back to Sign In"
                     onPress={() => router.replace("/login")}
                     variant="accent"
                     size="lg"
-                    style={styles.backBtn}
+                    style={styles.btn}
                   />
                 </View>
               ) : (
-                /* Input state */
+                // ── Form state ──────────────────────────────────
                 <>
-                  <Text style={styles.formTitle}>Reset Password</Text>
+                  <TouchableOpacity
+                    style={styles.backBtn}
+                    onPress={() => router.back()}
+                  >
+                    <Text style={styles.backBtnText}>‹ Back</Text>
+                  </TouchableOpacity>
+
+                  <Text style={styles.formTitle}>Reset your password</Text>
                   <Text style={styles.formSubtitle}>
-                    {
-                      "Enter your email and we'll send you a link to reset your password."
-                    }
+                    Enter your email and we'll send you a link to reset your
+                    password.
                   </Text>
 
                   <Text style={styles.label}>Email Address</Text>
@@ -112,23 +120,16 @@ export default function ForgotPasswordScreen() {
 
                   <Button
                     label="Send Reset Link"
-                    onPress={handleReset}
+                    onPress={handleSend}
                     variant="accent"
                     size="lg"
                     loading={loading}
-                    style={styles.submitBtn}
+                    style={styles.btn}
                   />
-
-                  <TouchableOpacity
-                    style={styles.cancelBtn}
-                    onPress={() => router.back()}
-                  >
-                    <Text style={styles.cancelText}>← Back to Sign In</Text>
-                  </TouchableOpacity>
                 </>
               )}
             </View>
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -156,11 +157,11 @@ const styles = StyleSheet.create({
   },
   safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
-  content: { flex: 1, justifyContent: "center", padding: SPACING.lg },
+  scroll: { flexGrow: 1, justifyContent: "center", padding: SPACING.lg },
   logoSection: { alignItems: "center", marginBottom: SPACING.xl },
-  logoIcon: { width: 64, height: 64, marginBottom: SPACING.sm },
+  logoIcon: { width: 72, height: 72, marginBottom: SPACING.sm },
   appName: {
-    fontSize: FONTS.sizes.xxl,
+    fontSize: FONTS.sizes.hero,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.white,
     letterSpacing: 1,
@@ -170,6 +171,12 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     ...SHADOW.lg,
+  },
+  backBtn: { marginBottom: SPACING.md },
+  backBtnText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.primary,
+    fontWeight: FONTS.weights.bold,
   },
   formTitle: {
     fontSize: FONTS.sizes.xxl,
@@ -197,31 +204,10 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.md,
     color: COLORS.black,
     backgroundColor: "rgba(232,248,247,0.75)",
-    marginBottom: SPACING.md,
-  },
-  submitBtn: { marginBottom: SPACING.sm },
-  cancelBtn: { alignItems: "center", padding: SPACING.sm },
-  cancelText: {
-    color: COLORS.primary,
-    fontSize: FONTS.sizes.sm,
-    fontWeight: FONTS.weights.medium,
-  },
-  successContainer: { alignItems: "center" },
-  successEmoji: { fontSize: 56, marginBottom: SPACING.md },
-  successTitle: {
-    fontSize: FONTS.sizes.xxl,
-    fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
     marginBottom: SPACING.sm,
-    textAlign: "center",
   },
-  successDesc: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.darkGray,
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: SPACING.xl,
-  },
-  successEmail: { fontWeight: FONTS.weights.bold, color: COLORS.primary },
-  backBtn: { width: "100%" },
+  btn: { marginTop: SPACING.md },
+  successSection: { alignItems: "center" },
+  successEmoji: { fontSize: 56, marginBottom: SPACING.md },
+  emailHighlight: { fontWeight: FONTS.weights.bold, color: COLORS.primary },
 });

@@ -246,7 +246,9 @@ export default function ActiveHuntScreen() {
       setCompletedIndices(newCompletedList);
       setTotalPoints(newTotalPoints);
 
-      const allStopIndices = hunt.stops.map((_: any, i: number) => i);
+      const allStopIndices = hunt.stops
+        .map((_: any, i: number) => i)
+        .filter((i: number) => !hunt.stops[i].isReserve);
       const isLastStop = allStopIndices.every(
         (i: number) =>
           newCompletedList.includes(i) ||
@@ -408,7 +410,9 @@ export default function ActiveHuntScreen() {
         );
       }
 
-      const allStopIndices = hunt.stops.map((_: any, i: number) => i);
+      const allStopIndices = hunt.stops
+        .map((_: any, i: number) => i)
+        .filter((i: number) => !hunt.stops[i].isReserve);
       const isLastStop = allStopIndices.every(
         (i: number) =>
           newCompletedList.includes(i) ||
@@ -502,7 +506,9 @@ export default function ActiveHuntScreen() {
             const updatedSkipped = [...skippedStops, activeStop.order];
             setSkippedStops(updatedSkipped);
 
-            const allStopIndices = hunt.stops.map((_: any, i: number) => i);
+            const allStopIndices = hunt.stops
+              .map((_: any, i: number) => i)
+              .filter((i: number) => !hunt.stops[i].isReserve);
             const huntComplete = allStopIndices.every(
               (i: number) =>
                 completedIndices.includes(i) ||

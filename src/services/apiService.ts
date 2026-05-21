@@ -317,6 +317,7 @@ export interface HuntStop {
     answerIndex: number;
     funFact: string;
   };
+  isReserve?: boolean;
 }
 
 export interface Hunt {
