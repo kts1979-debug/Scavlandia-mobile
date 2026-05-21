@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/ui/Card";
-import { generateMicroHunt } from "../services/apiService";
+import { generateMicroHunt, consumeHunt } from "../services/apiService";
 import {
   COLORS,
   DIFFICULTY,
@@ -23,7 +23,6 @@ import {
   SPACING,
   SPECIALTY_HUNTS,
 } from "../theme";
-import { canGenerateHunt } from "../services/purchaseService";
 
 const HERO_BG = require("../../assets/images/hunt_bg_8_friends_overlook.jpg");
 
@@ -115,18 +114,22 @@ export default function MicroHuntScreen() {
         ? SPECIALTY_HUNTS[incomingSpecialtyKey as keyof typeof SPECIALTY_HUNTS]
         : null;
 
-      const canGenerate = await canGenerateHunt("micro");
-      if (!canGenerate) {
-        setPhase("intro");
-        router.push({
-          pathname: "/paywall",
-          params: {
-            huntType: "micro",
-            nextRoute: "/micro-hunt",
-            nextParams: JSON.stringify({}),
-          },
-        });
-        return;
+      try {
+        await consumeHunt("micro");
+      } catch (consumeErr: any) {
+        if (consumeErr.response?.status === 403) {
+          setPhase("intro");
+          router.push({
+            pathname: "/paywall",
+            params: {
+              huntType: "micro",
+              nextRoute: "/micro-hunt",
+              nextParams: JSON.stringify({}),
+            },
+          });
+          return;
+        }
+        console.warn("consumeHunt failed (non-blocking):", consumeErr);
       }
 
       // Niche interest warning

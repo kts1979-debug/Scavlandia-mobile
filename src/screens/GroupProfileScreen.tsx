@@ -23,7 +23,6 @@ import {
   SPACING,
   SPECIALTY_HUNTS,
 } from "../theme";
-import { canGenerateHunt } from "../services/purchaseService";
 
 const HERO_BG = require("../../assets/images/hunt_bg_3_friends_nyc.jpg");
 
@@ -160,22 +159,6 @@ export default function GroupProfileScreen() {
       stopCount,
       playMode,
     };
-
-    const canGenerate = await canGenerateHunt("city");
-    if (!canGenerate) {
-      router.push({
-        pathname: "/paywall",
-        params: {
-          huntType: "city",
-          nextRoute: "/generating",
-          nextParams: JSON.stringify({
-            city: city.trim(),
-            groupProfile: JSON.stringify(groupProfile),
-          }),
-        },
-      });
-      return;
-    }
 
     router.push({
       pathname: "/generating",

@@ -14,8 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import NearbyCitySuggestion from "../components/NearbyCitySuggestion";
 import {
   generateHunt,
-  generateMuseumHunt,
   generateRoadTripHunt,
+  consumeHunt,
 } from "../services/apiService";
 import { COLORS, FONTS, SPACING } from "../theme";
 
@@ -37,12 +37,6 @@ const ROAD_TRIP_IMAGES = [
   require("../../assets/images/hunt_bg_8_friends_overlook.jpg"),
 ];
 
-const MUSEUM_IMAGES = [
-  require("../../assets/images/hunt_bg_5_explorer_greece.jpg"),
-  require("../../assets/images/hunt_bg_3_friends_nyc.jpg"),
-  require("../../assets/images/hunt_bg_4_friends_mountains.jpg"),
-];
-
 const STEPS = [
   { emoji: "🗺️", text: "Mapping your city..." },
   { emoji: "📍", text: "Finding real locations..." },
@@ -50,15 +44,6 @@ const STEPS = [
   { emoji: "✍️", text: "Writing custom clues..." },
   { emoji: "🎯", text: "Ordering stops perfectly..." },
   { emoji: "✨", text: "Almost ready..." },
-];
-
-const MUSEUM_STEPS = [
-  { emoji: "🏛️", text: "Exploring the museum..." },
-  { emoji: "🎨", text: "Finding iconic artworks..." },
-  { emoji: "⚙️", text: "Crafting your art clues..." },
-  { emoji: "🔍", text: "Writing mystery riddles..." },
-  { emoji: "🗺️", text: "Mapping gallery stops..." },
-  { emoji: "✨", text: "Your hunt is almost ready..." },
 ];
 
 const ROAD_TRIP_STEPS = [
@@ -82,18 +67,9 @@ export default function GeneratingScreen() {
   // Fade animation for image transitions
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const isMuseumHunt = groupProfile.huntType === "museum";
   const isRoadTrip = groupProfile.huntType === "road-trip";
-  const activeSteps = isMuseumHunt
-    ? MUSEUM_STEPS
-    : isRoadTrip
-      ? ROAD_TRIP_STEPS
-      : STEPS;
-  const activeImages = isMuseumHunt
-    ? MUSEUM_IMAGES
-    : isRoadTrip
-      ? ROAD_TRIP_IMAGES
-      : CITY_IMAGES;
+  const activeSteps = isRoadTrip ? ROAD_TRIP_STEPS : STEPS;
+  const activeImages = isRoadTrip ? ROAD_TRIP_IMAGES : CITY_IMAGES;
 
   // ── Step and dot intervals ────────────────────────────────────
   useEffect(() => {
@@ -135,16 +111,31 @@ export default function GeneratingScreen() {
 
   const runGeneration = async (huntCity: string, profile: any) => {
     try {
+      // Consume the hunt credit before generating
+      const grantTypeMap: Record<string, "city" | "micro" | "roadTrip"> = {
+        city: "city",
+        micro: "micro",
+        "road-trip": "roadTrip",
+      };
+      const grantType = grantTypeMap[profile.huntType] || "city";
+      try {
+        await consumeHunt(grantType);
+      } catch (consumeErr: any) {
+        // 403 means no credits — send back to paywall
+        if (consumeErr.response?.status === 403) {
+          Alert.alert(
+            "No Hunt Credits",
+            "You don't have any hunts remaining. Purchase one to continue.",
+            [{ text: "OK", onPress: () => router.back() }],
+          );
+          return;
+        }
+        // For other errors, log but don't block — avoids locking out the user
+        console.warn("consumeHunt failed (non-blocking):", consumeErr);
+      }
+
       let result;
-      if (profile.huntType === "museum" && profile.museum) {
-        result = await generateMuseumHunt(
-          profile.museum.name,
-          profile.museum.address,
-          profile.museum.lat,
-          profile.museum.lng,
-          profile,
-        );
-      } else if (profile.huntType === "road-trip") {
+      if (profile.huntType === "road-trip") {
         result = await generateRoadTripHunt(
           profile.startLocation,
           profile.endLocation,
@@ -231,14 +222,10 @@ export default function GeneratingScreen() {
           {/* Top — city and title */}
           <View style={styles.topSection}>
             <Text style={styles.city}>
-              {isMuseumHunt ? "🏛️" : isRoadTrip ? "🚗" : "📍"} {city}
+              {isRoadTrip ? "🚗" : "📍"} {city}
             </Text>
             <Text style={styles.title}>
-              {isMuseumHunt
-                ? "Building your museum adventure"
-                : isRoadTrip
-                  ? "Planning your road trip"
-                  : "Building your hunt"}
+              {isRoadTrip ? "Planning your road trip" : "Building your hunt"}
               {dots}
             </Text>
           </View>
@@ -261,11 +248,9 @@ export default function GeneratingScreen() {
               ))}
             </View>
             <Text style={styles.note}>
-              {isMuseumHunt
-                ? "Crafting your artwork clues..."
-                : isRoadTrip
-                  ? "Mapping your route and finding stops along the way..."
-                  : "This can take up to a minute — we're crafting real clues for real places ✨"}
+              {isRoadTrip
+                ? "Mapping your route and finding stops along the way..."
+                : "This can take up to a minute — we're crafting real clues for real places ✨"}
             </Text>
           </View>
 

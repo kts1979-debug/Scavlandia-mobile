@@ -51,25 +51,6 @@ export const hasPremium = async (): Promise<boolean> => {
   }
 };
 
-// ── Check if user can generate a hunt ─────────────────────────────
-// Premium subscribers can always generate. Consumable purchasers
-// are granted access by your backend after purchase — pass
-// hasGrantedHunt from your Firestore user record here.
-export const canGenerateHunt = async (
-  huntType: "city" | "micro" | "road-trip",
-  hasGrantedHunt: boolean = false,
-): Promise<boolean> => {
-  if (isExpoGo) return true;
-  try {
-    const premium = await hasPremium();
-    if (premium) return true;
-    return hasGrantedHunt;
-  } catch (err) {
-    console.warn("Could not check purchase status:", err);
-    return false;
-  }
-};
-
 // ── Get current offering ───────────────────────────────────────────
 export const getCurrentOffering =
   async (): Promise<PurchasesOffering | null> => {

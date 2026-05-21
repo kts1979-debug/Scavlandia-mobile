@@ -22,8 +22,9 @@ import {
 } from "../services/purchaseService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 import Purchases from "react-native-purchases";
+import { grantHunt } from "../services/apiService";
 
-type HuntType = "city" | "museum" | "micro" | "road-trip";
+type HuntType = "city" | "micro" | "road-trip";
 
 const isExpoGo = Constants.appOwnership === "expo";
 
@@ -35,14 +36,6 @@ const HUNT_INFO = {
     price: "$7.99",
     productId: PRODUCT_IDS.cityHunt,
     packageId: "city_hunt",
-  },
-  museum: {
-    emoji: "🏛️",
-    title: "Museum Hunt",
-    desc: "Discover artworks with custom riddle clues",
-    price: "$7.99",
-    productId: PRODUCT_IDS.museumHunt,
-    packageId: "museum_hunt",
   },
   micro: {
     emoji: "⚡",
@@ -165,31 +158,23 @@ export default function PaywallScreen() {
 
     try {
       setPurchasing(true);
-      const customerInfo = await purchasePackage(pkg);
-      const entitlements = customerInfo.entitlements.active;
+      await purchasePackage(pkg);
 
-      const entitlementMap: Record<HuntType, string> = {
-        city: "city_hunt",
-        museum: "museum_hunt",
-        micro: "micro_hunt",
-        "road-trip": "roadtrip_hunt",
+      // Map hunt type to backend grant type
+      const grantTypeMap: Record<HuntType, "city" | "micro" | "roadTrip"> = {
+        city: "city",
+        micro: "micro",
+        "road-trip": "roadTrip",
       };
 
-      if (
-        entitlementMap[huntType] in entitlements ||
-        "premium" in entitlements
-      ) {
-        Alert.alert(
-          "✅ Purchase Successful!",
-          `Your ${huntInfo.title} is ready. Let's go!`,
-          [{ text: "Let's Hunt!", onPress: proceedAfterPurchase }],
-        );
-      } else {
-        Alert.alert(
-          "Purchase Issue",
-          "Purchase completed but entitlement not found. Please restore purchases.",
-        );
-      }
+      // Grant the hunt credit in Firestore
+      await grantHunt(grantTypeMap[huntType]);
+
+      Alert.alert(
+        "✅ Purchase Successful!",
+        `Your ${huntInfo.title} is ready. Let's go!`,
+        [{ text: "Let's Hunt!", onPress: proceedAfterPurchase }],
+      );
     } catch (err: any) {
       if (!err.userCancelled) {
         Alert.alert(
@@ -387,7 +372,7 @@ export default function PaywallScreen() {
             Scavlandia Premium — $19.99/mo
           </Text>
           <Text style={styles.subscriptionSub}>
-            Unlimited city, museum and micro hunts
+            Unlimited city and micro hunts
           </Text>
           <Text style={styles.subscriptionDetail}>
             {"That's less than $1 per adventure 🎉"}
