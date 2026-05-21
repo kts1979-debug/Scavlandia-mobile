@@ -206,9 +206,12 @@ export default function MicroHuntScreen() {
         params: { hunt: JSON.stringify(hunt), playMode },
       });
     } catch (err: any) {
+      const isRateLimit = err.response?.status === 429;
       setError(
-        (err.response?.data?.error || "Could not generate a micro hunt.") +
-          "\n\nIf this keeps happening, wait 1–2 minutes and try again — our AI occasionally needs a moment to recover.",
+        isRateLimit
+          ? "You've generated a lot of hunts recently. Please wait an hour before trying again."
+          : (err.response?.data?.error || "Could not generate a micro hunt.") +
+              "\n\nIf this keeps happening, wait 1–2 minutes and try again — our AI occasionally needs a moment to recover.",
       );
       setPhase("error");
     }

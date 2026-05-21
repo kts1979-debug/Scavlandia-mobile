@@ -198,11 +198,14 @@ export default function GeneratingScreen() {
       ) {
         setShowSuggestion(true);
       } else {
+        const isRateLimit = error.response?.status === 429;
         Alert.alert(
-          "Hunt Generation Failed",
-          (errorMsg || "Something went wrong.") +
-            "\n\nIf this keeps happening, wait 1–2 minutes and try again — our AI occasionally needs a moment to recover.",
-          [{ text: "Try Again", onPress: () => router.back() }],
+          isRateLimit ? "Slow Down!" : "Hunt Generation Failed",
+          isRateLimit
+            ? "You've generated a lot of hunts recently. Please wait an hour before trying again."
+            : (errorMsg || "Something went wrong.") +
+                "\n\nIf this keeps happening, wait 1–2 minutes and try again — our AI occasionally needs a moment to recover.",
+          [{ text: "OK", onPress: () => router.back() }],
         );
       }
     }
