@@ -248,15 +248,6 @@ export const deleteAccount = async () => {
   return response.data;
 };
 
-// ── TypeScript interfaces ─────────────────────────────────────────
-export interface GroupProfile {
-  ages: number;
-  groupSize: number;
-  interests: string[];
-  tone: string;
-  mobility: string;
-}
-
 // ── Fetch road trip candidates ────────────────────────────────────
 export const getRoadTripCandidates = async (
   startLocation: string,
@@ -272,6 +263,35 @@ export const getRoadTripCandidates = async (
   });
   return response.data;
 };
+
+// ── Hunt credits ─────────────────────────────────────────────────
+export const getPendingHunts = async (): Promise<{
+  city: number;
+  micro: number;
+  roadTrip: number;
+}> => {
+  const response = await api.get("/api/users/pending-hunts");
+  return response.data.pendingHunts;
+};
+
+export const grantHunt = async (huntType: "city" | "micro" | "roadTrip") => {
+  const response = await api.post("/api/users/grant-hunt", { huntType });
+  return response.data;
+};
+
+export const consumeHunt = async (huntType: "city" | "micro" | "roadTrip") => {
+  const response = await api.post("/api/users/consume-hunt", { huntType });
+  return response.data;
+};
+
+// ── TypeScript interfaces ─────────────────────────────────────────
+export interface GroupProfile {
+  ages: number;
+  groupSize: number;
+  interests: string[];
+  tone: string;
+  mobility: string;
+}
 
 export interface HuntStop {
   order: number;

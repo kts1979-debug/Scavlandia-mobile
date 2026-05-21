@@ -1,8 +1,4 @@
 // src/services/purchaseService.ts
-// Handles all in-app purchase logic via RevenueCat.
-// Abstracts purchase state so the rest of the app
-// doesn't need to know about RevenueCat directly.
-
 import Constants from "expo-constants";
 import Purchases, {
   CustomerInfo,
@@ -11,10 +7,8 @@ import Purchases, {
 } from "react-native-purchases";
 import { Platform } from "react-native";
 
-// ── Expo Go detection ──────────────────────────────────────────────
 const isExpoGo = Constants.appOwnership === "expo";
 
-// ── RevenueCat API Keys ────────────────────────────────────────────
 const API_KEYS = {
   ios: "appl_RhtBfqfVHnAfrOQtEgDCaMSxRwM",
   android: "goog_ITlqwUuNFHSvNZZtMxMxUuyMQuJ",
@@ -22,19 +16,14 @@ const API_KEYS = {
 
 // ── Product IDs ────────────────────────────────────────────────────
 export const PRODUCT_IDS = {
-  cityHunt: "com.katesauls.scavlandia.city_hunt",
-  museumHunt: "com.katesauls.scavlandia.museum_hunt",
-  microHunt: "com.katesauls.scavlandia.micro_hunt",
+  cityHunt: "com.katesauls.scavlandia.hunt_city",
+  microHunt: "com.katesauls.scavlandia.hunt_micro",
   roadTripHunt: "com.katesauls.scavlandia.road_trip_hunt",
   monthly: "com.katesauls.scavlandia.monthly",
 };
 
-// ── Entitlement IDs ────────────────────────────────────────────────
+// ── Entitlement IDs (subscription only) ───────────────────────────
 export const ENTITLEMENTS = {
-  cityHunt: "city_hunt",
-  museumHunt: "museum_hunt",
-  microHunt: "micro_hunt",
-  roadTripHunt: "roadtrip_hunt",
   premium: "premium",
 };
 
@@ -50,38 +39,31 @@ export const initializePurchases = (userId?: string) => {
   console.log("💰 RevenueCat initialized");
 };
 
-// ── Check if user has entitlement ─────────────────────────────────
-export const hasEntitlement = async (
-  entitlementId: string,
-): Promise<boolean> => {
-  if (isExpoGo) return true;
+// ── Check if user has active premium subscription ─────────────────
+export const hasPremium = async (): Promise<boolean> => {
+  if (isExpoGo) return false;
   try {
     const customerInfo = await Purchases.getCustomerInfo();
-    return entitlementId in customerInfo.entitlements.active;
+    return "premium" in customerInfo.entitlements.active;
   } catch (err) {
     console.warn("Could not check entitlement:", err);
     return false;
   }
 };
 
-// ── Check entitlement for hunt type ───────────────────────────────
-// TEMPORARY: Allow all hunts for closed testing
-
+// ── Check if user can generate a hunt ─────────────────────────────
+// Premium subscribers can always generate. Consumable purchasers
+// are granted access by your backend after purchase — pass
+// hasGrantedHunt from your Firestore user record here.
 export const canGenerateHunt = async (
-  huntType: "city" | "museum" | "micro" | "road-trip",
+  huntType: "city" | "micro" | "road-trip",
+  hasGrantedHunt: boolean = false,
 ): Promise<boolean> => {
   if (isExpoGo) return true;
   try {
-    const customerInfo = await Purchases.getCustomerInfo();
-    const active = customerInfo.entitlements.active;
-    if ("premium" in active) return true;
-    const entitlementMap: Record<string, string> = {
-      city: ENTITLEMENTS.cityHunt,
-      museum: ENTITLEMENTS.museumHunt,
-      micro: ENTITLEMENTS.microHunt,
-      "road-trip": ENTITLEMENTS.roadTripHunt,
-    };
-    return entitlementMap[huntType] in active;
+    const premium = await hasPremium();
+    if (premium) return true;
+    return hasGrantedHunt;
   } catch (err) {
     console.warn("Could not check purchase status:", err);
     return false;
@@ -107,7 +89,7 @@ export const purchasePackage = async (packageToPurchase: any) => {
   return customerInfo;
 };
 
-// ── Restore purchases ─────────────────────────────────────────────
+// ── Restore purchases (subscriptions only) ────────────────────────
 export const restorePurchases = async (): Promise<CustomerInfo> => {
   return await Purchases.restorePurchases();
 };
