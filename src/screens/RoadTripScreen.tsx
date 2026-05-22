@@ -220,8 +220,10 @@ export default function RoadTripScreen() {
       setTimeout(() => {
         setSearching(false);
         setMarkerDelay(true);
-        setShowTeamSetup(true);
       }, 1000);
+      setTimeout(() => {
+        setShowTeamSetup(true);
+      }, 5000);
     } catch (error: any) {
       setSearching(false);
       Alert.alert(

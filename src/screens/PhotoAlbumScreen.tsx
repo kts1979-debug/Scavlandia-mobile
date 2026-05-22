@@ -70,8 +70,15 @@ export default function PhotoAlbumScreen() {
     const createdAt = (hunt as any).createdAt;
     if (!createdAt) return null;
     const created = new Date(
-      createdAt._seconds ? createdAt._seconds * 1000 : createdAt,
+      createdAt._seconds
+        ? createdAt._seconds * 1000
+        : typeof createdAt === "number"
+          ? createdAt
+          : typeof createdAt === "string"
+            ? parseInt(createdAt)
+            : createdAt,
     );
+    if (isNaN(created.getTime())) return null;
     const expiry = new Date(created.getTime() + 90 * 24 * 60 * 60 * 1000);
     return expiry;
   })();
@@ -462,11 +469,10 @@ export default function PhotoAlbumScreen() {
           <TouchableOpacity
             style={[
               styles.slideNavBtn,
-              slideIndex === stopsWithPhotos.length - 1 &&
-                styles.slideNavBtnDisabled,
+              slideIndex === allSlides.length - 1 && styles.slideNavBtnDisabled,
             ]}
             onPress={() =>
-              setSlideIndex((i) => Math.min(stopsWithPhotos.length - 1, i + 1))
+              setSlideIndex((i) => Math.min(allSlides.length - 1, i + 1))
             }
             disabled={slideIndex === allSlides.length - 1}
           >
