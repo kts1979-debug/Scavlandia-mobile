@@ -27,12 +27,14 @@ export const createSession = async (
   city: string,
   isTeam: boolean,
   teamName?: string,
+  teamAvatar?: string,
 ) => {
   const response = await api.post("/api/leaderboard/sessions/create", {
     huntTitle,
     city,
     isTeam,
     teamName,
+    teamAvatar,
   });
   return response.data; // { sessionCode }
 };
@@ -42,12 +44,14 @@ export const joinSession = async (
   city: string,
   isTeam: boolean,
   teamName?: string,
+  teamAvatar?: string,
 ) => {
   const response = await api.post("/api/leaderboard/sessions/join", {
     sessionCode,
     city,
     isTeam,
     teamName,
+    teamAvatar,
   });
   return response.data; // { sessionCode, huntTitle, city }
 };
@@ -101,6 +105,7 @@ export interface SessionParticipant {
   userId: string;
   displayName: string;
   teamName?: string;
+  teamAvatar?: string | null;
   isTeam: boolean;
   score: number;
   stopsComplete: number;

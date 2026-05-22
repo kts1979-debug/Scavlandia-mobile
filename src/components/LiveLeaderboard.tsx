@@ -24,6 +24,7 @@ const MEDALS = ["🥇", "🥈", "🥉"];
 export default function LiveLeaderboard({ sessionCode }: LiveLeaderboardProps) {
   const { user } = useAuth();
   const [participants, setParticipants] = useState<SessionParticipant[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -106,6 +107,7 @@ export default function LiveLeaderboard({ sessionCode }: LiveLeaderboardProps) {
                 style={[styles.name, isCurrentUser && styles.nameHighlighted]}
                 numberOfLines={1}
               >
+                {participant.teamAvatar ? `${participant.teamAvatar} ` : ""}
                 {displayLabel}
                 {isCurrentUser ? " (you)" : ""}
               </Text>

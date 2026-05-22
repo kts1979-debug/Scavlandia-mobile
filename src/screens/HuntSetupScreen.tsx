@@ -27,6 +27,9 @@ export default function HuntSetupScreen() {
   const hunt = JSON.parse(params.hunt as string);
   const playMode = (params.playMode as string) || "solo";
   const isSolo = playMode === "solo";
+  const teamName = (params.teamName as string) || "";
+  const teamAvatar = (params.teamAvatar as string) || "";
+  const hasTeam = !!teamName;
 
   const [sessionAction, setAction] = useState<"create" | "join">("create");
   const [joinCode, setJoinCode] = useState("");
@@ -37,7 +40,12 @@ export default function HuntSetupScreen() {
   const handleStartHunt = async (sessionCode?: string) => {
     router.replace({
       pathname: "/safety-warning",
-      params: { hunt: JSON.stringify(hunt), sessionCode: sessionCode || "" },
+      params: {
+        hunt: JSON.stringify(hunt),
+        sessionCode: sessionCode || "",
+        teamName,
+        teamAvatar,
+      },
     });
   };
 
@@ -62,8 +70,9 @@ export default function HuntSetupScreen() {
       const result = await createSession(
         hunt.huntTitle,
         hunt.city,
-        false,
-        undefined,
+        hasTeam,
+        teamName || undefined,
+        teamAvatar || undefined,
       );
       showSessionCode(result.sessionCode);
     } catch (error: any) {
@@ -114,8 +123,9 @@ export default function HuntSetupScreen() {
       const result = await joinSession(
         joinCode.trim().toUpperCase(),
         hunt.city,
-        false,
-        undefined,
+        hasTeam,
+        teamName || undefined,
+        teamAvatar || undefined,
       );
       Alert.alert(
         "✅ Joined Session!",
@@ -154,6 +164,13 @@ export default function HuntSetupScreen() {
           <View style={styles.cityBadge}>
             <Text style={styles.cityBadgeText}>📍 {hunt.city}</Text>
           </View>
+          {hasTeam && (
+            <View style={styles.teamBadge}>
+              <Text style={styles.teamBadgeText}>
+                {teamAvatar} {teamName}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* White card */}
@@ -502,4 +519,18 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
   },
   skipBtn: { marginTop: SPACING.sm },
+  teamBadge: {
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: RADIUS.round,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    marginTop: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.gold,
+  },
+  teamBadgeText: {
+    color: COLORS.gold,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+  },
 });
