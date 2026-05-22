@@ -529,7 +529,12 @@ const styles = StyleSheet.create({
   },
 
   // ── Buttons ───────────────────────────────────────────────────
-  signOutBtn: { marginTop: SPACING.sm, marginBottom: SPACING.lg },
+  signOutBtn: {
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.lred,
+    borderColor: COLORS.danger,
+  },
 
   // ── Danger zone ───────────────────────────────────────────────
   dangerZone: {

@@ -79,6 +79,8 @@ export default function HuntCompleteScreen() {
   const stopPhotos = (params.stopPhotos as string) || "{}";
   const hintsUsed = parseInt((params.hintsUsed as string) || "0");
   const answerRevealed = params.answerRevealed === "true";
+  const teamName = (params.teamName as string) || "";
+  const teamAvatar = (params.teamAvatar as string) || "";
   const skippedStops: number[] = params.skippedStops
     ? JSON.parse(params.skippedStops as string)
     : [];
@@ -411,9 +413,10 @@ export default function HuntCompleteScreen() {
                     params: {
                       hunt: JSON.stringify(hunt),
                       stopPhotos,
-                      finalPhotoUrl: (hunt as any).finalPhotoUrl || "",
-                      teamAvatar: (hunt as any).teamAvatar || "",
-                      teamName: (hunt as any).teamName || "",
+                      finalPhotoUrl:
+                        finalPhoto || (hunt as any).finalPhotoUrl || "",
+                      teamAvatar,
+                      teamName,
                     },
                   })
                 }
@@ -603,7 +606,7 @@ const styles = StyleSheet.create({
   },
   finaleLabel: {
     fontSize: FONTS.sizes.xs,
-    color: COLORS.accent,
+    color: COLORS.hint,
     fontWeight: FONTS.weights.bold,
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -711,7 +714,7 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.weights.heavy,
   },
   huntEndedBadge: {
-    backgroundColor: "rgba(90, 203, 166, 0.2)",
+    backgroundColor: "rgba(90, 203, 166, 0.75)",
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     alignItems: "center",
@@ -722,6 +725,6 @@ const styles = StyleSheet.create({
   huntEndedText: {
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
-    color: COLORS.accent,
+    color: COLORS.white,
   },
 });

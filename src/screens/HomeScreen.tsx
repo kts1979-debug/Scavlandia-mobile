@@ -8,6 +8,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/ui/Card";
@@ -15,20 +17,18 @@ import { useAuth } from "../context/AuthContext";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as StoreReview from "expo-store-review";
-import { Platform, Linking } from "react-native";
 
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 const HERO_BG = require("../../assets/images/hunt_bg_5_explorer_greece.jpg");
 
 export default function HomeScreen() {
   const { user } = useAuth();
-  const [activeHunt, setActiveHunt] = useState<any>(null);
   const [showReviewPrompt, setShowReviewPrompt] = useState(false);
 
   const stats = [
-    { emoji: "🗺️", label: "Cities", value: "500+" },
-    { emoji: "🎯", label: "Stops", value: "6–12" },
-    { emoji: "⚡", label: "Ready in", value: "30s" },
+    { emoji: "🗺️", label: "Anywhere", value: "Any City" },
+    { emoji: "🎯", label: "Stops", value: "1–12" },
+    { emoji: "⚡", label: "Ready in", value: "60s" },
   ];
 
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function HomeScreen() {
             {
               emoji: "🏙️",
               title: "City Hunt",
-              desc: "Explore any city with custom clues that fit your vibe. Works in 500+ cities worldwide.",
+              desc: "Explore any city with custom clues that fit your vibe. Works in any city worldwide.",
               onPress: () => router.push("/hunt-type"),
             },
             {
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    color: COLORS.accent,
   },
   greeting: {
     fontSize: FONTS.sizes.md,

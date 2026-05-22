@@ -47,6 +47,8 @@ export default function StopCompleteScreen() {
   const completedIndices: number[] = params.completedIndices
     ? JSON.parse(params.completedIndices as string)
     : [];
+  const teamName = (params.teamName as string) || "";
+  const teamAvatar = (params.teamAvatar as string) || "";
 
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [shareCode, setShareCode] = useState<string | null>(null);
@@ -137,6 +139,8 @@ export default function StopCompleteScreen() {
         skippedStops: JSON.stringify(skippedStops),
         swapsUsed,
         completedIndices: JSON.stringify(completedIndices),
+        teamName,
+        teamAvatar,
       },
     });
   };
@@ -153,6 +157,8 @@ export default function StopCompleteScreen() {
         quitEarly: isHuntComplete ? "false" : "true",
         skippedStops: JSON.stringify(skippedStops),
         swapsUsed,
+        teamName,
+        teamAvatar,
       },
     });
   };
@@ -170,6 +176,8 @@ export default function StopCompleteScreen() {
         swapsUsed,
         completedIndices: JSON.stringify(completedIndices),
         showLeaderboard: "true",
+        teamName,
+        teamAvatar,
       },
     });
   };
@@ -289,6 +297,8 @@ export default function StopCompleteScreen() {
                           skippedStops: JSON.stringify(skippedStops),
                           swapsUsed,
                           completedIndices: JSON.stringify(completedIndices),
+                          teamName,
+                          teamAvatar,
                         },
                       });
                     }}

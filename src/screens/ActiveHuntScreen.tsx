@@ -47,6 +47,8 @@ export default function ActiveHuntScreen() {
   const params = useLocalSearchParams();
   const hunt: Hunt = JSON.parse(params.hunt as string);
   const sessionCode = (params.sessionCode as string) || "";
+  const teamName = (params.teamName as string) || "";
+  const teamAvatar = (params.teamAvatar as string) || "";
   const isMicroHunt = !!(hunt as any).isMicroHunt;
   const MAX_SWAPS = isMicroHunt ? 1 : 2;
 
@@ -149,6 +151,8 @@ export default function ActiveHuntScreen() {
                   completedIndices: JSON.stringify(completedIndices),
                   hintsUsed: String(Math.round(hintDeductions / 5)),
                   answerRevealed: String(answerRevealed),
+                  teamName,
+                  teamAvatar,
                 },
               }),
           },
@@ -295,6 +299,8 @@ export default function ActiveHuntScreen() {
             completedIndices: JSON.stringify(newCompletedList),
             hintsUsed: String(Math.round(hintDeductions / 5)),
             answerRevealed: String(answerRevealed),
+            teamName,
+            teamAvatar,
           },
         });
         return;
@@ -465,6 +471,8 @@ export default function ActiveHuntScreen() {
             completedIndices: JSON.stringify(newCompletedList),
             hintsUsed: String(Math.round(hintDeductions / 5)),
             answerRevealed: String(answerRevealed),
+            teamName,
+            teamAvatar,
           },
         });
         return;
@@ -555,6 +563,8 @@ export default function ActiveHuntScreen() {
                   completedIndices: JSON.stringify(completedIndices),
                   hintsUsed: String(Math.round(hintDeductions / 5)),
                   answerRevealed: String(answerRevealed),
+                  teamName,
+                  teamAvatar,
                 },
               });
               return;
@@ -732,6 +742,8 @@ export default function ActiveHuntScreen() {
         quitEarly: "false",
         skippedStops: JSON.stringify(skippedStops),
         swapsUsed: String(swapsUsed),
+        teamName,
+        teamAvatar,
       },
     });
     return null;

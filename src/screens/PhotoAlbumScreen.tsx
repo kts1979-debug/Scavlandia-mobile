@@ -345,12 +345,28 @@ export default function PhotoAlbumScreen() {
                   </Text>
                 </View>
               )}
-              {teamAvatar && teamAvatar.startsWith("http") && (
+              {teamAvatar && (
                 <View style={styles.gridPhotoContainer}>
-                  <Image
-                    source={{ uri: teamAvatar }}
-                    style={styles.gridPhoto}
-                  />
+                  {teamAvatar.startsWith("http") ||
+                  teamAvatar.startsWith("file") ? (
+                    <Image
+                      source={{ uri: teamAvatar }}
+                      style={styles.gridPhoto}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.gridPhoto,
+                        {
+                          backgroundColor: COLORS.accentPale,
+                          justifyContent: "center",
+                          alignItems: "center",
+                        },
+                      ]}
+                    >
+                      <Text style={{ fontSize: 40 }}>{teamAvatar}</Text>
+                    </View>
+                  )}
                   <View
                     style={[
                       styles.gridPhotoOverlay,
@@ -360,7 +376,7 @@ export default function PhotoAlbumScreen() {
                     <Text style={styles.gridPhotoNum}>👥</Text>
                   </View>
                   <Text style={styles.gridPhotoName} numberOfLines={1}>
-                    {teamName || "Team Photo"}
+                    {teamName || "Team"}
                   </Text>
                 </View>
               )}
