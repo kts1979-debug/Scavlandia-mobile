@@ -284,6 +284,13 @@ export const consumeHunt = async (huntType: "city" | "micro" | "roadTrip") => {
   return response.data;
 };
 
+export const saveTeamProfile = async (
+  teamName: string,
+  teamAvatar: string,
+): Promise<void> => {
+  await api.patch("/api/users/team-profile", { teamName, teamAvatar });
+};
+
 // ── TypeScript interfaces ─────────────────────────────────────────
 export interface GroupProfile {
   ages: number;

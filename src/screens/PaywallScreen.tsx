@@ -85,6 +85,7 @@ export default function PaywallScreen() {
   const nextParams = params.nextParams
     ? JSON.parse(params.nextParams as string)
     : {};
+  const mode = (params.mode as string) || "default";
 
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
@@ -313,12 +314,19 @@ export default function PaywallScreen() {
           <Text style={styles.closeBtnText}>✕</Text>
         </TouchableOpacity>
 
-        <Text style={styles.heroEmoji}>{huntInfo.emoji}</Text>
-        <Text style={styles.heroTitle}>
-          Unlock Your{"\n"}
-          {huntInfo.title}
+        <Text style={styles.heroEmoji}>
+          {mode === "subscription" ? "⭐" : huntInfo.emoji}
         </Text>
-        <Text style={styles.heroDesc}>{huntInfo.desc}</Text>
+        <Text style={styles.heroTitle}>
+          {mode === "subscription"
+            ? "Scavlandia\nPremium ⭐"
+            : `Unlock Your\n${huntInfo.title}`}
+        </Text>
+        <Text style={styles.heroDesc}>
+          {mode === "subscription"
+            ? "Unlimited city hunts, micro hunts, and road trips for one monthly price."
+            : huntInfo.desc}
+        </Text>
 
         {/* Offer error banner */}
         {offerError && (
@@ -346,25 +354,30 @@ export default function PaywallScreen() {
           ))}
         </View>
 
-        {/* Single purchase option */}
-        <TouchableOpacity
-          style={[styles.purchaseBtn, purchasing && styles.purchaseBtnDisabled]}
-          onPress={handlePurchaseSingle}
-          disabled={purchasing || restoring}
-        >
-          {purchasing ? (
-            <ActivityIndicator color={COLORS.white} />
-          ) : (
-            <>
-              <Text style={styles.purchaseBtnTitle}>
-                Buy This Hunt — {huntInfo.price}
-              </Text>
-              <Text style={styles.purchaseBtnSub}>
-                One-time purchase, no subscription
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {/* Single purchase option — hidden in subscription mode */}
+        {mode !== "subscription" && (
+          <TouchableOpacity
+            style={[
+              styles.purchaseBtn,
+              purchasing && styles.purchaseBtnDisabled,
+            ]}
+            onPress={handlePurchaseSingle}
+            disabled={purchasing || restoring}
+          >
+            {purchasing ? (
+              <ActivityIndicator color={COLORS.white} />
+            ) : (
+              <>
+                <Text style={styles.purchaseBtnTitle}>
+                  Buy This Hunt — {huntInfo.price}
+                </Text>
+                <Text style={styles.purchaseBtnSub}>
+                  One-time purchase, no subscription
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
 
         {/* Subscription option */}
         <TouchableOpacity

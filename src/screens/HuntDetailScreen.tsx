@@ -169,6 +169,90 @@ export default function HuntDetailScreen() {
           </View>
         )}
 
+        {/* Photo album section */}
+        {hasPhotos && (
+          <View style={styles.albumCard}>
+            <View style={styles.albumHeader}>
+              <Text style={styles.albumTitle}>📸 Photo Album</Text>
+              <TouchableOpacity
+                style={styles.downloadAllBtn}
+                onPress={async () => {
+                  const { status } =
+                    await MediaLibrary.requestPermissionsAsync();
+                  if (status !== "granted") {
+                    Alert.alert(
+                      "Permission needed",
+                      "Please allow photo library access in settings.",
+                    );
+                    return;
+                  }
+                  let saved = 0;
+                  let failed = 0;
+                  for (const [, url] of Object.entries(hunt.stopPhotos)) {
+                    try {
+                      await MediaLibrary.saveToLibraryAsync(url as string);
+                      saved++;
+                    } catch {
+                      failed++;
+                    }
+                  }
+                  if (failed === 0) {
+                    Alert.alert(
+                      "✅ All Saved!",
+                      `${saved} photo${saved !== 1 ? "s" : ""} saved to your camera roll.`,
+                    );
+                  } else {
+                    Alert.alert(
+                      "Partially Saved",
+                      `${saved} saved, ${failed} failed. Try downloading the failed ones individually.`,
+                    );
+                  }
+                }}
+              >
+                <Text style={styles.downloadAllBtnText}>⬇️ Save All</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.albumExpiry}>
+              🕐 Photos are available for 90 days after your hunt
+            </Text>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.albumScroll}
+            >
+              {hunt.stops
+                ?.filter((stop: any) => hunt.stopPhotos?.[String(stop.order)])
+                .map((stop: any) => {
+                  const photoUrl = hunt.stopPhotos[String(stop.order)];
+                  return (
+                    <View key={stop.order} style={styles.albumThumb}>
+                      <Image
+                        source={{ uri: photoUrl }}
+                        style={styles.albumThumbImage}
+                        resizeMode="cover"
+                      />
+                      <Text style={styles.albumThumbLabel} numberOfLines={1}>
+                        {stop.locationName}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.albumThumbDownload}
+                        onPress={() =>
+                          handleDownloadPhoto(photoUrl, stop.locationName)
+                        }
+                      >
+                        <Text style={styles.albumThumbDownloadText}>
+                          ⬇️ Save
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Photos note if no photos saved */}
         {!hasPhotos && (
           <View style={styles.noPhotosNote}>
@@ -513,5 +597,66 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.heavy,
+  },
+  albumCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    ...SHADOW.sm,
+  },
+  albumHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  albumTitle: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+  },
+  downloadAllBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.round,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+  },
+  downloadAllBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+  },
+  albumExpiry: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.midGray,
+    marginBottom: SPACING.md,
+    fontStyle: "italic",
+  },
+  albumScroll: { marginHorizontal: -SPACING.sm },
+  albumThumb: {
+    width: 160,
+    marginHorizontal: SPACING.sm,
+    borderRadius: RADIUS.md,
+    overflow: "hidden",
+    backgroundColor: COLORS.lightGray,
+  },
+  albumThumbImage: { width: 160, height: 120 },
+  albumThumbLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.darkGray,
+    fontWeight: FONTS.weights.medium,
+    padding: 6,
+    paddingBottom: 2,
+  },
+  albumThumbDownload: {
+    padding: 6,
+    alignItems: "center",
+    backgroundColor: COLORS.accentPale,
+  },
+  albumThumbDownloadText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.accent,
+    fontWeight: FONTS.weights.bold,
   },
 });

@@ -1,7 +1,7 @@
 // src/screens/MicroHuntScreen.tsx
 import * as Location from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -28,6 +28,7 @@ import {
   SPACING,
   SPECIALTY_HUNTS,
 } from "../theme";
+import TeamSetupModal from "../components/TeamSetupModal";
 
 const HERO_BG = require("../../assets/images/hunt_bg_8_friends_overlook.jpg");
 
@@ -80,8 +81,18 @@ export default function MicroHuntScreen() {
   );
   const [interests, setInterests] = useState<string[]>([]);
   const [playMode, setPlayMode] = useState<"solo" | "compete">("solo");
+  const [showTeamSetup, setShowTeamSetup] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const [teamAvatar, setTeamAvatar] = useState("");
 
   const isSpecialty = huntStyle === "specialty";
+
+  useEffect(() => {
+    if (phase === "generating") {
+      const timer = setTimeout(() => setShowTeamSetup(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
 
   const toggleInterest = (label: string) => {
     setInterests((prev) =>
@@ -203,7 +214,7 @@ export default function MicroHuntScreen() {
 
       router.replace({
         pathname: "/hunt-setup",
-        params: { hunt: JSON.stringify(hunt), playMode },
+        params: { hunt: JSON.stringify(hunt), playMode, teamName, teamAvatar },
       });
     } catch (err: any) {
       const isRateLimit = err.response?.status === 429;
@@ -291,6 +302,15 @@ export default function MicroHuntScreen() {
             </Text>
           </View>
         </SafeAreaView>
+        <TeamSetupModal
+          visible={showTeamSetup}
+          onDismiss={() => setShowTeamSetup(false)}
+          onSave={(name, avatar) => {
+            setTeamName(name);
+            setTeamAvatar(avatar);
+            setShowTeamSetup(false);
+          }}
+        />
       </View>
     );
   }

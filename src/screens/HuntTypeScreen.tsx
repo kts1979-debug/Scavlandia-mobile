@@ -140,7 +140,7 @@ export default function HuntTypeScreen() {
               onPress={() =>
                 router.push({
                   pathname: "/paywall",
-                  params: { huntType: "city" },
+                  params: { huntType: "city", mode: "subscription" },
                 })
               }
               activeOpacity={0.85}

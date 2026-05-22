@@ -942,6 +942,9 @@ export default function ActiveHuntScreen() {
           {/* Task card */}
           {atLocation && (
             <View style={styles.taskCard}>
+              <Text style={styles.locationNameHeader}>
+                📍 {activeStop.locationName}
+              </Text>
               <View style={styles.clueLabelRow}>
                 <Text style={styles.taskLabel}>
                   {isMuseumHunt ? "🎨 Your Task" : "🎯 Your Task"}
@@ -1372,5 +1375,14 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: "rgba(25, 50, 85, 0.75)",
+  },
+  locationNameHeader: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightGray,
+    paddingBottom: SPACING.sm,
   },
 });

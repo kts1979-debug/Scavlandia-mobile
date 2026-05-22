@@ -20,6 +20,7 @@ import {
 } from "../services/apiService";
 import { hasPremium } from "../services/purchaseService";
 import { COLORS, FONTS, SPACING } from "../theme";
+import TeamSetupModal from "../components/TeamSetupModal";
 
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 
@@ -73,6 +74,11 @@ export default function GeneratingScreen() {
   const activeSteps = isRoadTrip ? ROAD_TRIP_STEPS : STEPS;
   const activeImages = isRoadTrip ? ROAD_TRIP_IMAGES : CITY_IMAGES;
 
+  // Add these state variables after existing state declarations
+  const [showTeamSetup, setShowTeamSetup] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const [teamAvatar, setTeamAvatar] = useState("");
+
   // ── Step and dot intervals ────────────────────────────────────
   useEffect(() => {
     const stepInterval = setInterval(
@@ -88,6 +94,11 @@ export default function GeneratingScreen() {
       clearInterval(dotInterval);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowTeamSetup(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // ── Image cycling with crossfade ──────────────────────────────
   useEffect(() => {
@@ -187,6 +198,8 @@ export default function GeneratingScreen() {
         params: {
           hunt: JSON.stringify(result.hunt),
           playMode: profile.playMode || "solo",
+          teamName,
+          teamAvatar,
         },
       });
     } catch (error: any) {
@@ -230,6 +243,15 @@ export default function GeneratingScreen() {
             onDismiss={() => router.back()}
           />
         </View>
+        <TeamSetupModal
+          visible={showTeamSetup}
+          onDismiss={() => setShowTeamSetup(false)}
+          onSave={(name, avatar) => {
+            setTeamName(name);
+            setTeamAvatar(avatar);
+            setShowTeamSetup(false);
+          }}
+        />
       </SafeAreaView>
     );
   }
@@ -298,6 +320,15 @@ export default function GeneratingScreen() {
           </View>
         </View>
       </SafeAreaView>
+      <TeamSetupModal
+        visible={showTeamSetup}
+        onDismiss={() => setShowTeamSetup(false)}
+        onSave={(name, avatar) => {
+          setTeamName(name);
+          setTeamAvatar(avatar);
+          setShowTeamSetup(false);
+        }}
+      />
     </View>
   );
 }
