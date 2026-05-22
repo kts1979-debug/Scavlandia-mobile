@@ -199,6 +199,7 @@ export default function RoadTripScreen() {
 
     setLoadingCandidates(true);
     setSearching(true);
+    setTimeout(() => setShowTeamSetup(true), 3000);
     try {
       const data = await getRoadTripCandidates(
         startLocation.trim(),
@@ -221,9 +222,6 @@ export default function RoadTripScreen() {
         setSearching(false);
         setMarkerDelay(true);
       }, 1000);
-      setTimeout(() => {
-        setShowTeamSetup(true);
-      }, 5000);
     } catch (error: any) {
       setSearching(false);
       Alert.alert(

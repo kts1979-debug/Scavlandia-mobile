@@ -97,20 +97,6 @@ export default function ActiveHuntScreen() {
   const [triviaCompleted, setTriviaCompleted] = useState(false);
   const [triviaBonus, setTriviaBonus] = useState(0);
 
-  // ── Debug log on mount only ────────────────────────────────────────
-  useEffect(() => {
-    console.log(
-      "  stop orders:",
-      hunt.stops.map((s: any) => s.order),
-      "  activeStopIndex:",
-      activeStopIndex,
-      "  resumeAtStop param:",
-      params.resumeAtStop,
-      "  completedIndices:",
-      completedIndices,
-    );
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Museum / Road Trip mode ────────────────────────────────────────
   const isMuseumHunt = !!(hunt as any).isMuseumHunt;
   const isRoadTripHunt = !!(hunt as any).isRoadTripHunt;

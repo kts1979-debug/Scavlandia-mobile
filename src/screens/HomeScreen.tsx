@@ -390,6 +390,7 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.xl,
     fontWeight: FONTS.weights.heavy,
     color: COLORS.primary,
+    textAlign: "center",
   },
   statLabel: { fontSize: FONTS.sizes.xs, color: COLORS.darkGray, marginTop: 2 },
 

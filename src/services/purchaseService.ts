@@ -30,13 +30,11 @@ export const ENTITLEMENTS = {
 // ── Initialize RevenueCat ──────────────────────────────────────────
 export const initializePurchases = (userId?: string) => {
   if (isExpoGo) {
-    console.log("💰 RevenueCat skipped — running in Expo Go");
     return;
   }
   const apiKey = Platform.OS === "ios" ? API_KEYS.ios : API_KEYS.android;
   Purchases.setLogLevel(LOG_LEVEL.WARN);
   Purchases.configure({ apiKey, appUserID: userId || null });
-  console.log("💰 RevenueCat initialized");
 };
 
 // ── Check if user has active premium subscription ─────────────────

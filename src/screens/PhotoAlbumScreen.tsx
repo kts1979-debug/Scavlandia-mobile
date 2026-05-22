@@ -46,11 +46,6 @@ export default function PhotoAlbumScreen() {
   const getPhoto = (order: number): string | undefined =>
     stopPhotos[String(order)];
 
-  console.log(
-    "Hunt stops:",
-    hunt.stops.map((s) => s.order),
-  );
-
   const [activeTab, setActiveTab] = useState<TabType>("grid");
   const [slideIndex, setSlideIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);

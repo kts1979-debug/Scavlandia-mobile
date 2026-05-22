@@ -48,19 +48,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             firebaseUser.displayName || firebaseUser.email || "User",
           );
         } catch (err) {
-          console.log("Profile save failed (non-critical):", err);
+          console.warn("Profile save failed (non-critical):", err);
         }
         try {
           initializePurchases(firebaseUser.uid);
-          console.log("💰 RevenueCat initialized for user:", firebaseUser.uid);
         } catch (err) {
-          console.log("RevenueCat init failed (non-critical):", err);
+          console.warn("RevenueCat init failed (non-critical):", err);
         }
       } else {
         try {
           initializePurchases();
         } catch (err) {
-          console.log("RevenueCat anonymous init failed (non-critical):", err);
+          console.warn("RevenueCat anonymous init failed (non-critical):", err);
         }
       }
     });
@@ -102,7 +101,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const googleCredential = GoogleAuthProvider.credential(tokens.idToken);
       await signInWithCredential(auth, googleCredential);
     } catch (e) {
-      console.log("Google Sign In not available in Expo Go:", e);
       throw e;
     }
   };
