@@ -408,7 +408,13 @@ export default function HuntCompleteScreen() {
                 onPress={() =>
                   router.push({
                     pathname: "/photo-album",
-                    params: { hunt: JSON.stringify(hunt), stopPhotos },
+                    params: {
+                      hunt: JSON.stringify(hunt),
+                      stopPhotos,
+                      finalPhotoUrl: (hunt as any).finalPhotoUrl || "",
+                      teamAvatar: (hunt as any).teamAvatar || "",
+                      teamName: (hunt as any).teamName || "",
+                    },
                   })
                 }
                 variant="secondary"

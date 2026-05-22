@@ -78,8 +78,8 @@ export default function ForgotPasswordScreen() {
                   <Text style={styles.formTitle}>Check your inbox</Text>
                   <Text style={styles.formSubtitle}>
                     We sent a password reset link to{" "}
-                    <Text style={styles.emailHighlight}>{email}</Text>. Check
-                    your spam folder if you don't see it.
+                    <Text style={styles.emailHighlight}>{email}</Text>.{" "}
+                    {"Check your spam folder if you don't see it."}
                   </Text>
                   <Button
                     label="Back to Sign In"
@@ -101,8 +101,9 @@ export default function ForgotPasswordScreen() {
 
                   <Text style={styles.formTitle}>Reset your password</Text>
                   <Text style={styles.formSubtitle}>
-                    Enter your email and we'll send you a link to reset your
-                    password.
+                    {
+                      "Enter your email and we'll send you a link to reset your password. If you don't see it right away, check your spam or junk folder."
+                    }
                   </Text>
 
                   <Text style={styles.label}>Email Address</Text>

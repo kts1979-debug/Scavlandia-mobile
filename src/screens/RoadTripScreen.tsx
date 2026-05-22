@@ -22,6 +22,7 @@ import MapView, {
 } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getRoadTripCandidates } from "../services/apiService";
+import TeamSetupModal from "../components/TeamSetupModal";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 const INTERESTS = [
@@ -110,6 +111,9 @@ export default function RoadTripScreen() {
     const shuffled = [...RANDOM_INTERESTS_LIST].sort(() => Math.random() - 0.5);
     setSelectedInterests(shuffled.slice(0, Math.floor(Math.random() * 3) + 3));
   };
+  const [showTeamSetup, setShowTeamSetup] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const [teamAvatar, setTeamAvatar] = useState("");
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -214,8 +218,9 @@ export default function RoadTripScreen() {
 
       setStep(2);
       setTimeout(() => {
-        setSearching(false); // ← move here, hide AFTER step 2 is set
+        setSearching(false);
         setMarkerDelay(true);
+        setShowTeamSetup(true);
       }, 1000);
     } catch (error: any) {
       setSearching(false);
@@ -249,6 +254,8 @@ export default function RoadTripScreen() {
       pathname: "/generating",
       params: {
         city: `${routeInfo?.startName} to ${routeInfo?.endName}`,
+        teamName,
+        teamAvatar,
         groupProfile: JSON.stringify({
           huntType: "road-trip",
           startLocation: startLocation.trim(),
@@ -652,6 +659,15 @@ export default function RoadTripScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      <TeamSetupModal
+        visible={showTeamSetup}
+        onDismiss={() => setShowTeamSetup(false)}
+        onSave={(name, avatar) => {
+          setTeamName(name);
+          setTeamAvatar(avatar);
+          setShowTeamSetup(false);
+        }}
+      />
     </SafeAreaView>
   );
 }

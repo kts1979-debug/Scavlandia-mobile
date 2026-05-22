@@ -32,6 +32,9 @@ export default function PhotoAlbumScreen() {
   const params = useLocalSearchParams();
   const hunt: Hunt = JSON.parse(params.hunt as string);
   const rawPhotos = JSON.parse((params.stopPhotos as string) || "{}");
+  const finalPhotoUrl = (params.finalPhotoUrl as string) || null;
+  const teamAvatar = (params.teamAvatar as string) || null;
+  const teamName = (params.teamName as string) || null;
 
   // Normalize all keys to strings
   const stopPhotos: Record<string, string> = {};
@@ -58,7 +61,8 @@ export default function PhotoAlbumScreen() {
 
   // Only include stops that have photos
   const stopsWithPhotos = hunt.stops.filter((stop) => !!getPhoto(stop.order));
-  const totalPhotos = stopsWithPhotos.length;
+  const finalPhotoLocal = stopPhotos["999"] || finalPhotoUrl;
+  const totalPhotos = stopsWithPhotos.length + (finalPhotoLocal ? 1 : 0);
 
   // ── Expiration date ─────────────────────────────────────────────
   // Photos are deleted 90 days after hunt creation
@@ -303,9 +307,7 @@ export default function PhotoAlbumScreen() {
               {stopsWithPhotos.map((stop) => (
                 <View key={stop.order} style={styles.gridPhotoContainer}>
                   <Image
-                    source={{
-                      uri: getPhoto(stop.order),
-                    }}
+                    source={{ uri: getPhoto(stop.order) }}
                     style={styles.gridPhoto}
                     onError={(e) =>
                       console.log(
@@ -324,6 +326,44 @@ export default function PhotoAlbumScreen() {
                   </Text>
                 </View>
               ))}
+              {finalPhotoLocal && (
+                <View style={styles.gridPhotoContainer}>
+                  <Image
+                    source={{ uri: finalPhotoLocal }}
+                    style={styles.gridPhoto}
+                  />
+                  <View
+                    style={[
+                      styles.gridPhotoOverlay,
+                      { backgroundColor: COLORS.primary },
+                    ]}
+                  >
+                    <Text style={styles.gridPhotoNum}>🏁</Text>
+                  </View>
+                  <Text style={styles.gridPhotoName} numberOfLines={1}>
+                    Final Photo
+                  </Text>
+                </View>
+              )}
+              {teamAvatar && teamAvatar.startsWith("http") && (
+                <View style={styles.gridPhotoContainer}>
+                  <Image
+                    source={{ uri: teamAvatar }}
+                    style={styles.gridPhoto}
+                  />
+                  <View
+                    style={[
+                      styles.gridPhotoOverlay,
+                      { backgroundColor: "#7f78de" },
+                    ]}
+                  >
+                    <Text style={styles.gridPhotoNum}>👥</Text>
+                  </View>
+                  <Text style={styles.gridPhotoName} numberOfLines={1}>
+                    {teamName || "Team Photo"}
+                  </Text>
+                </View>
+              )}
             </View>
             <View style={styles.collageFooter}>
               <Text style={styles.collageFooterText}>🗺️ Scavlandia.app</Text>

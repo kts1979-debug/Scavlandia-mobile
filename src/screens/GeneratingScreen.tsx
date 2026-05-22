@@ -96,7 +96,7 @@ export default function GeneratingScreen() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowTeamSetup(true), 2000);
+    const timer = setTimeout(() => setShowTeamSetup(true), 10000);
     return () => clearTimeout(timer);
   }, []);
 
