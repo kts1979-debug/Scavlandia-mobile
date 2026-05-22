@@ -392,36 +392,59 @@ export default function PhotoAlbumScreen() {
 
   // ── Slideshow View ─────────────────────────────────────────────
   const SlideshowTab = () => {
-    if (stopsWithPhotos.length === 0) return <EmptyState />;
-    const stop = stopsWithPhotos[slideIndex];
+    const allSlides = [
+      ...stopsWithPhotos.map((s) => ({ type: "stop" as const, stop: s })),
+      ...(finalPhotoLocal ? [{ type: "final" as const, stop: null }] : []),
+    ];
+    if (allSlides.length === 0) return <EmptyState />;
+    const currentSlide = allSlides[slideIndex];
+    const stop = currentSlide.type === "stop" ? currentSlide.stop! : null;
+    const isFinalSlide = currentSlide.type === "final";
     return (
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <ViewShot ref={slideshowRef} options={{ format: "png", quality: 0.9 }}>
           <View style={styles.slideContainer}>
             <Image
               source={{
-                uri: getPhoto(stop.order),
+                uri: isFinalSlide ? finalPhotoLocal! : getPhoto(stop!.order),
               }}
               style={styles.slidePhoto}
               resizeMode="cover"
-              onError={(e) =>
-                console.log("Slideshow image error:", e.nativeEvent.error)
-              }
-              onLoad={() => console.log("Slideshow image loaded")}
             />
             <View style={styles.slideOverlay}>
-              <View style={styles.slideStopBadge}>
-                <Text style={styles.slideStopNum}>Stop {stop.order}</Text>
-              </View>
-              <Text style={styles.slideName}>{stop.locationName}</Text>
-              <Text style={styles.slideAddress}>{stop.address}</Text>
+              {isFinalSlide ? (
+                <>
+                  <View
+                    style={[
+                      styles.slideStopBadge,
+                      { backgroundColor: COLORS.primary },
+                    ]}
+                  >
+                    <Text style={styles.slideStopNum}>🏁 Final Photo</Text>
+                  </View>
+                  <Text style={styles.slideName}>{teamName || "Our Team"}</Text>
+                  <Text style={styles.slideAddress}>
+                    {hunt.city?.split(",")[0]} · {hunt.huntTitle}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <View style={styles.slideStopBadge}>
+                    <Text style={styles.slideStopNum}>Stop {stop!.order}</Text>
+                  </View>
+                  <Text style={styles.slideName}>{stop!.locationName}</Text>
+                  <Text style={styles.slideAddress}>{stop!.address}</Text>
+                </>
+              )}
             </View>
           </View>
         </ViewShot>
-        <View style={styles.slideFact}>
-          <Text style={styles.slideFactLabel}>💡 Fun Fact</Text>
-          <Text style={styles.slideFactText}>{stop.funFact}</Text>
-        </View>
+        {!isFinalSlide && stop && (
+          <View style={styles.slideFact}>
+            <Text style={styles.slideFactLabel}>💡 Fun Fact</Text>
+            <Text style={styles.slideFactText}>{stop.funFact}</Text>
+          </View>
+        )}
         <View style={styles.slideNav}>
           <TouchableOpacity
             style={[
@@ -434,7 +457,7 @@ export default function PhotoAlbumScreen() {
             <Text style={styles.slideNavText}>‹ Prev</Text>
           </TouchableOpacity>
           <Text style={styles.slideCounter}>
-            {slideIndex + 1} / {stopsWithPhotos.length}
+            {slideIndex + 1} / {allSlides.length}
           </Text>
           <TouchableOpacity
             style={[
@@ -445,7 +468,7 @@ export default function PhotoAlbumScreen() {
             onPress={() =>
               setSlideIndex((i) => Math.min(stopsWithPhotos.length - 1, i + 1))
             }
-            disabled={slideIndex === stopsWithPhotos.length - 1}
+            disabled={slideIndex === allSlides.length - 1}
           >
             <Text style={styles.slideNavText}>Next ›</Text>
           </TouchableOpacity>
