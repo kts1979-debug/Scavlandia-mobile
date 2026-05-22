@@ -230,9 +230,15 @@ export const clearActiveHuntState = async (huntId: string) => {
 export const completeHunt = async (
   huntId: string,
   visitedPlaceIds: string[],
+  finalPhotoUrl?: string,
+  totalPoints?: number,
+  completedStops?: number,
 ) => {
   const response = await api.post(`/api/hunts/${huntId}/complete`, {
     visitedPlaceIds,
+    finalPhotoUrl,
+    totalPoints,
+    completedStops,
   });
   return response.data;
 };

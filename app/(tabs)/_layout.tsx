@@ -81,6 +81,7 @@ export default function TabLayout() {
       <Tabs.Screen name="paywall" options={{ href: null }} />
       <Tabs.Screen name="photo-album" options={{ href: null }} />
       <Tabs.Screen name="add-stop" options={{ href: null }} />
+      <Tabs.Screen name="active-hunt" options={{ href: null }} />
     </Tabs>
   );
 }

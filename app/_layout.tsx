@@ -65,12 +65,10 @@ function RootStack() {
       <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
       <Stack.Screen name="final-leaderboard" options={{ headerShown: false }} />
-      <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
       <Stack.Screen
         name="community-leaderboard"
         options={{ headerShown: false }}
       />
-      <Stack.Screen options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -123,13 +123,19 @@ export default function PaywallScreen() {
   };
 
   const handlePurchaseSingle = async () => {
-    // In Expo Go — skip purchase and proceed directly for testing
+    // In Expo Go — grant a credit and proceed for testing
     if (isExpoGo) {
-      Alert.alert(
-        "Test Mode",
-        "Purchase skipped in Expo Go. Proceeding to hunt.",
-        [{ text: "OK", onPress: proceedAfterPurchase }],
-      );
+      const grantTypeMap: Record<string, "city" | "micro" | "roadTrip"> = {
+        city: "city",
+        micro: "micro",
+        "road-trip": "roadTrip",
+      };
+      try {
+        await grantHunt(grantTypeMap[huntType] || "city");
+      } catch (e) {
+        console.warn("Expo Go grantHunt failed:", e);
+      }
+      proceedAfterPurchase();
       return;
     }
 
@@ -190,13 +196,9 @@ export default function PaywallScreen() {
   };
 
   const handlePurchaseSubscription = async () => {
-    // In Expo Go — skip purchase and proceed directly for testing
+    // In Expo Go — proceed directly for testing (premium bypasses credit check)
     if (isExpoGo) {
-      Alert.alert(
-        "Test Mode",
-        "Subscription skipped in Expo Go. Proceeding to hunt.",
-        [{ text: "OK", onPress: proceedAfterPurchase }],
-      );
+      proceedAfterPurchase();
       return;
     }
 

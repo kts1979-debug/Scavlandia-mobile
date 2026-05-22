@@ -1,6 +1,8 @@
 // src/screens/HuntCompleteScreen.tsx
 import { router, useLocalSearchParams } from "expo-router";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   Share,
@@ -15,7 +17,10 @@ import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 // @ts-ignore
 import * as StoreReview from "expo-store-review";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { completeHunt } from "../services/apiService";
+import { uploadHuntPhoto } from "../services/storageService";
 
 const HERO_IMAGES = [
   require("../../assets/images/hunt_bg_4_friends_mountains.jpg"),
@@ -81,6 +86,10 @@ export default function HuntCompleteScreen() {
   const [showSkippedPrompt, setShowSkippedPrompt] = useState(
     skippedStops.length > 0,
   );
+  const [finalPhoto, setFinalPhoto] = useState<string | null>(null);
+  const [huntEnded, setHuntEnded] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const hasCompleted = useRef(false);
 
   useEffect(() => {
     const maybeRequestReview = async () => {
@@ -172,6 +181,76 @@ export default function HuntCompleteScreen() {
     });
   };
 
+  const handlePickFinalPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Please allow photo library access.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setFinalPhoto(result.assets[0].uri);
+    }
+  };
+
+  const handleTakeFinalPhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Please allow camera access.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setFinalPhoto(result.assets[0].uri);
+    }
+  };
+
+  const handleEndHunt = async () => {
+    if (hasCompleted.current) return;
+    hasCompleted.current = true;
+    setEnding(true);
+    try {
+      let finalPhotoUrl: string | undefined;
+
+      // Upload final photo if one was taken
+      if (finalPhoto) {
+        try {
+          finalPhotoUrl = await uploadHuntPhoto(finalPhoto, hunt.huntId, 999);
+        } catch (uploadErr) {
+          console.warn("Final photo upload failed (non-blocking):", uploadErr);
+        }
+      }
+
+      // Mark hunt complete in backend
+      const visitedPlaceIds =
+        hunt.stops?.map((s: any) => s.placeId).filter(Boolean) || [];
+
+      await completeHunt(
+        hunt.huntId,
+        visitedPlaceIds,
+        finalPhotoUrl,
+        totalPoints,
+        completedStops,
+      );
+
+      setHuntEnded(true);
+    } catch (err) {
+      console.warn("End hunt failed (non-blocking):", err);
+      setHuntEnded(true); // still proceed even if backend call fails
+    } finally {
+      setEnding(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Full-screen hero image — was only 320px tall */}
@@ -227,6 +306,61 @@ export default function HuntCompleteScreen() {
               <View style={styles.finaleCard}>
                 <Text style={styles.finaleLabel}>🎉 How to End in Style</Text>
                 <Text style={styles.finaleText}>{hunt.huntFinale}</Text>
+              </View>
+            )}
+
+            {/* Final photo + end hunt */}
+            {!huntEnded ? (
+              <View style={styles.finalPhotoCard}>
+                <Text style={styles.finalPhotoTitle}>📸 Final Group Photo</Text>
+                <Text style={styles.finalPhotoDesc}>
+                  {
+                    "Capture your team's victory moment! This will be saved to your hunt album."
+                  }
+                </Text>
+                {finalPhoto && (
+                  <Image
+                    source={{ uri: finalPhoto }}
+                    style={styles.finalPhotoPreview}
+                    resizeMode="cover"
+                  />
+                )}
+                <View style={styles.finalPhotoBtns}>
+                  <TouchableOpacity
+                    style={styles.photoBtn}
+                    onPress={handleTakeFinalPhoto}
+                  >
+                    <Text style={styles.photoBtnText}>📷 Take Photo</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.photoBtn}
+                    onPress={handlePickFinalPhoto}
+                  >
+                    <Text style={styles.photoBtnText}>🖼️ Choose Photo</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.endHuntBtn,
+                    ending && styles.endHuntBtnDisabled,
+                  ]}
+                  onPress={handleEndHunt}
+                  disabled={ending}
+                >
+                  {ending ? (
+                    <ActivityIndicator color={COLORS.white} />
+                  ) : (
+                    <Text style={styles.endHuntBtnText}>
+                      🏁 {finalPhoto ? "Submit Photo & End Hunt" : "End Hunt"}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.huntEndedBadge}>
+                <Text style={styles.huntEndedText}>
+                  ✅ Hunt Officially Ended!
+                </Text>
               </View>
             )}
 
@@ -517,4 +651,71 @@ const styles = StyleSheet.create({
   },
   skippedNoBtnText: { color: COLORS.darkGray, fontSize: FONTS.sizes.sm },
   btn: { marginBottom: SPACING.sm },
+  finalPhotoCard: {
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  finalPhotoTitle: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.heavy,
+    color: COLORS.primary,
+    marginBottom: 4,
+  },
+  finalPhotoDesc: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.darkGray,
+    lineHeight: 20,
+    marginBottom: SPACING.md,
+  },
+  finalPhotoPreview: {
+    width: "100%",
+    height: 200,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+  },
+  finalPhotoBtns: {
+    flexDirection: "row",
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  photoBtn: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    padding: SPACING.sm,
+    alignItems: "center",
+  },
+  photoBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.sm,
+    fontWeight: FONTS.weights.bold,
+  },
+  endHuntBtn: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    alignItems: "center",
+  },
+  endHuntBtnDisabled: { opacity: 0.6 },
+  endHuntBtnText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.lg,
+    fontWeight: FONTS.weights.heavy,
+  },
+  huntEndedBadge: {
+    backgroundColor: "rgba(90, 203, 166, 0.2)",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    alignItems: "center",
+    marginBottom: SPACING.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.accent,
+  },
+  huntEndedText: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+    color: COLORS.accent,
+  },
 });

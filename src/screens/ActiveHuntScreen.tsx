@@ -100,6 +100,12 @@ export default function ActiveHuntScreen() {
     console.log(
       "  stop orders:",
       hunt.stops.map((s: any) => s.order),
+      "  activeStopIndex:",
+      activeStopIndex,
+      "  resumeAtStop param:",
+      params.resumeAtStop,
+      "  completedIndices:",
+      completedIndices,
     );
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -712,6 +718,24 @@ export default function ActiveHuntScreen() {
       ],
     );
   };
+
+  // Guard: if activeStop is undefined, hunt is complete
+  if (!activeStop) {
+    router.replace({
+      pathname: "/hunt-complete",
+      params: {
+        hunt: JSON.stringify(hunt),
+        totalPoints: String(totalPoints),
+        completedStops: String(completedIndices.length),
+        sessionCode,
+        stopPhotos: JSON.stringify(stopPhotos),
+        quitEarly: "false",
+        skippedStops: JSON.stringify(skippedStops),
+        swapsUsed: String(swapsUsed),
+      },
+    });
+    return null;
+  }
 
   // ── Render ─────────────────────────────────────────────────────────
   return (

@@ -142,11 +142,17 @@ export default function GeneratingScreen() {
             roadTrip: "roadTrip",
           };
           if ((pending[creditKey[grantType]] ?? 0) < 1) {
-            Alert.alert(
-              "No Hunt Credits",
-              "You don't have any hunts remaining. Purchase one to continue.",
-              [{ text: "OK", onPress: () => router.back() }],
-            );
+            router.replace({
+              pathname: "/paywall",
+              params: {
+                huntType: grantType === "roadTrip" ? "road-trip" : grantType,
+                nextRoute: "/generating",
+                nextParams: JSON.stringify({
+                  city: huntCity,
+                  groupProfile: JSON.stringify(profile),
+                }),
+              },
+            });
             return;
           }
         } catch (preflightErr) {
