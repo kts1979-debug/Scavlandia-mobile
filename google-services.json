@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "659464658532-972egr9vcdju67cmfpp3a09pmp8ueb8i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.katesauls.scavlandia",
+            "certificate_hash": "7fd7eacf9d9e5d00c4afa2aabecf861840c3a7a3"
+          }
+        },
+        {
           "client_id": "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
           "client_type": 3
         }
