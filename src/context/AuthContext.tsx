@@ -1,21 +1,21 @@
 // src/context/AuthContext.tsx
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  updateProfile,
   GoogleAuthProvider,
   OAuthProvider,
-  signInWithCredential,
+  onAuthStateChanged,
   sendPasswordResetEmail,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+  updateProfile,
   User,
 } from "firebase/auth";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { saveUserProfile } from "../services/apiService";
 import { initializePurchases } from "../services/purchaseService";
 import { auth } from "../utils/firebaseConfig";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface AuthContextType {
   user: User | null;
@@ -100,7 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const tokens = await GoogleSignin.getTokens();
       const googleCredential = GoogleAuthProvider.credential(tokens.idToken);
       await signInWithCredential(auth, googleCredential);
-    } catch (e) {
+    } catch (e: any) {
+      console.warn("Google Sign In error code:", e.code);
+      console.warn("Google Sign In error message:", e.message);
       throw e;
     }
   };
