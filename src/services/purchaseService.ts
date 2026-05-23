@@ -1,11 +1,11 @@
 // src/services/purchaseService.ts
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 import Purchases, {
   CustomerInfo,
   LOG_LEVEL,
   PurchasesOffering,
 } from "react-native-purchases";
-import { Platform } from "react-native";
 
 const isExpoGo = Constants.appOwnership === "expo";
 
@@ -42,10 +42,18 @@ export const hasPremium = async (): Promise<boolean> => {
   if (isExpoGo) return false;
   try {
     const customerInfo = await Purchases.getCustomerInfo();
-    return "premium" in customerInfo.entitlements.active;
+    const active = customerInfo.entitlements.active;
+    return "premium" in active;
   } catch (err) {
-    console.warn("Could not check entitlement:", err);
-    return false;
+    // Retry once after short delay in case RC hasn't initialized yet
+    try {
+      await new Promise((r) => setTimeout(r, 1500));
+      const customerInfo = await Purchases.getCustomerInfo();
+      return "premium" in customerInfo.entitlements.active;
+    } catch {
+      console.warn("Could not check entitlement after retry:", err);
+      return false;
+    }
   }
 };
 

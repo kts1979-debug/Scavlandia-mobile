@@ -1,29 +1,29 @@
 // src/screens/PaywallScreen.tsx
+import Constants from "expo-constants";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Linking,
-  Platform,
 } from "react-native";
+import Purchases from "react-native-purchases";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Constants from "expo-constants";
+import { grantHunt } from "../services/apiService";
 import {
+  ENTITLEMENTS,
   getCurrentOffering,
+  PRODUCT_IDS,
   purchasePackage,
   restorePurchases,
-  PRODUCT_IDS,
-  ENTITLEMENTS,
 } from "../services/purchaseService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
-import Purchases from "react-native-purchases";
-import { grantHunt } from "../services/apiService";
 
 type HuntType = "city" | "micro" | "road-trip";
 
@@ -36,7 +36,7 @@ const HUNT_INFO = {
     desc: "A personalized scavenger hunt in any city",
     price: "$7.99",
     productId: PRODUCT_IDS.cityHunt,
-    packageId: "city_hunt",
+    packageId: "hunt_city",
   },
   micro: {
     emoji: "⚡",
@@ -44,7 +44,7 @@ const HUNT_INFO = {
     desc: "A quick adventure near your location",
     price: "$1.99",
     productId: PRODUCT_IDS.microHunt,
-    packageId: "micro_hunt",
+    packageId: "hunt_micro",
   },
   "road-trip": {
     // ← add

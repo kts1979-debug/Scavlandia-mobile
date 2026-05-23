@@ -1,10 +1,11 @@
 // src/screens/RoadTripScreen.tsx
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Image,
   Platform,
   ScrollView,
@@ -21,8 +22,8 @@ import MapView, {
   PROVIDER_GOOGLE,
 } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getRoadTripCandidates } from "../services/apiService";
 import TeamSetupModal from "../components/TeamSetupModal";
+import { getRoadTripCandidates } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 const INTERESTS = [
@@ -46,6 +47,13 @@ const INTERESTS = [
 ];
 
 const HERO_BG = require("../../assets/images/hunt_bg_6_roadtrip_map_sunset.jpg");
+
+const SEARCH_IMAGES = [
+  require("../../assets/images/hunt_bg_6_roadtrip_map_sunset.jpg"),
+  require("../../assets/images/hunt_bg_7_roadtrip_map_beach.jpg"),
+  require("../../assets/images/hunt_bg_1_cliff_city.jpg"),
+  require("../../assets/images/hunt_bg_8_friends_overlook.jpg"),
+];
 
 const DIFFICULTIES = [
   { label: "Easy", desc: "Simple clues, great for families" },
@@ -117,6 +125,8 @@ export default function RoadTripScreen() {
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [loadingCandidates, setLoadingCandidates] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [searchImageIndex, setSearchImageIndex] = useState(0);
+  const searchFadeAnim = useRef(new Animated.Value(1)).current;
 
   const [candidates, setCandidates] = useState<any[]>([]);
   const [selectedStops, setSelectedStops] = useState<any[]>([]);
@@ -131,6 +141,25 @@ export default function RoadTripScreen() {
     totalDistanceMiles: number;
     totalDurationMinutes: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (!searching) return;
+    const interval = setInterval(() => {
+      Animated.timing(searchFadeAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }).start(() => {
+        setSearchImageIndex((i) => (i + 1) % SEARCH_IMAGES.length);
+        Animated.timing(searchFadeAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }).start();
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [searching, searchFadeAnim]);
 
   const toggleInterest = (label: string) => {
     setSelectedInterests((prev) =>
@@ -299,7 +328,11 @@ export default function RoadTripScreen() {
   if (searching) {
     return (
       <View style={styles.container}>
-        <Image source={HERO_BG} style={styles.heroBg} resizeMode="cover" />
+        <Animated.Image
+          source={SEARCH_IMAGES[searchImageIndex]}
+          style={[styles.heroBg, { opacity: searchFadeAnim }]}
+          resizeMode="cover"
+        />
         <View style={styles.heroOverlay} />
         <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
           <View
@@ -350,6 +383,15 @@ export default function RoadTripScreen() {
             </Text>
           </View>
         </SafeAreaView>
+        <TeamSetupModal
+          visible={showTeamSetup}
+          onDismiss={() => setShowTeamSetup(false)}
+          onSave={(name, avatar) => {
+            setTeamName(name);
+            setTeamAvatar(avatar);
+            setShowTeamSetup(false);
+          }}
+        />
       </View>
     );
   }
@@ -659,15 +701,6 @@ export default function RoadTripScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-      <TeamSetupModal
-        visible={showTeamSetup}
-        onDismiss={() => setShowTeamSetup(false)}
-        onSave={(name, avatar) => {
-          setTeamName(name);
-          setTeamAvatar(avatar);
-          setShowTeamSetup(false);
-        }}
-      />
     </SafeAreaView>
   );
 }
