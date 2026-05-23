@@ -1,7 +1,7 @@
 // src/screens/ActiveHuntScreen.tsx
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AudioButton from "../components/AudioButton";
 import HintsPanel from "../components/HintsPanel";
 import HuntTimer from "../components/HuntTimer";

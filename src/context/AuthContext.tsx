@@ -100,9 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const tokens = await GoogleSignin.getTokens();
       const googleCredential = GoogleAuthProvider.credential(tokens.idToken);
       await signInWithCredential(auth, googleCredential);
-    } catch (e: any) {
-      console.warn("Google Sign In error code:", e.code);
-      console.warn("Google Sign In error message:", e.message);
+    } catch (e) {
       throw e;
     }
   };

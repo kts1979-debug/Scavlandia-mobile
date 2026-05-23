@@ -1,6 +1,6 @@
 // src/screens/LoginScreen.tsx
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Image,
