@@ -1,22 +1,22 @@
 // src/screens/ActiveHuntScreen.tsx
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AudioButton from "../components/AudioButton";
 import HintsPanel from "../components/HintsPanel";
 import HuntTimer from "../components/HuntTimer";
 import LiveLeaderboard from "../components/LiveLeaderboard";
-import ProgressBar from "../components/ui/ProgressBar";
 import TriviaChallenge from "../components/TriviaChallenge";
+import ProgressBar from "../components/ui/ProgressBar";
 import { useHuntTimer } from "../hooks/useHuntTimer";
 import {
   Hunt,
   HuntStop,
   clearActiveHuntState,
+  completeHunt,
   saveActiveHuntState,
   saveHuntPhotos,
   submitStop,
-  completeHunt,
 } from "../services/apiService";
 import {
   updateAllTimeStats,
@@ -28,13 +28,13 @@ import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 import {
   Alert,
   Image,
+  Linking,
   ScrollView,
   Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import HuntMap from "../components/HuntMap";
@@ -183,10 +183,14 @@ export default function ActiveHuntScreen() {
   useEffect(() => {
     setTriviaCompleted(false);
     setTriviaBonus(0);
+    arrivalAlertShownRef.current = false;
   }, [activeStopIndex]);
 
   // ── Location ───────────────────────────────────────────────────────
+  const arrivalAlertShownRef = useRef(false);
   const handleArrival = useCallback(() => {
+    if (arrivalAlertShownRef.current) return;
+    arrivalAlertShownRef.current = true;
     setAtLocation(true);
     Alert.alert(
       "📍 You made it!",

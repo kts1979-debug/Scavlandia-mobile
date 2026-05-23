@@ -55,9 +55,17 @@ export function useLocation(
     })();
   }, []);
 
-  // Start watching GPS when permission is granted
+  // Stable ref for onArrival so it never causes effect re-runs
+  const onArrivalRef = useRef(onArrival);
+  useEffect(() => {
+    onArrivalRef.current = onArrival;
+  }, [onArrival]);
+
   useEffect(() => {
     if (!locationPermission) return;
+
+    // Reset arrival flag BEFORE starting subscription
+    arrivedRef.current = false;
 
     let subscription: Location.LocationSubscription;
 
@@ -66,7 +74,7 @@ export function useLocation(
         {
           accuracy: Location.Accuracy.High,
           timeInterval: config.LOCATION_UPDATE_INTERVAL,
-          distanceInterval: 5, // Update every 5 meters of movement
+          distanceInterval: 5,
         },
         (location) => {
           const coords = {
@@ -75,7 +83,6 @@ export function useLocation(
           };
           setUserLocation(coords);
 
-          // Check distance to active stop
           if (activeStop) {
             const stopCoords = {
               latitude: activeStop.lat,
@@ -84,23 +91,18 @@ export function useLocation(
             const distance = getDistanceMeters(coords, stopCoords);
             setDistanceToStop(Math.round(distance));
 
-            // Trigger arrival if within radius and haven't already triggered
             if (
               distance <= config.ARRIVAL_RADIUS_METERS &&
               !arrivedRef.current
             ) {
               arrivedRef.current = true;
-              onArrival();
+              onArrivalRef.current();
             }
           }
         },
       );
     })();
 
-    // Reset arrival flag when the active stop changes
-    arrivedRef.current = false;
-
-    // Clean up GPS subscription when component unmounts
     return () => {
       subscription?.remove();
     };
