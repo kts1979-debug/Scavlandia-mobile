@@ -5,20 +5,17 @@ import {
   Alert,
   Image,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Button from "../components/ui/Button";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
-// @ts-ignore
-import * as StoreReview from "expo-store-review";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState, useEffect, useRef } from "react";
+
 import * as ImagePicker from "expo-image-picker";
+
+import { useRef, useState } from "react";
 import { completeHunt } from "../services/apiService";
 import { uploadHuntPhoto } from "../services/storageService";
 
@@ -37,14 +34,17 @@ function getHeroImage(huntId: string) {
   return HERO_IMAGES[hash];
 }
 
-function getStarRating(hintsUsed: number, answerRevealed: boolean): number {
+export function getStarRating(
+  hintsUsed: number,
+  answerRevealed: boolean,
+): number {
   if (answerRevealed) return 1;
   if (hintsUsed === 0) return 3;
   if (hintsUsed <= 2) return 2;
   return 1;
 }
 
-function StarRating({ stars }: { stars: number }) {
+export function StarRating({ stars }: { stars: number }) {
   const labels = ["", "You got there!", "Nice work!", "Flawless! 🎉"];
   const subs = [
     "",
@@ -85,103 +85,11 @@ export default function HuntCompleteScreen() {
     ? JSON.parse(params.skippedStops as string)
     : [];
 
-  const [showSkippedPrompt, setShowSkippedPrompt] = useState(
-    skippedStops.length > 0,
-  );
   const [finalPhoto, setFinalPhoto] = useState<string | null>(null);
-  const [huntEnded, setHuntEnded] = useState(false);
   const [ending, setEnding] = useState(false);
   const hasCompleted = useRef(false);
 
-  useEffect(() => {
-    const maybeRequestReview = async () => {
-      try {
-        const reviewedKey = "scavlandia_review_completed";
-        const countKey = "scavlandia_hunts_since_review";
-
-        // If user already reviewed, stop entirely
-        const alreadyReviewed = await AsyncStorage.getItem(reviewedKey);
-        if (alreadyReviewed) return;
-
-        // Increment hunt count
-        const countStr = await AsyncStorage.getItem(countKey);
-        const count = countStr ? parseInt(countStr) : 0;
-        const newCount = count + 1;
-        await AsyncStorage.setItem(countKey, String(newCount));
-
-        // Show review prompt every 2 hunts until reviewed
-        if (newCount % 2 !== 0) return;
-
-        const isAvailable = await StoreReview.isAvailableAsync();
-        if (!isAvailable) return;
-
-        setTimeout(async () => {
-          await StoreReview.requestReview();
-        }, 2000);
-      } catch {
-        // Non-critical, ignore
-      }
-    };
-    maybeRequestReview();
-  }, []);
-
-  const stars = getStarRating(hintsUsed, answerRevealed);
   const heroImage = getHeroImage(hunt.huntId || hunt.huntTitle || "default");
-  const percentage = Math.round(
-    (totalPoints / (hunt.totalPossiblePoints || 1)) * 100,
-  );
-
-  const handleShare = async () => {
-    try {
-      const cityName = hunt.city?.split(",")[0] || hunt.city;
-      const scoreEmoji =
-        percentage >= 80 ? "🏆" : percentage >= 60 ? "⭐" : "🎯";
-      const diffMap = { easy: "🟢", medium: "🟡", hard: "🔴" } as Record<
-        string,
-        string
-      >;
-      const diffEmoji =
-        diffMap[hunt.groupProfile?.difficulty || "medium"] || "🟡";
-      const starStr = sessionCode
-        ? ""
-        : `${"★".repeat(stars)}${"☆".repeat(3 - stars)} ${stars}/3 stars\n`;
-      await Share.share({
-        message:
-          `${scoreEmoji} Just crushed a Scavlandia scavenger hunt in ${cityName}!\n\n` +
-          `🚩 ${completedStops} stops completed\n` +
-          `⭐ ${totalPoints} points earned\n` +
-          `💯 ${percentage}% score\n` +
-          `${starStr}` +
-          `${diffEmoji} ${hunt.groupProfile?.difficulty || "Medium"} difficulty\n\n` +
-          `Think you can beat my score? Try Scavlandia! 🗺️`,
-        title: `Scavlandia Hunt — ${cityName}`,
-      });
-    } catch (error) {
-      console.log("Share cancelled:", error);
-    }
-  };
-
-  const handleReturnToSkippedStop = () => {
-    const firstSkippedOrder = skippedStops[0];
-    const skippedStopIndex = hunt.stops.findIndex(
-      (s: any) => s.order === firstSkippedOrder,
-    );
-    const completedIndices: number[] = params.completedIndices
-      ? JSON.parse(params.completedIndices as string)
-      : [];
-    router.replace({
-      pathname: "/active-hunt",
-      params: {
-        hunt: params.hunt,
-        sessionCode,
-        stopPhotos,
-        resumeAtStop: String(skippedStopIndex + 1),
-        totalPoints: String(totalPoints),
-        skippedStops: JSON.stringify(skippedStops),
-        completedIndices: JSON.stringify(completedIndices),
-      },
-    });
-  };
 
   const handlePickFinalPhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -244,10 +152,44 @@ export default function HuntCompleteScreen() {
         completedStops,
       );
 
-      setHuntEnded(true);
+      // Navigate to results screen
+      router.replace({
+        pathname: "/hunt-results",
+        params: {
+          hunt: JSON.stringify(hunt),
+          totalPoints: String(totalPoints),
+          completedStops: String(completedStops),
+          sessionCode,
+          stopPhotos,
+          hintsUsed: String(hintsUsed),
+          answerRevealed: String(answerRevealed),
+          skippedStops: JSON.stringify(skippedStops),
+          finalPhotoUrl: finalPhotoUrl || "",
+          teamName,
+          teamAvatar,
+          completedIndices: (params.completedIndices as string) || "[]",
+        },
+      });
     } catch (err) {
       console.warn("End hunt failed (non-blocking):", err);
-      setHuntEnded(true); // still proceed even if backend call fails
+      // Still navigate even if backend call fails
+      router.replace({
+        pathname: "/hunt-results",
+        params: {
+          hunt: JSON.stringify(hunt),
+          totalPoints: String(totalPoints),
+          completedStops: String(completedStops),
+          sessionCode,
+          stopPhotos,
+          hintsUsed: String(hintsUsed),
+          answerRevealed: String(answerRevealed),
+          skippedStops: JSON.stringify(skippedStops),
+          finalPhotoUrl: "",
+          teamName,
+          teamAvatar,
+          completedIndices: (params.completedIndices as string) || "[]",
+        },
+      });
     } finally {
       setEnding(false);
     }
@@ -280,29 +222,6 @@ export default function HuntCompleteScreen() {
 
           {/* Content card */}
           <View style={styles.contentCard}>
-            {/* Stars — solo only */}
-            {!sessionCode && <StarRating stars={stars} />}
-
-            {/* Stats */}
-            <View style={styles.statsGrid}>
-              {[
-                { emoji: "⭐", value: String(totalPoints), label: "Points" },
-                { emoji: "🚩", value: String(completedStops), label: "Stops" },
-                { emoji: "💯", value: `${percentage}%`, label: "Score" },
-              ].map((s, i) => (
-                <View key={i} style={styles.statCard}>
-                  <Text style={styles.statEmoji}>{s.emoji}</Text>
-                  <Text style={styles.statValue}>{s.value}</Text>
-                  <Text style={styles.statLabel}>{s.label}</Text>
-                </View>
-              ))}
-            </View>
-
-            <Text style={styles.message}>
-              Amazing work! You explored the city, solved every clue, and
-              crushed it. 🎉
-            </Text>
-
             {/* Hunt Finale */}
             {hunt.huntFinale && (
               <View style={styles.finaleCard}>
@@ -312,142 +231,47 @@ export default function HuntCompleteScreen() {
             )}
 
             {/* Final photo + end hunt */}
-            {!huntEnded ? (
-              <View style={styles.finalPhotoCard}>
-                <Text style={styles.finalPhotoTitle}>📸 Final Group Photo</Text>
-                <Text style={styles.finalPhotoDesc}>
-                  {
-                    "Capture your team's victory moment! This will be saved to your hunt album."
-                  }
-                </Text>
-                {finalPhoto && (
-                  <Image
-                    source={{ uri: finalPhoto }}
-                    style={styles.finalPhotoPreview}
-                    resizeMode="cover"
-                  />
-                )}
-                <View style={styles.finalPhotoBtns}>
-                  <TouchableOpacity
-                    style={styles.photoBtn}
-                    onPress={handleTakeFinalPhoto}
-                  >
-                    <Text style={styles.photoBtnText}>📷 Take Photo</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.photoBtn}
-                    onPress={handlePickFinalPhoto}
-                  >
-                    <Text style={styles.photoBtnText}>🖼️ Choose Photo</Text>
-                  </TouchableOpacity>
-                </View>
+            <View style={styles.finalPhotoCard}>
+              <Text style={styles.finalPhotoTitle}>📸 Final Group Photo</Text>
+              <Text style={styles.finalPhotoDesc}>
+                {
+                  "Capture your team's victory moment! This will be saved to your hunt album."
+                }
+              </Text>
+              {finalPhoto && (
+                <Image
+                  source={{ uri: finalPhoto }}
+                  style={styles.finalPhotoPreview}
+                  resizeMode="cover"
+                />
+              )}
+              <View style={styles.finalPhotoBtns}>
                 <TouchableOpacity
-                  style={[
-                    styles.endHuntBtn,
-                    ending && styles.endHuntBtnDisabled,
-                  ]}
-                  onPress={handleEndHunt}
-                  disabled={ending}
+                  style={styles.photoBtn}
+                  onPress={handleTakeFinalPhoto}
                 >
-                  {ending ? (
-                    <ActivityIndicator color={COLORS.white} />
-                  ) : (
-                    <Text style={styles.endHuntBtnText}>
-                      🏁 {finalPhoto ? "Submit Photo & End Hunt" : "End Hunt"}
-                    </Text>
-                  )}
+                  <Text style={styles.photoBtnText}>📷 Take Photo</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.photoBtn}
+                  onPress={handlePickFinalPhoto}
+                >
+                  <Text style={styles.photoBtnText}>🖼️ Choose Photo</Text>
                 </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.huntEndedBadge}>
-                <Text style={styles.huntEndedText}>
-                  ✅ Hunt Officially Ended!
-                </Text>
-              </View>
-            )}
-
-            {/* Skipped stops */}
-            {showSkippedPrompt && (
-              <View style={styles.skippedCard}>
-                <Text style={styles.skippedCardTitle}>
-                  ⏭ You skipped {skippedStops.length} stop
-                  {skippedStops.length > 1 ? "s" : ""}
-                </Text>
-                <Text style={styles.skippedCardDesc}>
-                  Would you like to go back and complete{" "}
-                  {skippedStops.length > 1 ? "them" : "it"} now?
-                </Text>
-                <View style={styles.skippedCardBtns}>
-                  <TouchableOpacity
-                    style={styles.skippedYesBtn}
-                    onPress={handleReturnToSkippedStop}
-                  >
-                    <Text style={styles.skippedYesBtnText}>
-                      {"Yes, let's go!"}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.skippedNoBtn}
-                    onPress={() => setShowSkippedPrompt(false)}
-                  >
-                    <Text style={styles.skippedNoBtnText}>No thanks</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            <View style={styles.buttonsContainer}>
-              <Button
-                label="Share Your Results"
-                onPress={handleShare}
-                variant="accent"
-                size="lg"
-                emoji="📤"
-                style={styles.btn}
-              />
-              <Button
-                label="View Photo Album"
-                onPress={() =>
-                  router.push({
-                    pathname: "/photo-album",
-                    params: {
-                      hunt: JSON.stringify(hunt),
-                      stopPhotos,
-                      finalPhotoUrl:
-                        finalPhoto || (hunt as any).finalPhotoUrl || "",
-                      teamAvatar,
-                      teamName,
-                    },
-                  })
-                }
-                variant="secondary"
-                size="lg"
-                emoji="📸"
-                style={styles.btn}
-              />
-              <Button
-                label="Start Another Hunt"
-                onPress={() => router.replace("/(tabs)")}
-                variant="secondary"
-                size="lg"
-                emoji="🗺️"
-                style={styles.btn}
-              />
-              {sessionCode ? (
-                <Button
-                  label="View Final Leaderboard"
-                  onPress={() =>
-                    router.push({
-                      pathname: "/final-leaderboard",
-                      params: { sessionCode, myPoints: String(totalPoints) },
-                    })
-                  }
-                  variant="primary"
-                  size="lg"
-                  emoji="🏆"
-                  style={styles.btn}
-                />
-              ) : null}
+              <TouchableOpacity
+                style={[styles.endHuntBtn, ending && styles.endHuntBtnDisabled]}
+                onPress={handleEndHunt}
+                disabled={ending}
+              >
+                {ending ? (
+                  <ActivityIndicator color={COLORS.white} />
+                ) : (
+                  <Text style={styles.endHuntBtnText}>
+                    🏁 {finalPhoto ? "Submit Photo & End Hunt" : "End Hunt"}
+                  </Text>
+                )}
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -456,7 +280,7 @@ export default function HuntCompleteScreen() {
   );
 }
 
-const starStyles = StyleSheet.create({
+export const starStyles = StyleSheet.create({
   // In starStyles:
   container: {
     alignItems: "center",

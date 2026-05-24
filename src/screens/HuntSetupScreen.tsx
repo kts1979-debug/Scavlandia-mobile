@@ -1,7 +1,7 @@
 // src/screens/HuntSetupScreen.tsx
 import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Image,
@@ -16,8 +16,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import { createSession, joinSession } from "../services/leaderboardService";
 import { generateShareCode } from "../services/apiService";
+import { createSession, joinSession } from "../services/leaderboardService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
 
 const HERO_BG = require("../../assets/images/hunt_bg_4_friends_mountains.jpg");
@@ -182,6 +182,13 @@ export default function HuntSetupScreen() {
           {/* ── SOLO FLOW ─────────────────────────────────── */}
           {isSolo && (
             <>
+              <Button
+                label="🚀 Start Hunt"
+                onPress={() => handleStartHunt()}
+                variant="accent"
+                size="lg"
+                style={styles.startBtnTop}
+              />
               <Card style={styles.section}>
                 <Text style={styles.sectionTitle}>🔗 Share This Hunt</Text>
                 <Text style={styles.sectionDesc}>
@@ -222,14 +229,6 @@ export default function HuntSetupScreen() {
                   and start now.
                 </Text>
               </Card>
-
-              <Button
-                label="Start Hunt"
-                onPress={() => handleStartHunt()}
-                variant="accent"
-                size="lg"
-                style={styles.startBtn}
-              />
             </>
           )}
 
@@ -514,9 +513,14 @@ const styles = StyleSheet.create({
   },
   startBtn: {
     marginTop: SPACING.md,
-    backgroundColor: "rgba(232, 248, 247, 0.75)", // ← just the wrapper
+    backgroundColor: "rgba(232, 248, 247, 0.75)",
     borderRadius: RADIUS.lg,
     padding: SPACING.sm,
+  },
+  startBtnTop: {
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.lg,
   },
   skipBtn: { marginTop: SPACING.sm },
   teamBadge: {

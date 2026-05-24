@@ -26,7 +26,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: COLORS.accent,
         tabBarInactiveTintColor: COLORS.darkGray,
         tabBarStyle: {
-          backgroundColor: COLORS.white,
+          backgroundColor: "#f0f0f0",
           borderTopColor: COLORS.lightGray,
           height: Platform.OS === "android" ? 90 : 84,
           paddingBottom: Platform.OS === "android" ? 30 : 24,
@@ -82,6 +82,8 @@ export default function TabLayout() {
       <Tabs.Screen name="photo-album" options={{ href: null }} />
       <Tabs.Screen name="add-stop" options={{ href: null }} />
       <Tabs.Screen name="active-hunt" options={{ href: null }} />
+      <Tabs.Screen name="hunt-intro" options={{ href: null }} />
+      <Tabs.Screen name="hunt-results" options={{ href: null }} />
     </Tabs>
   );
 }

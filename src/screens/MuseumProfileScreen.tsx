@@ -3,7 +3,7 @@
 // Skips interests and mobility — not relevant indoors.
 
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   ScrollView,
@@ -25,7 +25,6 @@ import {
   SPACING,
   SPECIALTY_HUNTS,
 } from "../theme";
-import { canGenerateHunt } from "../services/purchaseService";
 
 export default function MuseumProfileScreen() {
   const [ages, setAges] = useState("30");
@@ -78,23 +77,6 @@ export default function MuseumProfileScreen() {
         lng: selectedMuseum.lng,
       },
     };
-
-    const canGenerate = await canGenerateHunt("museum");
-
-    if (!canGenerate) {
-      router.push({
-        pathname: "/paywall",
-        params: {
-          huntType: "museum",
-          nextRoute: "/generating",
-          nextParams: JSON.stringify({
-            city: selectedMuseum.name,
-            groupProfile: JSON.stringify(groupProfile),
-          }),
-        },
-      });
-      return;
-    }
 
     router.push({
       pathname: "/generating",

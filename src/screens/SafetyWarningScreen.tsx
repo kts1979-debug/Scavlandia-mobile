@@ -1,6 +1,6 @@
 // src/screens/SafetyWarningScreen.tsx
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Image,
   ScrollView,
@@ -20,18 +20,8 @@ export default function SafetyWarningScreen() {
 
   const handleContinue = () => {
     if (!agreed) return;
-    router.replace({ pathname: "/active-hunt", params });
+    router.replace({ pathname: "/hunt-intro", params });
   };
-
-  let huntIntroduction: string | null = null;
-  try {
-    if (params.hunt) {
-      const huntData = JSON.parse(params.hunt as string);
-      huntIntroduction = huntData.huntIntroduction || null;
-    }
-  } catch {
-    huntIntroduction = null;
-  }
 
   return (
     <View style={styles.container}>
@@ -61,14 +51,6 @@ export default function SafetyWarningScreen() {
           contentContainerStyle={styles.cardContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hunt Introduction */}
-          {huntIntroduction && (
-            <View style={styles.introCard}>
-              <Text style={styles.introLabel}>🗺️ Your Adventure</Text>
-              <Text style={styles.introText}>{huntIntroduction}</Text>
-            </View>
-          )}
-
           {/* Warning cards */}
           {[
             {

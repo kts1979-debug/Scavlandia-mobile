@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Alert,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,6 +12,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -99,127 +101,133 @@ export default function LoginScreen() {
       <View style={styles.overlay} />
 
       <SafeAreaView style={styles.safeArea}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
-        >
-          <ScrollView
-            contentContainerStyle={styles.scroll}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.keyboardView}
           >
-            {/* Logo */}
-            <View style={styles.logoSection}>
-              <Image
-                source={LOGO_ICON}
-                style={styles.logoIcon}
-                resizeMode="contain"
-              />
-              <Text style={styles.appName}>Scavlandia</Text>
-              <Text style={styles.tagline}>Your next adventure awaits</Text>
-            </View>
-
-            {/* Form Card */}
-            <View style={styles.formCard}>
-              <Text style={styles.formTitle}>Welcome back!</Text>
-              <Text style={styles.formSubtitle}>
-                Sign in to continue your adventures
-              </Text>
-
-              <Text style={styles.label}>Email Address</Text>
-              <TextInput
-                style={styles.input}
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@example.com"
-                placeholderTextColor={COLORS.midGray}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.passwordRow}>
-                <TextInput
-                  style={[styles.input, styles.passwordInput]}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Your password"
-                  placeholderTextColor={COLORS.midGray}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
+            <ScrollView
+              contentContainerStyle={styles.scroll}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Logo */}
+              <View style={styles.logoSection}>
+                <Image
+                  source={LOGO_ICON}
+                  style={styles.logoIcon}
+                  resizeMode="contain"
                 />
-                <TouchableOpacity
-                  style={styles.eyeBtn}
-                  onPress={() => setShowPassword((prev) => !prev)}
-                >
-                  <Text style={styles.eyeIcon}>
-                    {showPassword ? "🙈" : "👁️"}
-                  </Text>
-                </TouchableOpacity>
+                <Text style={styles.appName}>Scavlandia</Text>
+                <Text style={styles.tagline}>Your next adventure awaits</Text>
               </View>
 
-              {/* Forgot password */}
-              <TouchableOpacity
-                style={styles.forgotBtn}
-                onPress={() => router.push("/forgot-password")}
-              >
-                <Text style={styles.forgotText}>Forgot your password?</Text>
-              </TouchableOpacity>
+              {/* Form Card */}
+              <View style={styles.formCard}>
+                <Text style={styles.formTitle}>Welcome back!</Text>
+                <Text style={styles.formSubtitle}>
+                  Sign in to continue your adventures
+                </Text>
 
-              <Button
-                label="Sign In"
-                onPress={handleSignIn}
-                variant="accent"
-                size="lg"
-                loading={loading}
-                style={styles.signInBtn}
-              />
+                <Text style={styles.label}>Email Address</Text>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="you@example.com"
+                  placeholderTextColor={COLORS.midGray}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
 
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or continue with</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* SSO buttons */}
-              <View style={styles.ssoRow}>
-                {/* Google */}
-                <TouchableOpacity
-                  style={styles.ssoBtn}
-                  onPress={handleGoogleSignIn}
-                  disabled={googleLoading}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.ssoIcon}>G</Text>
-                </TouchableOpacity>
-
-                {/* Apple — iOS only */}
-                {Platform.OS === "ios" && (
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.passwordRow}>
+                  <TextInput
+                    style={[styles.input, styles.passwordInput]}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Your password"
+                    placeholderTextColor={COLORS.midGray}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                  />
                   <TouchableOpacity
-                    style={[styles.ssoBtn, styles.ssoBtnApple]}
-                    onPress={handleAppleSignIn}
-                    disabled={appleLoading}
-                    activeOpacity={0.8}
+                    style={styles.eyeBtn}
+                    onPress={() => setShowPassword((prev) => !prev)}
                   >
-                    <Text style={[styles.ssoIcon, styles.ssoIconApple]}>
-                      🍎
+                    <Text style={styles.eyeIcon}>
+                      {showPassword ? "🙈" : "👁️"}
                     </Text>
                   </TouchableOpacity>
-                )}
-              </View>
-            </View>
+                </View>
 
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>{"Don't have an account? "}</Text>
-              <TouchableOpacity onPress={() => router.push("/signup")}>
-                <Text style={styles.footerLink}>Create one free</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+                {/* Forgot password */}
+                <TouchableOpacity
+                  style={styles.forgotBtn}
+                  onPress={() => router.push("/forgot-password")}
+                >
+                  <Text style={styles.forgotText}>Forgot your password?</Text>
+                </TouchableOpacity>
+
+                <Button
+                  label="Sign In"
+                  onPress={handleSignIn}
+                  variant="accent"
+                  size="lg"
+                  loading={loading}
+                  style={styles.signInBtn}
+                />
+
+                {/* Divider */}
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or continue with</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <View style={styles.ssoColumn}>
+                  {/* Apple Sign In */}
+                  {Platform.OS === "ios" && (
+                    <TouchableOpacity
+                      style={styles.ssoBtnApple}
+                      onPress={handleAppleSignIn}
+                      disabled={appleLoading}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.ssoBtnAppleIcon}>🍎</Text>
+                      <Text style={styles.ssoBtnAppleText}>
+                        Continue with Apple
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {/* Google Sign In */}
+                  <TouchableOpacity
+                    style={styles.ssoBtnGoogle}
+                    onPress={handleGoogleSignIn}
+                    disabled={googleLoading}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.ssoBtnGoogleIcon}>G</Text>
+                    <Text style={styles.ssoBtnGoogleText}>
+                      Continue with Google
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Footer */}
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>
+                  {"Don't have an account? "}
+                </Text>
+                <TouchableOpacity onPress={() => router.push("/signup")}>
+                  <Text style={styles.footerLink}>Create one free</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </SafeAreaView>
     </View>
   );
@@ -310,32 +318,47 @@ const styles = StyleSheet.create({
     color: COLORS.darkGray,
     fontWeight: FONTS.weights.medium,
   },
-  ssoRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-    justifyContent: "center",
-    marginTop: SPACING.sm,
-  },
-  ssoBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    borderWidth: 1.5,
-    borderColor: COLORS.midGray,
-    backgroundColor: COLORS.white,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  ssoColumn: { gap: SPACING.sm, marginTop: SPACING.lg },
   ssoBtnApple: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: COLORS.black,
-    borderColor: COLORS.black,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: SPACING.sm,
   },
-  ssoIcon: {
-    fontSize: 20,
+  ssoBtnAppleIcon: { fontSize: 20, color: COLORS.white },
+  ssoBtnAppleText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+  },
+  ssoBtnGoogle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#4285F4",
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
+  ssoBtnGoogleIcon: {
+    fontSize: 18,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    backgroundColor: COLORS.white,
+    color: "#4285F4",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    textAlign: "center",
+    lineHeight: 24,
   },
-  ssoIconApple: { color: COLORS.white },
+  ssoBtnGoogleText: {
+    color: COLORS.white,
+    fontSize: FONTS.sizes.md,
+    fontWeight: FONTS.weights.bold,
+  },
   ssoBtnText: {
     fontSize: FONTS.sizes.md,
     fontWeight: FONTS.weights.bold,
