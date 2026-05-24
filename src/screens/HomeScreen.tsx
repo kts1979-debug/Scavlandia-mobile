@@ -1,22 +1,22 @@
 // src/screens/HomeScreen.tsx
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import React, { useState, useEffect } from "react";
+import * as StoreReview from "expo-store-review";
+import { useEffect, useState } from "react";
 import {
   Image,
+  Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Platform,
-  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Card from "../components/ui/Card";
 import { useAuth } from "../context/AuthContext";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as StoreReview from "expo-store-review";
 
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 const HERO_BG = require("../../assets/images/hunt_bg_5_explorer_greece.jpg");
@@ -115,64 +115,7 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          {/* Hunt types */}
-          <Text style={styles.sectionTitle}>Three ways to explore</Text>
-          {[
-            {
-              emoji: "🏙️",
-              title: "City Hunt",
-              desc: "Explore any city with custom clues that fit your vibe. Works in any city worldwide.",
-              onPress: () => router.push("/hunt-type"),
-            },
-            {
-              emoji: "🚗",
-              title: "Road Trip Hunt",
-              desc: "Discover roadside attractions and fun stops along your journey with riddle-based clues.",
-              onPress: () => router.push("/hunt-type"),
-            },
-            {
-              emoji: "⚡",
-              title: "Micro Hunt",
-              desc: "A quick 1–3 stop adventure within half a mile of you. Perfect for a short break.",
-              onPress: () => router.push("/hunt-type"),
-            },
-          ].map((item) => (
-            <TouchableOpacity
-              key={item.title}
-              onPress={item.onPress}
-              activeOpacity={0.85}
-            >
-              <Card style={styles.huntTypeCard}>
-                <Text style={styles.huntTypeEmoji}>{item.emoji}</Text>
-                <View style={styles.huntTypeContent}>
-                  <Text style={styles.huntTypeTitle}>{item.title}</Text>
-                  <Text style={styles.huntTypeDesc}>{item.desc}</Text>
-                </View>
-                <Text style={styles.huntTypeArrow}>›</Text>
-              </Card>
-            </TouchableOpacity>
-          ))}
-
-          {/* Join a Hunt */}
-          <TouchableOpacity
-            onPress={() => router.push("/join-hunt")}
-            activeOpacity={0.85}
-          >
-            <Card style={styles.joinHuntCard}>
-              <Text style={styles.huntTypeEmoji}>🤝</Text>
-              <View style={styles.huntTypeContent}>
-                <Text style={styles.huntTypeTitle}>Join a Hunt</Text>
-                <Text style={styles.huntTypeDesc}>
-                  {
-                    "Have a friend's share code? Enter it here to get your own copy of their hunt."
-                  }
-                </Text>
-              </View>
-              <Text style={styles.huntTypeArrow}>›</Text>
-            </Card>
-          </TouchableOpacity>
-
-          {/* Review prompt */}
+          {/* Review prompt — top of content */}
           {showReviewPrompt && (
             <TouchableOpacity
               style={styles.reviewCard}
@@ -236,6 +179,63 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.onboardingLinkArrow}>›</Text>
           </TouchableOpacity>
+
+          {/* Join a Hunt */}
+          <TouchableOpacity
+            onPress={() => router.push("/join-hunt")}
+            activeOpacity={0.85}
+          >
+            <Card style={styles.joinHuntCard}>
+              <Text style={styles.huntTypeEmoji}>🤝</Text>
+              <View style={styles.huntTypeContent}>
+                <Text style={styles.huntTypeTitle}>Join a Hunt</Text>
+                <Text style={styles.huntTypeDesc}>
+                  {
+                    "Have a friend's share code? Enter it here to get your own copy of their hunt."
+                  }
+                </Text>
+              </View>
+              <Text style={styles.huntTypeArrow}>›</Text>
+            </Card>
+          </TouchableOpacity>
+
+          {/* Hunt types */}
+          <Text style={styles.sectionTitle}>Three ways to explore</Text>
+          {[
+            {
+              emoji: "🏙️",
+              title: "City Hunt",
+              desc: "Explore any city worldwide with custom clues that fit your vibe.",
+              onPress: () => router.push("/hunt-type"),
+            },
+            {
+              emoji: "🚗",
+              title: "Road Trip Hunt",
+              desc: "Discover roadside attractions and fun stops along your route.",
+              onPress: () => router.push("/hunt-type"),
+            },
+            {
+              emoji: "⚡",
+              title: "Micro Hunt",
+              desc: "A quick 1–3 stop adventure within half a mile of you.",
+              onPress: () => router.push("/hunt-type"),
+            },
+          ].map((item) => (
+            <TouchableOpacity
+              key={item.title}
+              onPress={item.onPress}
+              activeOpacity={0.85}
+            >
+              <Card style={styles.huntTypeCard}>
+                <Text style={styles.huntTypeEmoji}>{item.emoji}</Text>
+                <View style={styles.huntTypeContent}>
+                  <Text style={styles.huntTypeTitle}>{item.title}</Text>
+                  <Text style={styles.huntTypeDesc}>{item.desc}</Text>
+                </View>
+                <Text style={styles.huntTypeArrow}>›</Text>
+              </Card>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -441,6 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginTop: SPACING.sm,
+    marginBottom: SPACING.lg,
     gap: SPACING.md,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.3)",

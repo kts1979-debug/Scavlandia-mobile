@@ -1019,7 +1019,7 @@ export default function ActiveHuntScreen() {
                       ? "⬆️  Uploading photo..."
                       : isMuseumHunt
                         ? "📸  Photograph the Artwork"
-                        : "📸  Add Photo (optional)"}
+                        : "📸  Add Photo or Go To Next Stop"}
                   </Text>
                 </TouchableOpacity>
               )}

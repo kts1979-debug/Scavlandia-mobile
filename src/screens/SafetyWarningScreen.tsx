@@ -115,7 +115,7 @@ export default function SafetyWarningScreen() {
                 !agreed && styles.continueBtnTextDisabled,
               ]}
             >
-              I Understand — Start My Hunt 🚀
+              Ready 🚀
             </Text>
           </TouchableOpacity>
 

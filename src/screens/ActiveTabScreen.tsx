@@ -1,20 +1,20 @@
 // src/screens/ActiveTabScreen.tsx
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
 import { getActiveHunt } from "../services/apiService";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
-import Button from "../components/ui/Button";
 
 const HERO_BG = require("../../assets/images/hunt_bg_5_explorer_greece.jpg");
 
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   stateTitleDark: {
     fontSize: FONTS.sizes.xxl,
     fontWeight: FONTS.weights.heavy,
-    color: COLORS.primary,
+    color: COLORS.accent,
     textAlign: "center",
     marginBottom: SPACING.sm,
   },
