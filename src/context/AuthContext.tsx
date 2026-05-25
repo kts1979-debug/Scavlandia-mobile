@@ -89,19 +89,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { GoogleSignin } =
         await import("@react-native-google-signin/google-signin");
-
       GoogleSignin.configure({
         webClientId:
           "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
+        offlineAccess: true,
       });
-
-      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
       await GoogleSignin.signIn();
       const tokens = await GoogleSignin.getTokens();
       const googleCredential = GoogleAuthProvider.credential(tokens.idToken);
       await signInWithCredential(auth, googleCredential);
-    } catch (e) {
-      throw e;
+    } catch (e: any) {
+      if (e.code === "SIGN_IN_CANCELLED") {
+        // User cancelled — don't throw, just return silently
+        return;
+      } else if (e.code === "IN_PROGRESS") {
+        return;
+      } else if (e.code === "PLAY_SERVICES_NOT_AVAILABLE") {
+        throw new Error(
+          "Google Play Services is not available on this device.",
+        );
+      } else {
+        throw e;
+      }
     }
   };
 
