@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         webClientId:
           "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
         offlineAccess: true,
-      });
+      } as any);
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
