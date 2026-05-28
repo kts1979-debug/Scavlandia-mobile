@@ -1,17 +1,17 @@
 // src/screens/OnboardingScreen.tsx
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   Dimensions,
   FlatList,
   Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, FONTS, RADIUS, SPACING } from "../theme";
@@ -57,7 +57,7 @@ const SLIDES = [
     emoji: "⚡",
     title: "Micro Hunt",
     subtitle: "A quick adventure nearby",
-    body: "Micro Hunts are short 1–2 stop adventures within half a mile of your location. Perfect for a quick break, lunch hour, or when you only have 15–30 minutes to spare.",
+    body: "Micro Hunts are short 1–3 stop adventures within a mile of your location. Perfect for a quick break, lunch hour, or when you only have 15–30 minutes to spare.",
   },
   {
     id: "6",

@@ -217,7 +217,7 @@ export default function HomeScreen() {
             {
               emoji: "⚡",
               title: "Micro Hunt",
-              desc: "A quick 1–3 stop adventure within half a mile of you.",
+              desc: "A quick 1–3 stop adventure within a mile of you.",
               onPress: () => router.push("/hunt-type"),
             },
           ].map((item) => (
