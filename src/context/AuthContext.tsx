@@ -1,185 +1,199 @@
-// src/context/AuthContext.tsx
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  GoogleAuthProvider,
-  OAuthProvider,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  signInWithCredential,
-  signInWithEmailAndPassword,
-  updateProfile,
-  User,
-} from "firebase/auth";
+import { Session } from "@supabase/supabase-js";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { saveUserProfile } from "../services/apiService";
-import { initializePurchases } from "../services/purchaseService";
-import { auth } from "../utils/firebaseConfig";
+import { supabase } from "../utils/supabaseConfig";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface UserProfile {
+  id: string;
+  email: string | undefined;
+  displayName: string | null;
+  photoUrl: string | null;
+  pendingCityHunts: number;
+  pendingMicroHunts: number;
+  pendingRoadTripHunts: number;
+  savedHuntIds: string[];
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: UserProfile | null;
+  session: Session | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
   signUp: (
     email: string,
     password: string,
     displayName: string,
   ) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
-  sendPasswordReset: (email: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  refreshUserProfile: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+// ─── Context ─────────────────────────────────────────────────────────────────
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
+  return context;
+}
+
+// ─── Helper: fetch user profile from public.users ────────────────────────────
+
+async function fetchUserProfile(
+  userId: string,
+  email: string | undefined,
+): Promise<UserProfile | null> {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    email: email,
+    displayName: data.display_name,
+    photoUrl: data.photo_url,
+    pendingCityHunts: data.pending_city_hunts ?? 0,
+    pendingMicroHunts: data.pending_micro_hunts ?? 0,
+    pendingRoadTripHunts: data.pending_road_trip_hunts ?? 0,
+    savedHuntIds: data.saved_hunt_ids ?? [],
+  };
+}
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Load session on mount + listen for auth changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        const profile = await fetchUserProfile(
+          session.user.id,
+          session.user.email,
+        );
+        setUser(profile);
+      }
       setLoading(false);
-      if (firebaseUser) {
-        try {
-          await saveUserProfile(
-            firebaseUser.displayName || firebaseUser.email || "User",
-          );
-        } catch (err) {
-          console.warn("Profile save failed (non-critical):", err);
-        }
-        try {
-          initializePurchases(firebaseUser.uid);
-        } catch (err) {
-          console.warn("RevenueCat init failed (non-critical):", err);
-        }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setSession(session);
+      if (session?.user) {
+        const profile = await fetchUserProfile(
+          session.user.id,
+          session.user.email,
+        );
+        setUser(profile);
       } else {
-        try {
-          initializePurchases();
-        } catch (err) {
-          console.warn("RevenueCat anonymous init failed (non-critical):", err);
-        }
+        setUser(null);
       }
     });
-    return unsubscribe;
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  // ─── Auth Methods ───────────────────────────────────────────────────────────
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+  };
 
   const signUp = async (
     email: string,
     password: string,
     displayName: string,
   ) => {
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-    );
-    await updateProfile(userCredential.user, { displayName });
-    await saveUserProfile(displayName);
-    await AsyncStorage.removeItem("scavlandia_onboarding_complete");
-  };
-
-  const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
-  };
-
-  const signInWithGoogle = async () => {
-    try {
-      const { GoogleSignin } =
-        await import("@react-native-google-signin/google-signin");
-      GoogleSignin.configure({
-        webClientId:
-          "659464658532-njhck3orvq6fjoi1m5kfc4mbhhrlli1h.apps.googleusercontent.com",
-        offlineAccess: true,
-      } as any);
-      await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
-      await GoogleSignin.signIn();
-      const tokens = await GoogleSignin.getTokens();
-      const googleCredential = GoogleAuthProvider.credential(tokens.idToken);
-      await signInWithCredential(auth, googleCredential);
-    } catch (e: any) {
-      if (e.code === "SIGN_IN_CANCELLED") {
-        // User cancelled — don't throw, just return silently
-        return;
-      } else if (e.code === "IN_PROGRESS") {
-        return;
-      } else if (e.code === "PLAY_SERVICES_NOT_AVAILABLE") {
-        throw new Error(
-          "Google Play Services is not available on this device.",
-        );
-      } else {
-        throw e;
-      }
-    }
-  };
-
-  const signInWithApple = async () => {
-    const AppleAuthentication = await import("expo-apple-authentication");
-
-    const credential = await AppleAuthentication.signInAsync({
-      requestedScopes: [
-        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-        AppleAuthentication.AppleAuthenticationScope.EMAIL,
-      ],
+      options: {
+        data: { full_name: displayName },
+      },
     });
-
-    const { identityToken } = credential;
-    if (!identityToken)
-      throw new Error("Apple Sign In failed — no identity token");
-
-    const provider = new OAuthProvider("apple.com");
-    const appleCredential = provider.credential({
-      idToken: identityToken,
-      rawNonce: undefined,
-    });
-
-    const result = await signInWithCredential(auth, appleCredential);
-
-    // Apple only provides name on first sign-in
-    if (credential.fullName?.givenName && result.user.displayName === null) {
-      const displayName = [
-        credential.fullName.givenName,
-        credential.fullName.familyName,
-      ]
-        .filter(Boolean)
-        .join(" ");
-      await updateProfile(result.user, { displayName });
-      await saveUserProfile(displayName);
-    }
-  };
-
-  const sendPasswordReset = async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
+    if (error) throw error;
   };
 
   const signOut = async () => {
-    await firebaseSignOut(auth);
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setUser(null);
+    setSession(null);
   };
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: "scavlandia://auth/callback",
+      },
+    });
+    if (error) throw error;
+  };
+
+  const signInWithApple = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: {
+        redirectTo: "scavlandia://auth/callback",
+      },
+    });
+    if (error) throw error;
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "scavlandia://auth/reset-password",
+    });
+    if (error) throw error;
+  };
+
+  const refreshUserProfile = async () => {
+    if (session?.user) {
+      const profile = await fetchUserProfile(
+        session.user.id,
+        session.user.email,
+      );
+      setUser(profile);
+    }
+  };
+
+  // ─── Value ──────────────────────────────────────────────────────────────────
 
   return (
     <AuthContext.Provider
       value={{
         user,
+        session,
         loading,
-        signUp,
         signIn,
+        signUp,
+        signOut,
         signInWithGoogle,
         signInWithApple,
-        sendPasswordReset,
-        signOut,
+        resetPassword,
+        refreshUserProfile,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used inside an AuthProvider");
-  return context;
 }

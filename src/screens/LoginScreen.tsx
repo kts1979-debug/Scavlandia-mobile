@@ -44,16 +44,15 @@ export default function LoginScreen() {
       router.replace("/(tabs)");
     } catch (error: any) {
       let message = "Sign in failed. Please try again.";
-      if (error.code === "auth/user-not-found")
-        message = "No account found with this email.";
-      if (error.code === "auth/wrong-password")
-        message = "Incorrect password. Please try again.";
-      if (error.code === "auth/invalid-email")
-        message = "Please enter a valid email address.";
-      if (error.code === "auth/too-many-requests")
-        message = "Too many attempts. Please try again later.";
-      if (error.code === "auth/invalid-credential")
+      const msg = error?.message?.toLowerCase() || "";
+      if (msg.includes("invalid login credentials"))
         message = "Email or password is incorrect.";
+      if (msg.includes("email not confirmed"))
+        message = "Please confirm your email address before signing in.";
+      if (msg.includes("too many requests"))
+        message = "Too many attempts. Please try again later.";
+      if (msg.includes("user not found"))
+        message = "No account found with this email.";
       Alert.alert("Sign In Failed", message);
     } finally {
       setLoading(false);
@@ -64,14 +63,12 @@ export default function LoginScreen() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
-      router.replace("/(tabs)");
+      // Navigation handled automatically by onAuthStateChange in AuthContext
     } catch (error: any) {
-      if (error.code !== "SIGN_IN_CANCELLED") {
-        Alert.alert(
-          "Google Sign In Failed",
-          "Could not sign in with Google. Please try again.",
-        );
-      }
+      Alert.alert(
+        "Google Sign In Failed",
+        "Could not sign in with Google. Please try again.",
+      );
     } finally {
       setGoogleLoading(false);
     }
@@ -81,14 +78,12 @@ export default function LoginScreen() {
     setAppleLoading(true);
     try {
       await signInWithApple();
-      router.replace("/(tabs)");
+      // Navigation handled automatically by onAuthStateChange in AuthContext
     } catch (error: any) {
-      if (error.code !== "ERR_REQUEST_CANCELED") {
-        Alert.alert(
-          "Apple Sign In Failed",
-          "Could not sign in with Apple. Please try again.",
-        );
-      }
+      Alert.alert(
+        "Apple Sign In Failed",
+        "Could not sign in with Apple. Please try again.",
+      );
     } finally {
       setAppleLoading(false);
     }

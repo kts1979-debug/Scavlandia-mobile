@@ -1,7 +1,6 @@
 // src/screens/SignUpScreen.tsx
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Image,
@@ -18,7 +17,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
-import { ONBOARDING_KEY } from "../screens/OnboardingScreen";
 import { COLORS, FONTS, RADIUS, SHADOW, SPACING } from "../theme";
 
 const BG_IMAGE = require("../../assets/images/hunt_bg_8_friends_overlook.jpg");
@@ -107,19 +105,21 @@ export default function SignUpScreen() {
     setLoading(true);
     try {
       await signUp(email.trim(), password, displayName.trim());
-      const hasSeenOnboarding = await AsyncStorage.getItem(ONBOARDING_KEY);
-      if (hasSeenOnboarding) {
-        router.replace("/(tabs)");
-      } else {
-        router.replace("/onboarding");
-      }
+      Alert.alert(
+        "Check your email! 📬",
+        "We sent a confirmation link to " +
+          email.trim() +
+          ". Click it to activate your account, then sign in.",
+        [{ text: "OK", onPress: () => router.replace("/login") }],
+      );
     } catch (error: any) {
       let message = "Sign up failed. Please try again.";
-      if (error.code === "auth/email-already-in-use")
+      const msg = error?.message?.toLowerCase() || "";
+      if (msg.includes("already registered") || msg.includes("already exists"))
         message = "An account with this email already exists.";
-      if (error.code === "auth/invalid-email")
+      if (msg.includes("invalid email"))
         message = "Please enter a valid email address.";
-      if (error.code === "auth/weak-password")
+      if (msg.includes("password") && msg.includes("characters"))
         message = "Password is too weak. Use at least 6 characters.";
       Alert.alert("Sign Up Failed", message);
     } finally {

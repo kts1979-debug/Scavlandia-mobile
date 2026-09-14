@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Alert,
   Image,
@@ -21,7 +21,7 @@ const BG_IMAGE = require("../../assets/images/hunt_bg_3_friends_nyc.jpg");
 const LOGO_ICON = require("../../assets/images/icon_white_1024.png");
 
 export default function ForgotPasswordScreen() {
-  const { sendPasswordReset } = useAuth();
+  const { resetPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -32,13 +32,14 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      await sendPasswordReset(email.trim());
+      await resetPassword(email.trim());
       setSent(true);
     } catch (error: any) {
       let message = "Could not send reset email. Please try again.";
-      if (error.code === "auth/user-not-found")
+      const msg = error?.message?.toLowerCase() || "";
+      if (msg.includes("user not found") || msg.includes("no user"))
         message = "No account found with this email address.";
-      if (error.code === "auth/invalid-email")
+      if (msg.includes("invalid email"))
         message = "Please enter a valid email address.";
       Alert.alert("Error", message);
     } finally {

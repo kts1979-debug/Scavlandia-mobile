@@ -1,18 +1,17 @@
 // src/services/storageService.ts
-import { getStorage, ref, uploadBytes } from "firebase/storage";
-import { auth } from "../utils/firebaseConfig";
-
-const storage = getStorage();
+import { supabase } from "../utils/supabaseConfig";
 
 export async function uploadHuntPhoto(
   photoUri: string,
   huntId: string,
   stopOrder: number,
 ): Promise<string> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.user) throw new Error("Must be logged in to upload photos");
 
-  const user = auth.currentUser;
-  if (!user) throw new Error("Must be logged in to upload photos");
-
+  const uid = session.user.id;
 
   // Convert the local photo URI to a blob using fetch()
   const response = await fetch(photoUri);
@@ -21,25 +20,22 @@ export async function uploadHuntPhoto(
   // Build the storage path
   const timestamp = Date.now();
   const fileName = `stop_${stopOrder}_${timestamp}.jpg`;
-  const storagePath = `huntPhotos/${user.uid}/${huntId}/${fileName}`;
+  const storagePath = `${uid}/${huntId}/${fileName}`;
 
+  // Upload to Supabase Storage
+  const { error } = await supabase.storage
+    .from("hunt-photos")
+    .upload(storagePath, blob, {
+      contentType: "image/jpeg",
+      upsert: false,
+    });
 
-  // Upload to Firebase Storage
-  const storageRef = ref(storage, storagePath);
-  await uploadBytes(storageRef, blob, { contentType: "image/jpeg" });
+  if (error) throw error;
 
-  // Build download URL manually with encoded slashes
-  const encodedPath = `huntPhotos%2F${user.uid}%2F${huntId}%2F${fileName}`;
-  const bucket = "daytripper-prod.firebasestorage.app";
+  // Get public URL
+  const { data } = supabase.storage
+    .from("hunt-photos")
+    .getPublicUrl(storagePath);
 
-  // Fetch the download token from Firebase Storage metadata
-  const metaResponse = await fetch(
-    `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}`,
-  );
-  const metadata = await metaResponse.json();
-  const token = metadata.downloadTokens;
-
-  const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}?alt=media&token=${token}`;
-
-  return downloadURL;
+  return data.publicUrl;
 }

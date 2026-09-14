@@ -1,17 +1,44 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Linking from "expo-linking";
 import { router, Stack } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { COLORS } from "../src/theme";
-import "../src/utils/firebaseConfig";
+import { supabase } from "../src/utils/supabaseConfig";
 
 function RootStack() {
   const { loading, user } = useAuth();
   const [checkingAuth, setCheckingAuth] = useState(true);
   const hasNavigated = useRef(false);
 
+  // ── Handle OAuth deep link callback ──────────────────────────
+  useEffect(() => {
+    // Handle the initial URL if app was opened via deep link
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink(url);
+    });
+
+    // Listen for deep links while app is open
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      handleDeepLink(url);
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  const handleDeepLink = async (url: string) => {
+    if (url.includes("auth/callback")) {
+      // Extract tokens from the URL and set the session
+      const { data, error } = await supabase.auth.getSessionFromUrl({ url });
+      if (data?.session) {
+        router.replace("/(tabs)");
+      }
+    }
+  };
+
+  // ── Navigate based on auth state ──────────────────────────────
   useEffect(() => {
     if (loading) return;
     if (hasNavigated.current) return;
@@ -54,10 +81,7 @@ function RootStack() {
 
   return (
     <Stack>
-      {/* Tab group — contains most screens now */}
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-      {/* Screens that stay outside tabs (no tab bar) */}
       <Stack.Screen name="generating" options={{ headerShown: false }} />
       <Stack.Screen name="active-hunt" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
