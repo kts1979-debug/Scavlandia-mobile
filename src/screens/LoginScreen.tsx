@@ -249,7 +249,12 @@ const styles = StyleSheet.create({
   },
   safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: "center", padding: SPACING.lg },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: SPACING.lg,
+    paddingBottom: 80,
+  },
   logoSection: { alignItems: "center", marginBottom: SPACING.xl },
   logoIcon: { width: 72, height: 72, marginBottom: SPACING.sm },
   appName: {
